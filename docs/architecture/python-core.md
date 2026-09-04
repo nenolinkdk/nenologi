@@ -10,11 +10,11 @@ src/nenologi/
   serialization/   # explicit JSON conversion and deterministic validation
 ```
 
-The package has no GUI, AI-provider, web-framework, database, or persistence dependency. Parsers will later populate these models through the public API.
+The package has no GUI, AI-provider, web-framework, database, or persistence dependency. The first parser-neutral interface and deliberately narrow implementation are documented in [Controlled English Analyzer v0.1](controlled-english-analyzer.md).
 
 ## Public API
 
-Common construction requires only imports from `nenologi`. The public surface includes `Analysis`, `Comparison`, `Difference`, `Confidence`, stable enums, component dataclasses, JSON conversion functions, and `validate_analysis` / `validate_comparison`. Internal conversion helpers are not public API.
+Common construction requires only imports from `nenologi`. The public surface includes `Analyzer`, `ControlledEnglishAnalyzer`, `UnsupportedConstructionError`, `Analysis`, `Comparison`, `Difference`, `Confidence`, stable enums, component dataclasses, JSON conversion functions, and `validate_analysis` / `validate_comparison`. Internal token and grammar helpers are not public API.
 
 ```python
 from nenologi import (
@@ -33,6 +33,14 @@ payload = analysis_to_json(analysis)
 ```
 
 The complete employees/MUST example and a manually constructed MUST→MAY comparison are in [`examples/core_v01.py`](../../examples/core_v01.py).
+
+The controlled analyzer can be invoked directly:
+
+```python
+from nenologi import ControlledEnglishAnalyzer
+
+analysis = ControlledEnglishAnalyzer().analyze("All employees must register.")
+```
 
 ## Model and schema relationship
 

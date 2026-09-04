@@ -40,8 +40,9 @@ The second is a source/target comparison in which both texts are independently r
 3. [Core boundary](docs/architecture/core-boundary.md)
 4. [Analysis schema v0.1](docs/architecture/semantic-json-schema.md)
 5. [Python core domain layer](docs/architecture/python-core.md)
-6. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
-7. [Build preparation](docs/project/build-preparation.md)
+6. [Controlled English Analyzer v0.1](docs/architecture/controlled-english-analyzer.md)
+7. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
+8. [Build preparation](docs/project/build-preparation.md)
 
 For a non-technical introduction, see [Nenologi – Looking Beneath the Words](docs/public/what-is-nenologi.md). The older topic-oriented documents under `docs/01-concept` through `docs/08-integrations` remain useful background; the files linked above are the canonical Phase 0 specification.
 

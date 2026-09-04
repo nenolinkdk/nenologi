@@ -24,8 +24,8 @@ A <-> B         -> semantic/logical findings
 
 1. ~~Choose Python/package tooling and record the decision.~~ Python 3.11+, `src` layout, and standard-library runtime selected.
 2. ~~Add typed domain models corresponding to the committed v0.1 JSON Schemas.~~ Implemented with explicit serialization and validation.
-3. Add controlled-English structural segmentation behind a parser-neutral interface.
-4. Implement enough semantic normalization for the committed gold cases.
+3. ~~Add controlled-English structural segmentation behind a parser-neutral interface.~~ Initial narrow analyzer implemented.
+4. Expand deterministic semantic normalization and grammar coverage for selected committed gold cases.
 5. Add cautious plain-English rendering over structured expressions.
 6. Implement deterministic comparison rules for critical minimal pairs.
 
