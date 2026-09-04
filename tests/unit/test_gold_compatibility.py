@@ -10,6 +10,8 @@ COMPATIBLE_CASE_IDS = {
     "modality_001", "modality_002", "modality_003",
     "quantifier_001", "quantifier_002", "quantifier_003",
     "negation_001", "negation_002", "contradiction_001",
+    "conjunction_001", "conjunction_002",
+    "numeric_001", "numeric_002", "numeric_003", "numeric_004",
 }
 
 

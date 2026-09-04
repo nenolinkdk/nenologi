@@ -25,13 +25,17 @@ A <-> B         -> semantic/logical findings
 1. ~~Choose Python/package tooling and record the decision.~~ Python 3.11+, `src` layout, and standard-library runtime selected.
 2. ~~Add typed domain models corresponding to the committed v0.1 JSON Schemas.~~ Implemented with explicit serialization and validation.
 3. ~~Add controlled-English structural segmentation behind a parser-neutral interface.~~ Initial narrow analyzer implemented.
-4. Expand deterministic semantic normalization and grammar coverage for selected committed gold cases. Flat object conjunction and positional entity/predicate correspondence are now supported.
+4. Expand deterministic semantic normalization and grammar coverage for selected committed gold cases. Flat object conjunction, positional entity/predicate correspondence, and exact numeric thresholds are now supported.
 5. Add cautious plain-English rendering over structured expressions.
 6. ~~Implement initial deterministic comparison rules.~~ Modality, quantifier, explicit negation, flat conjunction, positional entity/predicate change, and equivalence are implemented.
 
+## Current Phase 1 status
+
+The callable pipeline now covers 16 exact comparison/equivalence gold cases, including all four numeric threshold changes and one numeric wording equivalence. Numeric values are exact, units are preserved without conversion, and numeric findings coexist deterministically with existing operators.
+
 ## Next implementation milestone
 
-Define one small normalized representation for numeric thresholds and implement controlled parsing/comparison for the four existing numeric gold cases. Keep general arithmetic, units, conditions, and temporal reasoning out of that milestone.
+Add cautious plain-English rendering over structured expressions as recommended in step 5, without expanding the controlled grammar into general NLP. Conditions and temporal relations remain later isolated comparison milestones.
 
 ## Definition of ready
 

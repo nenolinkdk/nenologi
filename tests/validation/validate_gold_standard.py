@@ -28,6 +28,7 @@ STATUSES = {
     "CONTRADICTED", "CANNOT_BE_SAFELY_FORMALIZED",
 }
 LOGICAL_RELATIONS = {"EQUIVALENT", "CONTRADICTORY", "UNDETERMINED"}
+NUMERIC_OPERATORS = {"GREATER_THAN", "GREATER_THAN_OR_EQUAL", "LESS_THAN", "LESS_THAN_OR_EQUAL", "EQUAL"}
 CASE_FILES = (
     GOLD_DIR / "comparison" / "cases.json",
     GOLD_DIR / "equivalence" / "cases.json",
@@ -66,12 +67,15 @@ def validate_schemas() -> None:
         if schema["$schema"] != "https://json-schema.org/draft/2020-12/schema":
             raise ValidationError(f"schemas/{name}: unexpected JSON Schema dialect")
     analysis_statuses = set(loaded["analysis-v0.1.schema.json"]["$defs"]["interpretationStatus"]["enum"])
+    numeric_operators = set(loaded["analysis-v0.1.schema.json"]["$defs"]["numericConstraint"]["properties"]["operator"]["enum"])
     comparison_differences = set(loaded["comparison-v0.1.schema.json"]["$defs"]["differenceType"]["enum"])
     comparison_severities = set(loaded["comparison-v0.1.schema.json"]["$defs"]["severity"]["enum"])
     comparison_relations = set(loaded["comparison-v0.1.schema.json"]["$defs"]["logicalRelation"]["enum"])
     test_defs = loaded["test-case-v0.1.schema.json"]["$defs"]
     if analysis_statuses != STATUSES or set(test_defs["status"]["enum"]) != STATUSES:
         raise ValidationError("interpretation-status enums are out of sync")
+    if numeric_operators != NUMERIC_OPERATORS:
+        raise ValidationError("numeric-operator enum is out of sync")
     if comparison_differences != DIFFERENCE_TYPES or set(test_defs["differenceType"]["enum"]) != DIFFERENCE_TYPES:
         raise ValidationError("difference-type enums are out of sync")
     if comparison_severities != SEVERITIES or set(test_defs["severity"]["enum"]) != SEVERITIES:

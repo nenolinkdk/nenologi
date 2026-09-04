@@ -4,7 +4,7 @@
   "title": "Nenologi single-text analysis v0.1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "document", "profile", "structure", "entities", "propositions", "relations", "quantifiers", "modality", "negation", "conditions", "temporal_relations", "sets", "logical_representation", "inferences", "ambiguities", "confidence", "plain_language_interpretation"],
+  "required": ["schema_version", "document", "profile", "structure", "entities", "propositions", "relations", "quantifiers", "modality", "negation", "numeric_constraints", "conditions", "temporal_relations", "sets", "logical_representation", "inferences", "ambiguities", "confidence", "plain_language_interpretation"],
   "properties": {
     "schema_version": {"const": "0.1"},
     "document": {"$ref": "#/$defs/document"},
@@ -16,6 +16,7 @@
     "quantifiers": {"type": "array", "items": {"$ref": "#/$defs/operator"}},
     "modality": {"type": "array", "items": {"$ref": "#/$defs/operator"}},
     "negation": {"type": "array", "items": {"$ref": "#/$defs/operator"}},
+    "numeric_constraints": {"type": "array", "items": {"$ref": "#/$defs/numericConstraint"}},
     "conditions": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
     "temporal_relations": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
     "sets": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
@@ -68,6 +69,20 @@
     "operator": {
       "type": "object", "additionalProperties": false, "required": ["id", "operator", "scope", "interpretation_status", "confidence"],
       "properties": {"id": {"$ref": "#/$defs/identifier"}, "operator": {"type": "string"}, "scope": {"type": "array", "items": {"$ref": "#/$defs/identifier"}, "minItems": 1}, "span": {"$ref": "#/$defs/span"}, "interpretation_status": {"$ref": "#/$defs/interpretationStatus"}, "confidence": {"$ref": "#/$defs/confidence"}}
+    },
+    "numericConstraint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "operator", "value", "scope", "interpretation_status", "confidence"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "operator": {"enum": ["GREATER_THAN", "GREATER_THAN_OR_EQUAL", "LESS_THAN", "LESS_THAN_OR_EQUAL", "EQUAL"]},
+        "value": {"type": "string", "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"},
+        "unit": {"type": "string", "minLength": 1},
+        "scope": {"type": "array", "items": {"$ref": "#/$defs/identifier"}, "minItems": 1},
+        "span": {"$ref": "#/$defs/span"},
+        "interpretation_status": {"$ref": "#/$defs/interpretationStatus"},
+        "confidence": {"$ref": "#/$defs/confidence"}
+      }
     },
     "logicalExpression": {
       "type": "object", "additionalProperties": false, "required": ["id", "expression", "interpretation_status", "confidence"],

@@ -10,7 +10,7 @@ from typing import Any, Callable, TypeVar
 from ..models import (
     Ambiguity, Analysis, Comparison, ComparisonMode, Confidence, Difference,
     DifferenceType, DiscourseRelation, DiscourseRelationType, Document, Entity,
-    Inference, InterpretationStatus, LocalizedText, LogicalExpression, LogicalRelation, Operator,
+    Inference, InterpretationStatus, LocalizedText, LogicalExpression, LogicalRelation, NumericConstraint, NumericOperator, Operator,
     Proposition, SCHEMA_VERSION, SemanticItem, Severity, Span, StructuralNode,
     Structure,
 )
@@ -154,6 +154,32 @@ def _operator_from_dict(value: Any, location: str) -> Operator:
                       span=_span_from_dict(data["span"], f"{location}.span") if "span" in data else None)
 
 
+def _numeric_to_dict(value: NumericConstraint) -> dict[str, Any]:
+    result = {
+        "id": value.id, "operator": value.operator.value, "value": str(value.value),
+        "scope": list(value.scope), "interpretation_status": value.interpretation_status.value,
+        "confidence": _confidence_to_dict(value.confidence),
+    }
+    if value.unit is not None:
+        result["unit"] = value.unit
+    if value.span is not None:
+        result["span"] = _span_to_dict(value.span)
+    return result
+
+
+def _numeric_from_dict(value: Any, location: str) -> NumericConstraint:
+    required = {"id", "operator", "value", "scope", "interpretation_status", "confidence"}
+    data = _object(value, required, {"unit", "span"}, location)
+    return _construct(
+        NumericConstraint, location, id=data["id"],
+        operator=_enum(NumericOperator, data["operator"], f"{location}.operator"), value=data["value"],
+        unit=data.get("unit"), scope=tuple(_array(data["scope"], f"{location}.scope")),
+        interpretation_status=_status(data["interpretation_status"], f"{location}.interpretation_status"),
+        confidence=_confidence_from_dict(data["confidence"], f"{location}.confidence"),
+        span=_span_from_dict(data["span"], f"{location}.span") if "span" in data else None,
+    )
+
+
 def _node_to_dict(value: StructuralNode) -> dict[str, Any]:
     result: dict[str, Any] = {"id": value.id, "span": _span_to_dict(value.span)}
     if value.parent_id is not None: result["parent_id"] = value.parent_id
@@ -241,6 +267,7 @@ def analysis_to_dict(value: Analysis) -> dict[str, Any]:
         "quantifiers": [_operator_to_dict(item) for item in value.quantifiers],
         "modality": [_operator_to_dict(item) for item in value.modality],
         "negation": [_operator_to_dict(item) for item in value.negation],
+        "numeric_constraints": [_numeric_to_dict(item) for item in value.numeric_constraints],
         "conditions": [_semantic_to_dict(item) for item in value.conditions],
         "temporal_relations": [_semantic_to_dict(item) for item in value.temporal_relations],
         "sets": [_semantic_to_dict(item) for item in value.sets],
@@ -254,7 +281,7 @@ def analysis_to_dict(value: Analysis) -> dict[str, Any]:
 
 def analysis_from_dict(value: Mapping[str, Any]) -> Analysis:
     """Build a typed analysis, rejecting schema-shape and domain-value errors."""
-    required = {"schema_version", "document", "profile", "structure", "entities", "propositions", "relations", "quantifiers", "modality", "negation", "conditions", "temporal_relations", "sets", "logical_representation", "inferences", "ambiguities", "confidence", "plain_language_interpretation"}
+    required = {"schema_version", "document", "profile", "structure", "entities", "propositions", "relations", "quantifiers", "modality", "negation", "numeric_constraints", "conditions", "temporal_relations", "sets", "logical_representation", "inferences", "ambiguities", "confidence", "plain_language_interpretation"}
     data = _object(value, required, set(), "analysis")
     document_data = _object(data["document"], {"id", "language", "text"}, set(), "analysis.document")
     document = _construct(Document, "analysis.document", **document_data)
@@ -272,7 +299,7 @@ def analysis_from_dict(value: Mapping[str, Any]) -> Analysis:
         profile=data["profile"], structure=structure, entities=items("entities", _entity_from_dict),
         propositions=items("propositions", _proposition_from_dict), relations=items("relations", _semantic_from_dict),
         quantifiers=items("quantifiers", _operator_from_dict), modality=items("modality", _operator_from_dict),
-        negation=items("negation", _operator_from_dict), conditions=items("conditions", _semantic_from_dict),
+        negation=items("negation", _operator_from_dict), numeric_constraints=items("numeric_constraints", _numeric_from_dict), conditions=items("conditions", _semantic_from_dict),
         temporal_relations=items("temporal_relations", _semantic_from_dict), sets=items("sets", _semantic_from_dict),
         logical_representation=items("logical_representation", _logical_from_dict),
         inferences=items("inferences", _inference_from_dict), ambiguities=items("ambiguities", _ambiguity_from_dict),

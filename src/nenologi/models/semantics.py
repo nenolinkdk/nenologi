@@ -1,8 +1,12 @@
 """Semantic-layer domain models."""
 
+import re
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 
-from .common import Confidence, DomainValidationError, InterpretationStatus, Span, validate_identifier
+from .common import Confidence, DomainValidationError, InterpretationStatus, NumericOperator, Span, validate_identifier
+
+_DECIMAL_PATTERN = re.compile(r"^(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$")
 
 
 def _validate_references(values: tuple[str, ...], field_name: str) -> None:
@@ -89,4 +93,41 @@ class Operator:
         if not self.scope:
             raise DomainValidationError("operator scope must contain at least one reference")
         _validate_references(self.scope, "scope")
+        _validate_status_and_confidence(self.interpretation_status, self.confidence)
+
+
+@dataclass(frozen=True, slots=True)
+class NumericConstraint:
+    """An exact normalized threshold scoped to one semantic object."""
+
+    id: str
+    operator: NumericOperator
+    value: Decimal
+    scope: tuple[str, ...]
+    interpretation_status: InterpretationStatus
+    confidence: Confidence
+    unit: str | None = None
+    span: Span | None = None
+
+    def __post_init__(self) -> None:
+        validate_identifier(self.id)
+        if not isinstance(self.operator, NumericOperator):
+            raise DomainValidationError("numeric operator must be a NumericOperator")
+        if isinstance(self.value, bool) or isinstance(self.value, float):
+            raise DomainValidationError("numeric value must use exact decimal input")
+        text = str(self.value)
+        if not _DECIMAL_PATTERN.fullmatch(text):
+            raise DomainValidationError("numeric value must be a non-negative integer or simple decimal")
+        try:
+            normalized = Decimal(text)
+        except InvalidOperation as exc:
+            raise DomainValidationError("numeric value is invalid") from exc
+        rendered = format(normalized, "f")
+        canonical = (rendered.rstrip("0").rstrip(".") or "0") if "." in rendered else rendered
+        object.__setattr__(self, "value", Decimal(canonical))
+        if not self.scope:
+            raise DomainValidationError("numeric constraint scope must contain at least one reference")
+        _validate_references(self.scope, "scope")
+        if self.unit is not None and (not isinstance(self.unit, str) or not self.unit):
+            raise DomainValidationError("numeric unit must be non-empty text or None")
         _validate_status_and_confidence(self.interpretation_status, self.confidence)

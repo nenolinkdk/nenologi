@@ -1,8 +1,9 @@
 import unittest
+from decimal import Decimal
 
 from nenologi import (
     Ambiguity, Confidence, DifferenceType, DomainValidationError, Inference,
-    InterpretationStatus, Severity,
+    InterpretationStatus, NumericConstraint, NumericOperator, Severity,
 )
 
 
@@ -29,6 +30,25 @@ class DomainModelTests(unittest.TestCase):
     def test_ambiguity_requires_two_readings(self) -> None:
         with self.assertRaises(DomainValidationError):
             Ambiguity("ambiguity_001", "Two readings are possible.", ("prop_001",), Confidence(0.5))
+
+    def test_numeric_constraint_uses_exact_decimal_and_rejects_float(self) -> None:
+        constraint = NumericConstraint(
+            "numeric_001", NumericOperator.EQUAL, "18.50", ("prop_001",),
+            InterpretationStatus.EXPLICIT, Confidence(1.0),
+        )
+        self.assertEqual(constraint.value, Decimal("18.5"))
+        self.assertEqual(
+            NumericConstraint(
+                "numeric_002", NumericOperator.EQUAL, "0.0", ("prop_001",),
+                InterpretationStatus.EXPLICIT, Confidence(1.0),
+            ).value,
+            Decimal("0"),
+        )
+        with self.assertRaises(DomainValidationError):
+            NumericConstraint(
+                "numeric_001", NumericOperator.EQUAL, 18.5, ("prop_001",),
+                InterpretationStatus.EXPLICIT, Confidence(1.0),
+            )
 
 
 if __name__ == "__main__":

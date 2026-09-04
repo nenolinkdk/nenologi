@@ -4,23 +4,40 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from decimal import Decimal
 
 from ..models import (
     Analysis, Confidence, Document, Entity, InterpretationStatus, LocalizedText,
-    LogicalExpression, Operator, Proposition, SemanticItem, Span,
+    LogicalExpression, NumericConstraint, NumericOperator, Operator, Proposition, SemanticItem, Span,
     StructuralNode, Structure,
 )
 from ..serialization.validation import validate_analysis
 from .interface import UnsupportedConstructionError
 
-_TOKEN_RE = re.compile(r"[A-Za-z]+")
+_TOKEN_RE = re.compile(r">=|<=|>|<|=|[0-9]+(?:\.[0-9]+)?|%|°[Cc]|[A-Za-z]+")
 _QUANTIFIERS = {"all": "ALL", "every": "ALL", "some": "SOME", "no": "NONE"}
 _MODALS = {"must": "MUST", "may": "MAY", "should": "SHOULD"}
 _DETERMINERS = {"a", "an", "the"}
 _COPULAS = {"is", "are"}
 _ACTIONS = {
-    "access", "approve", "choose", "enter", "open", "receive", "register",
-    "report", "restart", "submit", "vote", "wear",
+    "access", "approve", "bring", "choose", "enter", "open", "receive", "register",
+    "report", "restart", "select", "submit", "vote", "wear",
+}
+_NUMBER_WORDS = {"zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10"}
+_UNITS = {"year": "year", "years": "year", "kg": "kg", "%": "%", "°c": "°C", "degree": "degree", "degrees": "degree", "copy": "copy", "copies": "copy", "file": "file", "files": "file"}
+_NUMERIC_FORMS = {
+    ("more", "than"): NumericOperator.GREATER_THAN,
+    ("greater", "than"): NumericOperator.GREATER_THAN,
+    ("at", "least"): NumericOperator.GREATER_THAN_OR_EQUAL,
+    ("less", "than"): NumericOperator.LESS_THAN,
+    ("below",): NumericOperator.LESS_THAN,
+    ("at", "most"): NumericOperator.LESS_THAN_OR_EQUAL,
+    ("exactly",): NumericOperator.EQUAL,
+    (">",): NumericOperator.GREATER_THAN,
+    (">=",): NumericOperator.GREATER_THAN_OR_EQUAL,
+    ("<",): NumericOperator.LESS_THAN,
+    ("<=",): NumericOperator.LESS_THAN_OR_EQUAL,
+    ("=",): NumericOperator.EQUAL,
 }
 _UNSUPPORTED_MARKERS = {
     "who", "which", "that", "because", "unless", "if",
@@ -56,6 +73,36 @@ class _Parsed:
     copular: bool
     subject_start: int
     predicate_start: int
+    numeric_operator: NumericOperator | None
+    numeric_value: Decimal | None
+    numeric_unit: _Token | None
+    numeric_span: Span | None
+
+
+def _numeric_phrase(tokens: tuple[_Token, ...]) -> tuple[NumericOperator, Decimal, _Token | None, Span] | None:
+    words = tuple(token.normalized for token in tokens)
+    if len(tokens) in {3, 4} and words[1:3] == ("or", "more"):
+        value_text = _NUMBER_WORDS.get(words[0], words[0])
+        if not re.fullmatch(r"(?:0|[1-9][0-9]*)(?:\.[0-9]+)?", value_text):
+            raise UnsupportedConstructionError("numeric values must be integers or simple dot decimals")
+        unit = tokens[3] if len(tokens) == 4 else None
+        if unit is not None and unit.normalized not in _UNITS:
+            raise UnsupportedConstructionError(f"unsupported numeric unit: {unit.text}")
+        return NumericOperator.GREATER_THAN_OR_EQUAL, Decimal(value_text), unit, Span(tokens[0].start, tokens[-1].end)
+    for marker, operator in sorted(_NUMERIC_FORMS.items(), key=lambda item: len(item[0]), reverse=True):
+        if words[:len(marker)] != marker:
+            continue
+        remainder = tokens[len(marker):]
+        if not 1 <= len(remainder) <= 2:
+            raise UnsupportedConstructionError("a numeric constraint requires one value and at most one unit")
+        value_text = _NUMBER_WORDS.get(remainder[0].normalized, remainder[0].normalized)
+        if not re.fullmatch(r"(?:0|[1-9][0-9]*)(?:\.[0-9]+)?", value_text):
+            raise UnsupportedConstructionError("numeric values must be integers or simple dot decimals")
+        unit = remainder[1] if len(remainder) == 2 else None
+        if unit is not None and unit.normalized not in _UNITS:
+            raise UnsupportedConstructionError(f"unsupported numeric unit: {unit.text}")
+        return operator, Decimal(value_text), unit, Span(tokens[0].start, tokens[-1].end)
+    return None
 
 
 def _singular(word: str) -> str:
@@ -78,6 +125,11 @@ def _object_display(tokens: tuple[_Token, ...]) -> str:
     return "".join(_class_name(token.normalized) for token in tokens)
 
 
+def _decimal_text(value: Decimal) -> str:
+    text = format(value, "f")
+    return (text.rstrip("0").rstrip(".") or "0") if "." in text else text
+
+
 def _tokens(text: str) -> tuple[_Token, ...]:
     if not isinstance(text, str) or not text.strip():
         raise UnsupportedConstructionError("input must contain one non-empty sentence")
@@ -85,8 +137,6 @@ def _tokens(text: str) -> tuple[_Token, ...]:
     if stripped[-1] in "?!":
         raise UnsupportedConstructionError("only declarative sentences are supported")
     body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
-    if "." in body:
-        raise UnsupportedConstructionError("exactly one sentence is supported")
     leading = len(text) - len(text.lstrip())
     matches = list(_TOKEN_RE.finditer(body))
     if not matches:
@@ -125,17 +175,32 @@ def _parse(tokens: tuple[_Token, ...]) -> _Parsed:
     negation = None
     copular = words[index] in _COPULAS
     if copular:
+        copula = tokens[index]
         index += 1
         if index < len(tokens) and words[index] == "not":
             negation = tokens[index]
             index += 1
+        numeric = _numeric_phrase(tuple(tokens[index:]))
+        if numeric is not None:
+            if negation is not None:
+                raise UnsupportedConstructionError("negated numeric constraints are unsupported")
+            operator, value, unit, numeric_span = numeric
+            return _Parsed(quantifier, subject, None, None, copula, None, (), None, None, (), False,
+                           subject_start, predicate_start, operator, value, unit, numeric_span)
         if index != len(tokens) - 1:
             raise UnsupportedConstructionError("copular predicates require one simple complement")
         predicate = tokens[index]
-        return _Parsed(quantifier, subject, modal, negation, predicate, None, (), None, None, (), True, subject_start, predicate_start)
+        return _Parsed(quantifier, subject, modal, negation, predicate, None, (), None, None, (), True, subject_start, predicate_start, None, None, None, None)
     if words[index] in _MODALS:
         modal = tokens[index]
         index += 1
+    if index < len(tokens) and words[index] == "be":
+        numeric = _numeric_phrase(tuple(tokens[index + 1:]))
+        if numeric is None:
+            raise UnsupportedConstructionError("BE is supported only with a controlled numeric constraint")
+        operator, value, unit, numeric_span = numeric
+        return _Parsed(quantifier, subject, modal, negation, tokens[index], None, (), None, None, (), False,
+                       subject_start, predicate_start, operator, value, unit, numeric_span)
     if index < len(tokens) and words[index] == "not":
         if modal is None:
             raise UnsupportedConstructionError("NOT is supported only after a modal or copula")
@@ -148,6 +213,14 @@ def _parse(tokens: tuple[_Token, ...]) -> _Parsed:
         raise UnsupportedConstructionError(f"unsupported action predicate: {predicate.text}")
     index += 1
     remaining = tokens[index:]
+    numeric = _numeric_phrase(tuple(remaining)) if remaining else None
+    if numeric is not None:
+        operator, value, unit, numeric_span = numeric
+        objects = (unit,) if unit is not None else ()
+        return _Parsed(quantifier, subject, modal, negation, predicate, None, objects, None, None, (), False,
+                       subject_start, predicate_start, operator, value, unit, numeric_span)
+    if any(re.fullmatch(r"[0-9].*|>=|<=|>|<|=", token.normalized) for token in remaining):
+        raise UnsupportedConstructionError("unsupported numeric construction")
     connectors = [position for position, token in enumerate(remaining) if token.normalized in {"and", "or"}]
     if len(connectors) > 1:
         raise UnsupportedConstructionError("nested or repeated coordination is unsupported")
@@ -175,18 +248,31 @@ def _parse(tokens: tuple[_Token, ...]) -> _Parsed:
         object_determiner, objects = None, ()
         second_determiner, second_objects = None, ()
     return _Parsed(quantifier, subject, modal, negation, predicate, object_determiner, objects,
-                   conjunction, second_determiner, second_objects, False, subject_start, predicate_start)
+                   conjunction, second_determiner, second_objects, False, subject_start, predicate_start, None, None, None, None)
 
 
 def _predicate_display(parsed: _Parsed) -> str:
-    predicate = _class_name(parsed.predicate.normalized)
-    def atom(objects: tuple[_Token, ...]) -> str:
-        arguments = "x" + (f", {_object_display(objects)}" if objects else "")
-        return f"{predicate}({arguments})"
-    result = atom(parsed.objects)
-    if parsed.conjunction is not None:
-        symbol = "∧" if parsed.conjunction.normalized == "and" else "∨"
-        result = f"({result} {symbol} {atom(parsed.second_objects)})"
+    if parsed.numeric_operator is not None:
+        symbols = {
+            NumericOperator.GREATER_THAN: ">", NumericOperator.GREATER_THAN_OR_EQUAL: "≥",
+            NumericOperator.LESS_THAN: "<", NumericOperator.LESS_THAN_OR_EQUAL: "≤", NumericOperator.EQUAL: "=",
+        }
+        value = _decimal_text(parsed.numeric_value)
+        unit = f" {_UNITS[parsed.numeric_unit.normalized]}" if parsed.numeric_unit else ""
+        if parsed.predicate.normalized in {"be", "is", "are"}:
+            result = f"{_class_name(parsed.subject.normalized)}(x) {symbols[parsed.numeric_operator]} {value}{unit}"
+        else:
+            object_display = f", {_object_display(parsed.objects)}" if parsed.objects else ""
+            result = f"{_class_name(parsed.predicate.normalized)}(x{object_display}) {symbols[parsed.numeric_operator]} {value}{unit}"
+    else:
+        predicate = _class_name(parsed.predicate.normalized)
+        def atom(objects: tuple[_Token, ...]) -> str:
+            arguments = "x" + (f", {_object_display(objects)}" if objects else "")
+            return f"{predicate}({arguments})"
+        result = atom(parsed.objects)
+        if parsed.conjunction is not None:
+            symbol = "∧" if parsed.conjunction.normalized == "and" else "∨"
+            result = f"({result} {symbol} {atom(parsed.second_objects)})"
     if parsed.negation is not None:
         result = f"¬{result}"
     if parsed.modal is not None:
@@ -203,6 +289,8 @@ def _formula(parsed: _Parsed) -> str:
         return f"∃x ({subject}(x) ∧ {predicate})"
     if parsed.quantifier == "NONE":
         return f"¬∃x ({subject}(x) ∧ {predicate})"
+    if parsed.numeric_operator is not None:
+        return predicate
     return f"{predicate.replace('(x', f'({subject}') }"
 
 
@@ -210,6 +298,13 @@ def _action_text(parsed: _Parsed) -> str:
     if parsed.copular:
         return parsed.predicate.normalized
     action = parsed.predicate.normalized
+    if parsed.numeric_operator is not None:
+        forms = {
+            NumericOperator.GREATER_THAN: "more than", NumericOperator.GREATER_THAN_OR_EQUAL: "at least",
+            NumericOperator.LESS_THAN: "less than", NumericOperator.LESS_THAN_OR_EQUAL: "at most", NumericOperator.EQUAL: "exactly",
+        }
+        unit = f" {_UNITS[parsed.numeric_unit.normalized]}" if parsed.numeric_unit else ""
+        return f"{action} {forms[parsed.numeric_operator]} {_decimal_text(parsed.numeric_value)}{unit}"
     if parsed.objects:
         determiner = f"{parsed.object_determiner.normalized} " if parsed.object_determiner else ""
         action += f" {determiner}{' '.join(token.normalized for token in parsed.objects)}"
@@ -282,6 +377,8 @@ class ControlledEnglishAnalyzer:
         if parsed.objects:
             object_start = parsed.object_determiner.start if parsed.object_determiner else parsed.objects[0].start
             clauses.append(StructuralNode("object_001", Span(object_start, parsed.objects[-1].end), "predicate_001", "object_phrase"))
+        if parsed.numeric_span:
+            clauses.append(StructuralNode("numeric_constraint_001", parsed.numeric_span, "predicate_001", "numeric_constraint"))
         if parsed.conjunction:
             clauses.append(StructuralNode("conjunction_marker_001", parsed.conjunction.span, "predicate_001", "conjunction_marker"))
             second_start = parsed.second_object_determiner.start if parsed.second_object_determiner else parsed.second_objects[0].start
@@ -306,12 +403,19 @@ class ControlledEnglishAnalyzer:
         negation = ()
         if parsed.negation is not None or parsed.quantifier == "NONE":
             negation = (Operator("negation_001", "NOT" if parsed.negation else "NOT_EXISTS", ("prop_001",), status, certain, parsed.negation.span if parsed.negation else tokens[0].span),)
-        derived = ["prop_001", *(["quantifier_001"] if quantifiers else []), *(["modality_001"] if modality else []), *(["negation_001"] if negation else []), *(["conjunction_001"] if parsed.conjunction else [])]
+        numeric_constraints = ()
+        if parsed.numeric_operator is not None:
+            numeric_constraints = (NumericConstraint(
+                "numeric_001", parsed.numeric_operator, parsed.numeric_value, ("prop_001",), status, certain,
+                _UNITS[parsed.numeric_unit.normalized] if parsed.numeric_unit else None, parsed.numeric_span,
+            ),)
+        derived = ["prop_001", *(["quantifier_001"] if quantifiers else []), *(["modality_001"] if modality else []), *(["negation_001"] if negation else []), *(["conjunction_001"] if parsed.conjunction else []), *(["numeric_001"] if numeric_constraints else [])]
         analysis = Analysis(
             document=Document("doc_001", language, text), profile=profile,
             structure=Structure((StructuralNode("sentence_001", Span(sentence_start, sentence_end), kind="sentence"),), tuple(clauses)),
             entities=tuple(entities), propositions=(proposition,), relations=relations,
             quantifiers=quantifiers, modality=modality, negation=negation,
+            numeric_constraints=numeric_constraints,
             logical_representation=(LogicalExpression("logic_001", {"operator": "CONTROLLED_ENGLISH", "arguments": derived}, status, certain, _formula(parsed), tuple(derived)),),
             confidence=certain,
             plain_language_interpretation=LocalizedText("en", _interpretation(parsed)),

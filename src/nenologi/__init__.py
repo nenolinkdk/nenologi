@@ -6,7 +6,7 @@ from .models import (
     Ambiguity, Analysis, Comparison, ComparisonMode, Confidence, Difference,
     DifferenceType, DiscourseRelation, DiscourseRelationType, Document,
     DomainValidationError, Entity, Inference, InterpretationStatus,
-    LocalizedText, LogicalExpression, LogicalRelation, Operator, Proposition, SemanticItem,
+    LocalizedText, LogicalExpression, LogicalRelation, NumericConstraint, NumericOperator, Operator, Proposition, SemanticItem,
     Severity, Span, StructuralNode, Structure,
 )
 from .serialization import (
@@ -22,7 +22,7 @@ __all__ = [
     "DeterministicComparator",
     "Difference", "DifferenceType", "DiscourseRelation", "DiscourseRelationType",
     "Document", "DomainValidationError", "Entity", "Inference",
-    "InterpretationStatus", "LocalizedText", "LogicalExpression", "LogicalRelation", "Operator",
+    "InterpretationStatus", "LocalizedText", "LogicalExpression", "LogicalRelation", "NumericConstraint", "NumericOperator", "Operator",
     "Proposition", "ReferenceValidationError", "SchemaValidationError",
     "SemanticItem", "Severity", "Span", "StructuralNode", "Structure",
     "UnsupportedComparisonError", "UnsupportedConstructionError",

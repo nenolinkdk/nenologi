@@ -11,13 +11,18 @@ SUPPORTED_CASE_IDS = {
     "quantifier_001", "quantifier_002", "quantifier_003",
     "negation_001", "negation_002",
     "conjunction_001", "conjunction_002", "contradiction_001",
+    "numeric_001", "numeric_002", "numeric_003", "numeric_004", "equivalence_003",
 }
 
 
 class ComparatorGoldStandardTests(unittest.TestCase):
     def test_supported_gold_cases_match_expected_findings(self) -> None:
-        data = json.loads((ROOT / "tests/gold_standard/comparison/cases.json").read_text(encoding="utf-8"))
-        cases = {case["id"]: case for case in data["cases"]}
+        paths = ("comparison/cases.json", "equivalence/cases.json")
+        cases = {
+            case["id"]: case
+            for path in paths
+            for case in json.loads((ROOT / "tests/gold_standard" / path).read_text(encoding="utf-8"))["cases"]
+        }
         analyzer = ControlledEnglishAnalyzer()
         comparator = DeterministicComparator()
         for case_id in sorted(SUPPORTED_CASE_IDS):

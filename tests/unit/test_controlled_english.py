@@ -1,7 +1,8 @@
 import unittest
+from decimal import Decimal
 
 from nenologi import (
-    ControlledEnglishAnalyzer, UnsupportedConstructionError,
+    ControlledEnglishAnalyzer, NumericOperator, UnsupportedConstructionError,
     analysis_from_json, analysis_to_dict, analysis_to_json, validate_analysis,
 )
 
@@ -61,6 +62,49 @@ class ControlledEnglishAnalyzerTests(unittest.TestCase):
                 self.assertEqual(conjunction.arguments, ("entity_002", "entity_003"))
                 self.assertIn(symbol, result.logical_representation[0].display)
                 self.assertEqual(analysis_from_json(analysis_to_json(result)), result)
+
+    def test_numeric_words_and_symbols_normalize_to_exact_constraints(self) -> None:
+        forms = (
+            ("more than 18", NumericOperator.GREATER_THAN), ("> 18", NumericOperator.GREATER_THAN),
+            ("at least 18", NumericOperator.GREATER_THAN_OR_EQUAL), (">= 18", NumericOperator.GREATER_THAN_OR_EQUAL),
+            ("less than 18", NumericOperator.LESS_THAN), ("< 18", NumericOperator.LESS_THAN),
+            ("at most 18", NumericOperator.LESS_THAN_OR_EQUAL), ("<= 18", NumericOperator.LESS_THAN_OR_EQUAL),
+            ("exactly 18", NumericOperator.EQUAL), ("= 18", NumericOperator.EQUAL),
+        )
+        for surface, operator in forms:
+            with self.subTest(surface=surface):
+                result = self.analyzer.analyze(f"The score must be {surface}.")
+                constraint = result.numeric_constraints[0]
+                self.assertIs(constraint.operator, operator)
+                self.assertEqual(constraint.value, Decimal("18"))
+                self.assertEqual(constraint.scope, ("prop_001",))
+
+    def test_numeric_decimal_unit_formula_and_serialization(self) -> None:
+        result = self.analyzer.analyze("The weight must be less than 18.50 kg.")
+        constraint = result.numeric_constraints[0]
+        self.assertEqual(constraint.value, Decimal("18.5"))
+        self.assertEqual(constraint.unit, "kg")
+        self.assertEqual(result.logical_representation[0].display, "Must(Weight(x) < 18.5 kg)")
+        self.assertEqual(analysis_from_json(analysis_to_json(result)), result)
+
+    def test_numeric_quantity_after_action_and_or_more_equivalence_form(self) -> None:
+        first = self.analyzer.analyze("Bring at least three copies.")
+        second = self.analyzer.analyze("Bring three or more copies.")
+        self.assertEqual(first.numeric_constraints[0].operator, second.numeric_constraints[0].operator)
+        self.assertEqual(first.numeric_constraints[0].value, Decimal("3"))
+        self.assertEqual(first.numeric_constraints[0].unit, "copy")
+        direct = self.analyzer.analyze("The score is at least 18.")
+        self.assertEqual(direct.logical_representation[0].display, "Score(x) ≥ 18")
+
+    def test_unsupported_numeric_constructions_are_rejected(self) -> None:
+        unsupported = (
+            "The score must be between 10 and 20.", "The score must be at least 1/2.",
+            "The score must be about 18.", "The score must be at least 1e3.",
+            "The weight must be at least 10000 g.",
+        )
+        for text in unsupported:
+            with self.subTest(text=text), self.assertRaises(UnsupportedConstructionError):
+                self.analyzer.analyze(text)
 
     def test_structure_includes_required_controlled_parts(self) -> None:
         result = self.analyzer.analyze("All operators must not restart the server.")

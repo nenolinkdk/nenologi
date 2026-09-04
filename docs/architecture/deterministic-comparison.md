@@ -47,6 +47,7 @@ All supported transitions are explicit data in `comparison/rules.py`:
 | Conjunction | `OR → AND` | `HIGH` |
 | One positional subject/object label | changed | `HIGH` |
 | Predicate identity | changed | `HIGH` |
+| Numeric threshold | operator/value/unit changed | `MEDIUM`, or `HIGH` when exact equality is entered/left |
 
 These severities indicate a material controlled semantic change, not legal, safety, or real-world impact. Every supported exact comparison uses confidence `1.0` with a deterministic rationale. Confidence remains independent of severity.
 
@@ -60,7 +61,8 @@ Findings are emitted in fixed dimension order:
 2. `MODALITY_CHANGE`
 3. `NEGATION_CHANGE`
 4. `CONJUNCTION_CHANGE`
-5. `ENTITY_RELATION_CHANGE`
+5. `NUMERIC_THRESHOLD_CHANGE`
+6. `ENTITY_RELATION_CHANGE`
 
 IDs (`difference_001`, and so on) follow that order. All dimensions are checked, so one comparison may produce multiple findings. Equivalent normalized analyses use `differences = []`; no artificial no-change difference type or severity is introduced.
 
@@ -80,13 +82,20 @@ Entity comparison uses positional roles in one proposition. Index zero is report
 
 Gold-standard comparator coverage increased from 8 to 11 cases: the previous modality, quantifier, and negation cases; both conjunction cases; and the corrected contradiction-relation case. The three existing entity/relation gold cases remain unsupported because they require past-tense normalization or spatial-relation grammar beyond this controlled extension.
 
+## Numeric thresholds
+
+Exactly one normalized numeric constraint may be scoped to the aligned proposition. Operator, exact decimal value, and optional normalized unit are compared. Equivalent surfaces such as `at least 18` and `>= 18.0` produce no finding. A changed component produces `NUMERIC_THRESHOLD_CHANGE`; the explanation identifies whether operator, value, or unit changed without inferring safety or domain consequences. Units are compared literally and never converted. For compatibility with the committed gold contract, finding values use canonical symbolic strings such as `>= 18`; their references point to the complete structured constraints in the two nested analyses, which remain authoritative.
+
+Numeric differences do not by themselves establish contradiction or entailment, so their logical relation is `UNDETERMINED`. Interval algebra is outside v0.1. Gold coverage is now 16 exact cases: the previous 11, four numeric changes, and one numeric equivalence.
+
 ## Unsupported comparisons
 
 - Multiple propositions or non-`EXPLICIT` aligned propositions
 - Different argument counts/types, more than one changed entity, or simultaneous entity and predicate changes
 - Multiple/scoped-to-other-proposition operators
 - Any modality or quantifier transition absent from the rule tables
-- General contradiction/coordination/alignment, temporal, conditional, numeric, scope, or addition/omission logic
+- General contradiction/coordination/alignment, temporal, conditional, interval, scope, or addition/omission logic
+- Adding/removing a numeric constraint, multiple numeric constraints, ranges, conversions, or numeric entailment
 - `MAY NOT` scope resolution
 
 A runnable end-to-end example is available at [`examples/semantic_comparison.py`](../../examples/semantic_comparison.py).

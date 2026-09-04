@@ -12,4 +12,6 @@ Before the v0.1 release, one taxonomy correction removed `CONTRADICTION` from `D
 
 The structured expression object is authoritative. Any `display` formula is derived for humans and must not be parsed as the canonical meaning.
 
+Analysis v0.1 includes normalized `numeric_constraints`. Their exact decimal values are serialized as strings; optional units are preserved but never converted. See [controlled analysis](../docs/architecture/controlled-english-analyzer.md) and [deterministic comparison](../docs/architecture/deterministic-comparison.md).
+
 Run the repository validator as described in [the gold-standard guide](../tests/gold_standard/README.md).

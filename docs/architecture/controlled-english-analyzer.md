@@ -27,6 +27,8 @@ One optional-final-period declarative sentence is accepted:
 [ALL | EVERY | SOME | NO] SUBJECT [MUST | MAY | SHOULD] [NOT] VERB [OBJECT [AND | OR] OBJECT]
 [THE | A | AN] SUBJECT (IS | ARE) [NOT] COMPLEMENT
 VERB OBJECT [AND | OR] OBJECT
+[ALL | EVERY | SOME | NO] SUBJECT ([MUST | MAY | SHOULD] BE | IS | ARE) NUMERIC_CONSTRAINT
+VERB NUMERIC_CONSTRAINT [UNIT]
 ```
 
 The quantifier and article are optional. Subjects contain one noun. An object contains one or two controlled words and may have `the`, `a`, or `an`. Exactly two object phrases may be joined by one `AND` or `OR`. The imperative form exists only for this same controlled object grammar. The controlled action vocabulary is `access`, `approve`, `choose`, `enter`, `open`, `receive`, `register`, `report`, `restart`, `submit`, `vote`, and `wear`. A small copular form supports one complement.
@@ -40,6 +42,8 @@ Supported semantic features are:
 - `NOT` immediately after a modal, or after `is`/`are`
 - Intransitive actions and a single simple object
 - One flat `AND`/`OR` coordination between two simple objects
+- One numeric threshold using `more than`, `greater than`, `at least`, `less than`, `below`, `at most`, or `exactly`; the symbolic forms `>`, `>=`, `<`, `<=`, and `=` are equivalent
+- Integer values, simple dot decimals, and the number words zero through ten; `VALUE or more` is the one additional equivalence form used by the committed gold standard
 - A proposition, optional action relation, entities, operators, source spans, and structural phrase nodes
 
 Within this controlled grammar, `MAY NOT` is compositionally represented as `May(¬P)`. Ordinary English can also use “may not” as prohibition; inputs requiring that alternate reading need a future ambiguity-aware grammar.
@@ -49,6 +53,8 @@ Within this controlled grammar, `MAY NOT` is compositionally represented as `May
 Recognition is case-insensitive; runs of whitespace are insignificant; one final period is optional. `EVERY` normalizes to `ALL`, and `NO` to `NONE`. A small deterministic singularizer normalizes the simple controlled entity label and supports display text, allowing `employee` and `employees` to align. No broad morphology, synonym expansion, tense conversion, or world-knowledge inference occurs.
 
 `document.text` always preserves the caller's exact input. Token spans refer to that original string. Equivalent normalized inputs produce the same positional ID sequence and semantic identifiers, although original text and spans may differ.
+
+Numeric values use exact `Decimal` semantics and serialize as canonical decimal strings. The controlled units are `year(s)`, `kg`, `%`, `°C`, `degree(s)`, `copy/copies`, and `file(s)`; inflected forms normalize to singular machine values. Units are not converted. `g` is intentionally unsupported, so `10 kg` cannot be equated with `10000 g`.
 
 ## Deterministic IDs
 
@@ -70,6 +76,9 @@ No visitors may enter.
 
 All patients must receive treatment A and treatment B.
 ∀x (Patient(x) → Must((Receive(x, TreatmentA) ∧ Receive(x, TreatmentB))))
+
+The score must be at least 18.
+Must(Score(x) ≥ 18)
 ```
 
 Plain-language output uses fixed templates, such as “The sentence states that every employee is required to register.”
@@ -84,6 +93,7 @@ A runnable example is available at [`examples/controlled_english.py`](../../exam
 - Relative clauses and conditions
 - Passive voice and complex tense/aspect
 - Multiword noun phrases beyond a determiner plus one noun
+- Ranges, fractions, scientific notation, signed values, arithmetic, approximation, locale decimals, and unit conversion
 - Idioms, metaphor, broad synonymy, and unknown action verbs
 - Languages other than English
 
@@ -96,6 +106,6 @@ Both sides of these existing comparison cases are individually analyzable (autom
 - `negation_001` and `negation_002`
 - `contradiction_001`
 
-The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`).
+The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), and numeric equivalence case `equivalence_003`.
 
 Other cases remain intentionally outside this grammar. Gold expected results are unchanged.

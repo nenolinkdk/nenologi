@@ -55,7 +55,7 @@ def validate_analysis_references(analysis: Analysis) -> None:
         for item in collection:
             for reference in (*item.arguments, *item.derived_from):
                 _require(reference, all_ids, f"semantic item {item.id}")
-    for collection in (analysis.quantifiers, analysis.modality, analysis.negation):
+    for collection in (analysis.quantifiers, analysis.modality, analysis.negation, analysis.numeric_constraints):
         for operator in collection:
             for reference in operator.scope:
                 _require(reference, all_ids, f"operator {operator.id}")

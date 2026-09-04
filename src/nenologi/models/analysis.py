@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 from .common import Confidence, Document, DomainValidationError, LocalizedText
 from .logic import Ambiguity, Inference, LogicalExpression
-from .semantics import Entity, Operator, Proposition, SemanticItem
+from .semantics import Entity, NumericConstraint, Operator, Proposition, SemanticItem
 from .structure import Structure
 
 SCHEMA_VERSION = "0.1"
@@ -25,6 +25,7 @@ class Analysis:
     quantifiers: tuple[Operator, ...] = field(default_factory=tuple)
     modality: tuple[Operator, ...] = field(default_factory=tuple)
     negation: tuple[Operator, ...] = field(default_factory=tuple)
+    numeric_constraints: tuple[NumericConstraint, ...] = field(default_factory=tuple)
     conditions: tuple[SemanticItem, ...] = field(default_factory=tuple)
     temporal_relations: tuple[SemanticItem, ...] = field(default_factory=tuple)
     sets: tuple[SemanticItem, ...] = field(default_factory=tuple)
@@ -59,6 +60,7 @@ class Analysis:
             *self.quantifiers,
             *self.modality,
             *self.negation,
+            *self.numeric_constraints,
             *self.conditions,
             *self.temporal_relations,
             *self.sets,

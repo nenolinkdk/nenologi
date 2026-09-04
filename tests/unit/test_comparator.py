@@ -153,6 +153,41 @@ class DeterministicComparatorTests(unittest.TestCase):
         self.assertEqual([finding.difference_type for finding in result.differences], [DifferenceType.NEGATION_CHANGE])
         self.assertIs(result.logical_relation, LogicalRelation.CONTRADICTORY)
 
+    def test_numeric_operator_value_and_equivalent_surface_forms(self) -> None:
+        self.assert_transition(
+            "The score must be more than 18.", "The score must be at least 18.",
+            DifferenceType.NUMERIC_THRESHOLD_CHANGE, "> 18", ">= 18",
+        )
+        self.assert_transition(
+            "The score must be at least 18.", "The score must be at least 21.",
+            DifferenceType.NUMERIC_THRESHOLD_CHANGE, ">= 18", ">= 21",
+        )
+        equivalent = self.compare("The score must be at least 18.", "The score must be >= 18.0.")
+        self.assertEqual(equivalent.differences, ())
+        self.assertIs(equivalent.logical_relation, LogicalRelation.EQUIVALENT)
+
+    def test_numeric_unit_is_preserved_but_not_converted(self) -> None:
+        result = self.compare("The weight must be exactly 10 kg.", "The weight must be exactly 10000 %.")
+        finding = result.differences[0]
+        self.assertEqual((finding.source_value, finding.target_value), ("= 10 kg", "= 10000 %"))
+        self.assertIn("value, unit", finding.explanation)
+        self.assertIs(result.logical_relation, LogicalRelation.UNDETERMINED)
+        self.assertEqual(finding.references, ("source.numeric_001", "target.numeric_001"))
+        equivalent = self.compare("The age must be at least 18 years.", "The age must be >= 18 year.")
+        self.assertEqual(equivalent.differences, ())
+
+    def test_quantifier_and_numeric_order_and_end_to_end_round_trip(self) -> None:
+        result = self.compare(
+            "All scores must be at least 18.",
+            "Some scores must be more than 21.",
+        )
+        self.assertEqual(
+            [finding.difference_type for finding in result.differences],
+            [DifferenceType.QUANTIFIER_CHANGE, DifferenceType.NUMERIC_THRESHOLD_CHANGE],
+        )
+        self.assertIn("≥ 18", result.source_analysis.logical_representation[0].display)
+        self.assertEqual(comparison_from_json(comparison_to_json(result)), result)
+
 
 if __name__ == "__main__":
     unittest.main()

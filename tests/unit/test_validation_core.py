@@ -32,6 +32,16 @@ class ValidationTests(unittest.TestCase):
         with self.assertRaises(SchemaValidationError):
             validate_comparison(data)
 
+    def test_invalid_numeric_operator_is_schema_error(self) -> None:
+        data = analysis_to_dict(employee_analysis())
+        data["numeric_constraints"] = [{
+            "id": "numeric_001", "operator": "APPROXIMATELY", "value": "18",
+            "scope": ["prop_001"], "interpretation_status": "EXPLICIT",
+            "confidence": {"value": 1.0},
+        }]
+        with self.assertRaises(SchemaValidationError):
+            validate_analysis(data)
+
     def test_invalid_domain_value_is_distinct(self) -> None:
         with self.assertRaises(DomainValidationError):
             Confidence(2.0)

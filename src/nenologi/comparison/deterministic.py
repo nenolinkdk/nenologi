@@ -6,7 +6,7 @@ from collections.abc import Sequence
 
 from ..models import (
     Analysis, Comparison, ComparisonMode, Confidence, Difference,
-    DifferenceType, InterpretationStatus, LogicalRelation, Operator, Proposition, Severity,
+    DifferenceType, InterpretationStatus, LogicalRelation, NumericConstraint, NumericOperator, Operator, Proposition, Severity,
 )
 from ..serialization.validation import validate_analysis, validate_comparison
 from .interface import UnsupportedComparisonError
@@ -100,6 +100,28 @@ def _explicit_negation(analysis: Analysis, proposition_id: str) -> tuple[bool, s
     return value == "NOT", identifier
 
 
+def _numeric_constraint(analysis: Analysis, proposition_id: str, side: str) -> NumericConstraint | None:
+    if len(analysis.numeric_constraints) > 1:
+        raise UnsupportedComparisonError(f"multiple {side} numeric constraints are unsupported")
+    if not analysis.numeric_constraints:
+        return None
+    constraint = analysis.numeric_constraints[0]
+    if constraint.scope != (proposition_id,):
+        raise UnsupportedComparisonError(f"{side} numeric constraint scope is not the aligned proposition")
+    if constraint.interpretation_status is not InterpretationStatus.EXPLICIT:
+        raise UnsupportedComparisonError(f"{side} numeric constraint must have EXPLICIT interpretation status")
+    return constraint
+
+
+def _numeric_display(constraint: NumericConstraint, *, include_unit: bool = False) -> str:
+    symbols = {
+        NumericOperator.GREATER_THAN: ">", NumericOperator.GREATER_THAN_OR_EQUAL: ">=",
+        NumericOperator.LESS_THAN: "<", NumericOperator.LESS_THAN_OR_EQUAL: "<=", NumericOperator.EQUAL: "=",
+    }
+    unit = f" {constraint.unit}" if include_unit and constraint.unit else ""
+    return f"{symbols[constraint.operator]} {constraint.value}{unit}"
+
+
 def _transition(
     findings: list[Difference],
     difference_type: DifferenceType,
@@ -139,7 +161,7 @@ class DeterministicComparator:
          entity_changes, predicate_changed) = _corresponding_propositions(source, target)
         findings: list[Difference] = []
 
-        # Stable finding order: quantifier, modality, then explicit negation.
+        # Stable order continues through negation, conjunction, numeric, and entity/relation.
         source_quantifier, source_quantifier_id = _scoped_value(source.quantifiers, source_prop.id, "quantifier")
         target_quantifier, target_quantifier_id = _scoped_value(target.quantifiers, target_prop.id, "quantifier")
         if source_quantifier != target_quantifier:
@@ -182,6 +204,31 @@ class DeterministicComparator:
                 findings, DifferenceType.CONJUNCTION_CHANGE,
                 source_conjunction, target_conjunction, rule,
                 (f"source.{source_conjunction_id}", f"target.{target_conjunction_id}"),
+            )
+
+        source_numeric = _numeric_constraint(source, source_prop.id, "source")
+        target_numeric = _numeric_constraint(target, target_prop.id, "target")
+        if (source_numeric is None) != (target_numeric is None):
+            raise UnsupportedComparisonError("adding or removing a numeric constraint is unsupported")
+        if source_numeric is not None and target_numeric is not None and (
+            source_numeric.operator != target_numeric.operator
+            or source_numeric.value != target_numeric.value
+            or source_numeric.unit != target_numeric.unit
+        ):
+            changed = []
+            if source_numeric.operator != target_numeric.operator:
+                changed.append("operator")
+            if source_numeric.value != target_numeric.value:
+                changed.append("value")
+            if source_numeric.unit != target_numeric.unit:
+                changed.append("unit")
+            severity = Severity.HIGH if NumericOperator.EQUAL in {source_numeric.operator, target_numeric.operator} else Severity.MEDIUM
+            _transition(
+                findings, DifferenceType.NUMERIC_THRESHOLD_CHANGE,
+                _numeric_display(source_numeric, include_unit=source_numeric.unit != target_numeric.unit),
+                _numeric_display(target_numeric, include_unit=source_numeric.unit != target_numeric.unit),
+                TransitionRule(severity, f"The target changes the normalized numeric threshold {', '.join(changed)}; no domain consequence is inferred."),
+                (f"source.{source_numeric.id}", f"target.{target_numeric.id}"),
             )
 
         if entity_changes:

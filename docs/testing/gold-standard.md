@@ -27,3 +27,5 @@ Expected data may include multiple acceptable analyses when ambiguity is intenti
 Gold updates require an explanation and review. A changed implementation must not silently rewrite expected outputs to make tests pass.
 
 Taxonomy correction: `contradiction_001` now expects a `NEGATION_CHANGE` and separate `CONTRADICTORY` logical relation. Its text did not change. This prevents contradiction (a proposition relation) from being confused with negation change (the textual/semantic cause).
+
+The deterministic comparator currently executes 16 exact cases. Numeric Thresholds v0.1 raised coverage from 11 to 16 by activating `numeric_001` through `numeric_004` plus `equivalence_003`; expected gold results were not changed.

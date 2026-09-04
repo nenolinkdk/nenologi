@@ -27,3 +27,5 @@ Each committed case records an ID, category, input language, profile, mode, expe
 The initial gold standard contains approximately 30 controlled change cases. Priority coverage includes negation, conjunction, quantification, modality, conditions, temporal order, scope, entity relations, addition/omission, contradiction relations, and numeric thresholds. See [Gold standard](gold-standard.md).
 
 Reference analyses and intermediate representations should remain versioned. Changes require review because they support regression tests, architecture demonstrations, future benchmarks, and conference material.
+
+Numeric Thresholds v0.1 executes all four committed numeric change cases and the controlled numeric equivalence case. General ranges, conversion, approximation, and entailment remain future corpus targets rather than current parser promises.
