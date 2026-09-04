@@ -14,4 +14,6 @@ The structured expression object is authoritative. Any `display` formula is deri
 
 Analysis v0.1 includes normalized `numeric_constraints`. Their exact decimal values are serialized as strings; optional units are preserved but never converted. See [controlled analysis](../docs/architecture/controlled-english-analyzer.md) and [deterministic comparison](../docs/architecture/deterministic-comparison.md).
 
+`conditions` are structured IF relations referencing antecedent and consequent propositions. They do not store condition meaning as raw source text.
+
 Run the repository validator as described in [the gold-standard guide](../tests/gold_standard/README.md).

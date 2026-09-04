@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from ..models import (
-    Analysis, Comparison, ComparisonMode, Confidence, Difference,
+    Analysis, Comparison, ComparisonMode, Condition, Confidence, Difference,
     DifferenceType, InterpretationStatus, LogicalRelation, NumericConstraint, NumericOperator, Operator, Proposition, Severity,
 )
 from ..serialization.validation import validate_analysis, validate_comparison
@@ -36,9 +36,9 @@ def _proposition_entities(analysis: Analysis, proposition: Proposition, side: st
     return tuple(aligned)
 
 
-def _corresponding_propositions(source: Analysis, target: Analysis):
-    source_prop = _single_proposition(source, "source")
-    target_prop = _single_proposition(target, "target")
+def _corresponding_propositions(source: Analysis, target: Analysis, source_prop=None, target_prop=None):
+    source_prop = source_prop or _single_proposition(source, "source")
+    target_prop = target_prop or _single_proposition(target, "target")
     source_entities = _proposition_entities(source, source_prop, "source")
     target_entities = _proposition_entities(target, target_prop, "target")
     if len(source_entities) != len(target_entities):
@@ -52,12 +52,12 @@ def _corresponding_propositions(source: Analysis, target: Analysis):
     return source_prop, target_prop, source_entities, target_entities, changes, predicate_changed
 
 
-def _reject_unsupported_dimensions(source: Analysis, target: Analysis) -> None:
-    for name in ("conditions", "temporal_relations", "sets", "inferences", "ambiguities"):
+def _reject_unsupported_dimensions(source: Analysis, target: Analysis, source_prop: Proposition, target_prop: Proposition) -> None:
+    for name in ("temporal_relations", "sets", "inferences", "ambiguities"):
         if getattr(source, name) or getattr(target, name):
             raise UnsupportedComparisonError(f"{name} comparison is not supported")
-    source_relations = [item for item in source.relations if item.type not in {"AND", "OR"}]
-    target_relations = [item for item in target.relations if item.type not in {"AND", "OR"}]
+    source_relations = [item for item in source.relations if item.type not in {"AND", "OR"} and source_prop.id in item.derived_from]
+    target_relations = [item for item in target.relations if item.type not in {"AND", "OR"} and target_prop.id in item.derived_from]
     if len(source_relations) != len(target_relations):
         raise UnsupportedComparisonError("relation structures are not deterministically aligned")
     if tuple(item.type for item in source_relations) != tuple(item.type for item in target_relations):
@@ -77,6 +77,7 @@ def _conjunction_value(analysis: Analysis, proposition: Proposition) -> tuple[st
 
 
 def _scoped_value(operators: Sequence[Operator], proposition_id: str, dimension: str) -> tuple[str | None, str | None]:
+    operators = tuple(operator for operator in operators if proposition_id in operator.scope)
     if len(operators) > 1:
         raise UnsupportedComparisonError(f"multiple {dimension} operators are unsupported")
     if not operators:
@@ -101,11 +102,12 @@ def _explicit_negation(analysis: Analysis, proposition_id: str) -> tuple[bool, s
 
 
 def _numeric_constraint(analysis: Analysis, proposition_id: str, side: str) -> NumericConstraint | None:
-    if len(analysis.numeric_constraints) > 1:
+    constraints = tuple(item for item in analysis.numeric_constraints if proposition_id in item.scope)
+    if len(constraints) > 1:
         raise UnsupportedComparisonError(f"multiple {side} numeric constraints are unsupported")
-    if not analysis.numeric_constraints:
+    if not constraints:
         return None
-    constraint = analysis.numeric_constraints[0]
+    constraint = constraints[0]
     if constraint.scope != (proposition_id,):
         raise UnsupportedComparisonError(f"{side} numeric constraint scope is not the aligned proposition")
     if constraint.interpretation_status is not InterpretationStatus.EXPLICIT:
@@ -120,6 +122,58 @@ def _numeric_display(constraint: NumericConstraint, *, include_unit: bool = Fals
     }
     unit = f" {constraint.unit}" if include_unit and constraint.unit else ""
     return f"{symbols[constraint.operator]} {constraint.value}{unit}"
+
+
+def _condition_parts(analysis: Analysis, side: str) -> tuple[Condition | None, Proposition | None, Proposition]:
+    if len(analysis.conditions) > 1:
+        raise UnsupportedComparisonError(f"multiple {side} conditions are unsupported")
+    propositions = {item.id: item for item in analysis.propositions}
+    if not analysis.conditions:
+        return None, None, _single_proposition(analysis, side)
+    condition = analysis.conditions[0]
+    if condition.interpretation_status is not InterpretationStatus.EXPLICIT:
+        raise UnsupportedComparisonError(f"{side} condition must have EXPLICIT interpretation status")
+    if len(condition.antecedent) != 1 or len(condition.consequent) != 1:
+        raise UnsupportedComparisonError("a condition must reference one antecedent and one consequent proposition")
+    try:
+        antecedent = propositions[condition.antecedent[0]]
+        consequent = propositions[condition.consequent[0]]
+    except KeyError as exc:
+        raise UnsupportedComparisonError(f"{side} condition references an unknown proposition") from exc
+    return condition, antecedent, consequent
+
+
+def _append_numeric_change(findings: list[Difference], source: Analysis, target: Analysis,
+                           source_prop: Proposition, target_prop: Proposition) -> bool:
+    source_numeric = _numeric_constraint(source, source_prop.id, "source")
+    target_numeric = _numeric_constraint(target, target_prop.id, "target")
+    if (source_numeric is None) != (target_numeric is None):
+        raise UnsupportedComparisonError("adding or removing a numeric constraint is unsupported")
+    if source_numeric is None or target_numeric is None:
+        return False
+    if (source_numeric.operator, source_numeric.value, source_numeric.unit) == (target_numeric.operator, target_numeric.value, target_numeric.unit):
+        return False
+    changed = []
+    if source_numeric.operator != target_numeric.operator:
+        changed.append("operator")
+    if source_numeric.value != target_numeric.value:
+        changed.append("value")
+    if source_numeric.unit != target_numeric.unit:
+        changed.append("unit")
+    severity = Severity.HIGH if NumericOperator.EQUAL in {source_numeric.operator, target_numeric.operator} else Severity.MEDIUM
+    _transition(
+        findings, DifferenceType.NUMERIC_THRESHOLD_CHANGE,
+        _numeric_display(source_numeric, include_unit=source_numeric.unit != target_numeric.unit),
+        _numeric_display(target_numeric, include_unit=source_numeric.unit != target_numeric.unit),
+        TransitionRule(severity, f"The target changes the normalized numeric threshold {', '.join(changed)}; no domain consequence is inferred."),
+        (f"source.{source_numeric.id}", f"target.{target_numeric.id}"),
+    )
+    return True
+
+
+def _condition_value(analysis: Analysis, antecedent: Proposition) -> str:
+    numeric = _numeric_constraint(analysis, antecedent.id, "condition")
+    return f"IF_{_numeric_display(numeric).replace(' ', '_')}" if numeric else f"IF_{antecedent.predicate}"
 
 
 def _transition(
@@ -156,9 +210,11 @@ class DeterministicComparator:
             raise TypeError("source and target must be normalized Analysis objects")
         validate_analysis(source)
         validate_analysis(target)
-        _reject_unsupported_dimensions(source, target)
+        source_condition, source_antecedent, source_prop = _condition_parts(source, "source")
+        target_condition, target_antecedent, target_prop = _condition_parts(target, "target")
+        _reject_unsupported_dimensions(source, target, source_prop, target_prop)
         (source_prop, target_prop, source_entities, target_entities,
-         entity_changes, predicate_changed) = _corresponding_propositions(source, target)
+         entity_changes, predicate_changed) = _corresponding_propositions(source, target, source_prop, target_prop)
         findings: list[Difference] = []
 
         # Stable order continues through negation, conjunction, numeric, and entity/relation.
@@ -206,29 +262,42 @@ class DeterministicComparator:
                 (f"source.{source_conjunction_id}", f"target.{target_conjunction_id}"),
             )
 
-        source_numeric = _numeric_constraint(source, source_prop.id, "source")
-        target_numeric = _numeric_constraint(target, target_prop.id, "target")
-        if (source_numeric is None) != (target_numeric is None):
-            raise UnsupportedComparisonError("adding or removing a numeric constraint is unsupported")
-        if source_numeric is not None and target_numeric is not None and (
-            source_numeric.operator != target_numeric.operator
-            or source_numeric.value != target_numeric.value
-            or source_numeric.unit != target_numeric.unit
-        ):
-            changed = []
-            if source_numeric.operator != target_numeric.operator:
-                changed.append("operator")
-            if source_numeric.value != target_numeric.value:
-                changed.append("value")
-            if source_numeric.unit != target_numeric.unit:
-                changed.append("unit")
-            severity = Severity.HIGH if NumericOperator.EQUAL in {source_numeric.operator, target_numeric.operator} else Severity.MEDIUM
+        _append_numeric_change(findings, source, target, source_prop, target_prop)
+
+        condition_changed = False
+        if source_condition is None and target_condition is not None:
+            condition_changed = True
+            condition_source_value, condition_target_value = "NONE", _condition_value(target, target_antecedent)
+            condition_refs = (f"source.{source_prop.id}", f"target.{target_condition.id}")
+            condition_explanation = "The target makes the aligned consequent conditional by adding an IF antecedent."
+        elif source_condition is not None and target_condition is None:
+            condition_changed = True
+            condition_source_value, condition_target_value = _condition_value(source, source_antecedent), "NONE"
+            condition_refs = (f"source.{source_condition.id}", f"target.{target_prop.id}")
+            condition_explanation = "The target removes the IF antecedent that governed the aligned consequent."
+        elif source_condition is not None and target_condition is not None:
+            (_, _, source_antecedent_entities, target_antecedent_entities, _, _) = _corresponding_propositions(
+                source, target, source_antecedent, target_antecedent,
+            )
+            _append_numeric_change(findings, source, target, source_antecedent, target_antecedent)
+            source_antecedent_signature = (
+                source_antecedent.predicate,
+                tuple(entity.label.casefold() for entity in source_antecedent_entities),
+            )
+            target_antecedent_signature = (
+                target_antecedent.predicate,
+                tuple(entity.label.casefold() for entity in target_antecedent_entities),
+            )
+            if source_antecedent_signature != target_antecedent_signature:
+                condition_changed = True
+                condition_source_value, condition_target_value = _condition_value(source, source_antecedent), _condition_value(target, target_antecedent)
+                condition_refs = (f"source.{source_condition.id}", f"target.{target_condition.id}")
+                condition_explanation = "The target changes the normalized antecedent governing the aligned consequent."
+        if condition_changed:
             _transition(
-                findings, DifferenceType.NUMERIC_THRESHOLD_CHANGE,
-                _numeric_display(source_numeric, include_unit=source_numeric.unit != target_numeric.unit),
-                _numeric_display(target_numeric, include_unit=source_numeric.unit != target_numeric.unit),
-                TransitionRule(severity, f"The target changes the normalized numeric threshold {', '.join(changed)}; no domain consequence is inferred."),
-                (f"source.{source_numeric.id}", f"target.{target_numeric.id}"),
+                findings, DifferenceType.CONDITION_CHANGE,
+                condition_source_value, condition_target_value,
+                TransitionRule(Severity.HIGH, condition_explanation), condition_refs,
             )
 
         if entity_changes:

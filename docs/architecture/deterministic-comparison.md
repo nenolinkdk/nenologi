@@ -25,13 +25,13 @@ A polarity reversal therefore yields one `NEGATION_CHANGE` and `CONTRADICTORY`; 
 
 ## Alignment boundary
 
-v0.1 compares exactly one `EXPLICIT` proposition on each side. Argument count and entity types/roles must correspond positionally. One entity label or the predicate may change, but not both and not multiple entities. Operator scope must be exactly that proposition. Otherwise `UnsupportedComparisonError` is raised; the engine does not guess an alignment or report false equivalence.
+v0.1 compares one aligned `EXPLICIT` main proposition on each side. For a supported condition, that main proposition is the consequent; otherwise the analysis contains exactly one proposition. Argument count and entity types/roles must correspond positionally. One entity label or the predicate may change, but not both and not multiple entities. Operator scope must be exactly the aligned proposition. Otherwise `UnsupportedComparisonError` is raised; the engine does not guess an alignment or report false equivalence.
 
 The controlled analyzer now normalizes simple plural entity labels to singular forms so `Every employee` and `All employees` align. This is a deliberately small normalization, not general morphology or entity resolution.
 
 ## Rule tables
 
-All supported transitions are explicit data in `comparison/rules.py`:
+Finite operator transitions are explicit data in `comparison/rules.py`; structural numeric, condition, and entity rules are explicit comparator branches:
 
 | Dimension | Transition | Severity |
 | --- | --- | --- |
@@ -48,6 +48,7 @@ All supported transitions are explicit data in `comparison/rules.py`:
 | One positional subject/object label | changed | `HIGH` |
 | Predicate identity | changed | `HIGH` |
 | Numeric threshold | operator/value/unit changed | `MEDIUM`, or `HIGH` when exact equality is entered/left |
+| Condition | prefix IF added, removed, or antecedent identity changed | `HIGH` |
 
 These severities indicate a material controlled semantic change, not legal, safety, or real-world impact. Every supported exact comparison uses confidence `1.0` with a deterministic rationale. Confidence remains independent of severity.
 
@@ -62,7 +63,8 @@ Findings are emitted in fixed dimension order:
 3. `NEGATION_CHANGE`
 4. `CONJUNCTION_CHANGE`
 5. `NUMERIC_THRESHOLD_CHANGE`
-6. `ENTITY_RELATION_CHANGE`
+6. `CONDITION_CHANGE`
+7. `ENTITY_RELATION_CHANGE`
 
 IDs (`difference_001`, and so on) follow that order. All dimensions are checked, so one comparison may produce multiple findings. Equivalent normalized analyses use `differences = []`; no artificial no-change difference type or severity is introduced.
 
@@ -88,14 +90,21 @@ Exactly one normalized numeric constraint may be scoped to the aligned propositi
 
 Numeric differences do not by themselves establish contradiction or entailment, so their logical relation is `UNDETERMINED`. Interval algebra is outside v0.1. Gold coverage is now 16 exact cases: the previous 11, four numeric changes, and one numeric equivalence.
 
+## Conditions
+
+A condition aligns its consequent with the other main proposition and holds explicit references to one antecedent and one consequent. Adding or removing that governing IF relation produces one `CONDITION_CHANGE`; it does not also produce `ADDITION` or `OMISSION`. If both conditions align and only a normalized numeric threshold inside the antecedent changes, the comparator emits the more specific `NUMERIC_THRESHOLD_CHANGE`, not a redundant condition finding. A distinct antecedent predicate/entity produces `CONDITION_CHANGE`; multiple independent nested changes may produce their corresponding distinct findings.
+
+Condition comparison establishes neither contradiction nor conditional entailment, so changed conditions use `UNDETERMINED`. Gold coverage increased from 16 to 17 exact cases by activating `condition_001`. Suffix-IF `condition_002` and `UNLESS` case `condition_003` remain outside the grammar; their expected results were not changed.
+
 ## Unsupported comparisons
 
-- Multiple propositions or non-`EXPLICIT` aligned propositions
+- Multiple unscoped propositions or non-`EXPLICIT` aligned propositions
 - Different argument counts/types, more than one changed entity, or simultaneous entity and predicate changes
 - Multiple/scoped-to-other-proposition operators
 - Any modality or quantifier transition absent from the rule tables
 - General contradiction/coordination/alignment, temporal, conditional, interval, scope, or addition/omission logic
 - Adding/removing a numeric constraint, multiple numeric constraints, ranges, conversions, or numeric entailment
+- Multiple, nested, suffix, `UNLESS`, `ELSE`, biconditional, chained, counterfactual, or causally interpreted conditions
 - `MAY NOT` scope resolution
 
 A runnable end-to-end example is available at [`examples/semantic_comparison.py`](../../examples/semantic_comparison.py).

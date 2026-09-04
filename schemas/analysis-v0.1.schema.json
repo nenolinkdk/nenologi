@@ -17,7 +17,7 @@
     "modality": {"type": "array", "items": {"$ref": "#/$defs/operator"}},
     "negation": {"type": "array", "items": {"$ref": "#/$defs/operator"}},
     "numeric_constraints": {"type": "array", "items": {"$ref": "#/$defs/numericConstraint"}},
-    "conditions": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
+    "conditions": {"type": "array", "items": {"$ref": "#/$defs/condition"}},
     "temporal_relations": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
     "sets": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
     "logical_representation": {"type": "array", "items": {"$ref": "#/$defs/logicalExpression"}},
@@ -79,6 +79,18 @@
         "value": {"type": "string", "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"},
         "unit": {"type": "string", "minLength": 1},
         "scope": {"type": "array", "items": {"$ref": "#/$defs/identifier"}, "minItems": 1},
+        "span": {"$ref": "#/$defs/span"},
+        "interpretation_status": {"$ref": "#/$defs/interpretationStatus"},
+        "confidence": {"$ref": "#/$defs/confidence"}
+      }
+    },
+    "condition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "antecedent", "consequent", "interpretation_status", "confidence"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "antecedent": {"type": "array", "items": {"$ref": "#/$defs/identifier"}, "minItems": 1},
+        "consequent": {"type": "array", "items": {"$ref": "#/$defs/identifier"}, "minItems": 1},
         "span": {"$ref": "#/$defs/span"},
         "interpretation_status": {"$ref": "#/$defs/interpretationStatus"},
         "confidence": {"$ref": "#/$defs/confidence"}

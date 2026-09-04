@@ -29,6 +29,7 @@ One optional-final-period declarative sentence is accepted:
 VERB OBJECT [AND | OR] OBJECT
 [ALL | EVERY | SOME | NO] SUBJECT ([MUST | MAY | SHOULD] BE | IS | ARE) NUMERIC_CONSTRAINT
 VERB NUMERIC_CONSTRAINT [UNIT]
+IF SIMPLE_ANTECEDENT, CONSEQUENT
 ```
 
 The quantifier and article are optional. Subjects contain one noun. An object contains one or two controlled words and may have `the`, `a`, or `an`. Exactly two object phrases may be joined by one `AND` or `OR`. The imperative form exists only for this same controlled object grammar. The controlled action vocabulary is `access`, `approve`, `choose`, `enter`, `open`, `receive`, `register`, `report`, `restart`, `submit`, `vote`, and `wear`. A small copular form supports one complement.
@@ -45,6 +46,7 @@ Supported semantic features are:
 - One numeric threshold using `more than`, `greater than`, `at least`, `less than`, `below`, `at most`, or `exactly`; the symbolic forms `>`, `>=`, `<`, `<=`, and `=` are equivalent
 - Integer values, simple dot decimals, and the number words zero through ten; `VALUE or more` is the one additional equivalence form used by the committed gold standard
 - A proposition, optional action relation, entities, operators, source spans, and structural phrase nodes
+- One prefix `IF` condition whose antecedent is one simple copular property or numeric threshold and whose consequent is one otherwise supported controlled proposition
 
 Within this controlled grammar, `MAY NOT` is compositionally represented as `May(¬P)`. Ordinary English can also use “may not” as prohibition; inputs requiring that alternate reading need a future ambiguity-aware grammar.
 
@@ -79,6 +81,9 @@ All patients must receive treatment A and treatment B.
 
 The score must be at least 18.
 Must(Score(x) ≥ 18)
+
+If the temperature is above 30 °C, the system must stop.
+(Temperature(x) > 30 °C) → (Must(Stop(System)))
 ```
 
 Plain-language output uses fixed templates, such as “The sentence states that every employee is required to register.”
@@ -88,6 +93,7 @@ A runnable example is available at [`examples/controlled_english.py`](../../exam
 ## Explicitly unsupported
 
 - More than one sentence
+- Suffix `IF`, `UNLESS`, `ELSE`, nested/chained conditions, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
 - Questions and exclamations
 - Subject/predicate coordination, nested/repeated coordination, and subordination
 - Relative clauses and conditions
@@ -106,6 +112,6 @@ Both sides of these existing comparison cases are individually analyzable (autom
 - `negation_001` and `negation_002`
 - `contradiction_001`
 
-The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), and numeric equivalence case `equivalence_003`.
+The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), numeric equivalence case `equivalence_003`, and prefix-IF removal case `condition_001`.
 
 Other cases remain intentionally outside this grammar. Gold expected results are unchanged.

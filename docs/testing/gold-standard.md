@@ -29,3 +29,5 @@ Gold updates require an explanation and review. A changed implementation must no
 Taxonomy correction: `contradiction_001` now expects a `NEGATION_CHANGE` and separate `CONTRADICTORY` logical relation. Its text did not change. This prevents contradiction (a proposition relation) from being confused with negation change (the textual/semantic cause).
 
 The deterministic comparator currently executes 16 exact cases. Numeric Thresholds v0.1 raised coverage from 11 to 16 by activating `numeric_001` through `numeric_004` plus `equivalence_003`; expected gold results were not changed.
+
+Conditions v0.1 raises exact coverage from 16 to 17 by activating prefix-IF removal case `condition_001`. Suffix-IF `condition_002` and `UNLESS` case `condition_003` remain intentionally inactive; no gold expectation was changed.

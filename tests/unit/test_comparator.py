@@ -105,11 +105,11 @@ class DeterministicComparatorTests(unittest.TestCase):
 
     def test_unsupported_semantic_dimension_is_not_silently_equivalent(self) -> None:
         source = self.analyzer.analyze("All employees must register.")
-        target = replace(source, conditions=(SemanticItem(
-            "condition_001", "IF", ("prop_001",), InterpretationStatus.EXPLICIT,
+        target = replace(source, temporal_relations=(SemanticItem(
+            "temporal_001", "BEFORE", ("prop_001",), InterpretationStatus.EXPLICIT,
             Confidence(1.0), derived_from=("prop_001",),
         ),))
-        with self.assertRaisesRegex(UnsupportedComparisonError, "conditions"):
+        with self.assertRaisesRegex(UnsupportedComparisonError, "temporal_relations"):
             self.comparator.compare(source, target)
 
     def test_raw_text_to_comparison_integration(self) -> None:

@@ -1,7 +1,7 @@
 import unittest
 
 from nenologi import (
-    Analysis, Comparison, ComparisonMode, Confidence, DomainValidationError, Entity, InterpretationStatus,
+    Analysis, Comparison, ComparisonMode, Confidence, ControlledEnglishAnalyzer, DomainValidationError, Entity, InterpretationStatus,
     Proposition, ReferenceValidationError, SchemaValidationError,
     analysis_to_dict, comparison_to_dict, validate_analysis, validate_comparison,
 )
@@ -58,6 +58,12 @@ class ValidationTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ReferenceValidationError, "entity_999"):
             validate_analysis(bad)
+
+    def test_condition_requires_known_proposition_references(self) -> None:
+        data = analysis_to_dict(ControlledEnglishAnalyzer().analyze("If the light is green, employees may enter."))
+        data["conditions"][0]["antecedent"] = ["prop_999"]
+        with self.assertRaisesRegex(ReferenceValidationError, "prop_999"):
+            validate_analysis(data)
 
     def test_duplicate_semantic_id_is_reference_error(self) -> None:
         base = employee_analysis()

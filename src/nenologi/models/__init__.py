@@ -14,11 +14,11 @@ from .common import (
 )
 from .comparison import Comparison, Difference
 from .logic import Ambiguity, Inference, LogicalExpression
-from .semantics import Entity, NumericConstraint, Operator, Proposition, SemanticItem
+from .semantics import Condition, Entity, NumericConstraint, Operator, Proposition, SemanticItem
 from .structure import DiscourseRelation, DiscourseRelationType, StructuralNode, Structure
 
 __all__ = [
-    "Ambiguity", "Analysis", "Comparison", "ComparisonMode", "Confidence",
+    "Ambiguity", "Analysis", "Comparison", "ComparisonMode", "Condition", "Confidence",
     "Difference", "DifferenceType", "DiscourseRelation", "DiscourseRelationType",
     "Document", "DomainValidationError", "Entity", "Inference",
     "InterpretationStatus", "LocalizedText", "LogicalExpression", "LogicalRelation", "NumericConstraint", "NumericOperator", "Operator",

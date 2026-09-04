@@ -12,6 +12,7 @@ SUPPORTED_CASE_IDS = {
     "negation_001", "negation_002",
     "conjunction_001", "conjunction_002", "contradiction_001",
     "numeric_001", "numeric_002", "numeric_003", "numeric_004", "equivalence_003",
+    "condition_001",
 }
 
 

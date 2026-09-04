@@ -131,3 +131,23 @@ class NumericConstraint:
         if self.unit is not None and (not isinstance(self.unit, str) or not self.unit):
             raise DomainValidationError("numeric unit must be non-empty text or None")
         _validate_status_and_confidence(self.interpretation_status, self.confidence)
+
+
+@dataclass(frozen=True, slots=True)
+class Condition:
+    """A normalized IF relation between antecedent and consequent propositions."""
+
+    id: str
+    antecedent: tuple[str, ...]
+    consequent: tuple[str, ...]
+    interpretation_status: InterpretationStatus
+    confidence: Confidence
+    span: Span | None = None
+
+    def __post_init__(self) -> None:
+        validate_identifier(self.id)
+        if not self.antecedent or not self.consequent:
+            raise DomainValidationError("condition requires antecedent and consequent references")
+        _validate_references(self.antecedent, "antecedent")
+        _validate_references(self.consequent, "consequent")
+        _validate_status_and_confidence(self.interpretation_status, self.confidence)

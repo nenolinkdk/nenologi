@@ -68,6 +68,11 @@ def validate_schemas() -> None:
             raise ValidationError(f"schemas/{name}: unexpected JSON Schema dialect")
     analysis_statuses = set(loaded["analysis-v0.1.schema.json"]["$defs"]["interpretationStatus"]["enum"])
     numeric_operators = set(loaded["analysis-v0.1.schema.json"]["$defs"]["numericConstraint"]["properties"]["operator"]["enum"])
+    analysis_schema = loaded["analysis-v0.1.schema.json"]
+    if analysis_schema["properties"]["conditions"]["items"].get("$ref") != "#/$defs/condition":
+        raise ValidationError("analysis conditions must use the structured condition definition")
+    if set(analysis_schema["$defs"]["condition"]["required"]) != {"id", "antecedent", "consequent", "interpretation_status", "confidence"}:
+        raise ValidationError("condition schema fields are out of sync")
     comparison_differences = set(loaded["comparison-v0.1.schema.json"]["$defs"]["differenceType"]["enum"])
     comparison_severities = set(loaded["comparison-v0.1.schema.json"]["$defs"]["severity"]["enum"])
     comparison_relations = set(loaded["comparison-v0.1.schema.json"]["$defs"]["logicalRelation"]["enum"])

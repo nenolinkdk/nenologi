@@ -29,3 +29,5 @@ The initial gold standard contains approximately 30 controlled change cases. Pri
 Reference analyses and intermediate representations should remain versioned. Changes require review because they support regression tests, architecture demonstrations, future benchmarks, and conference material.
 
 Numeric Thresholds v0.1 executes all four committed numeric change cases and the controlled numeric equivalence case. General ranges, conversion, approximation, and entailment remain future corpus targets rather than current parser promises.
+
+Conditions v0.1 executes the prefix-IF removal case. Suffix conditions and `UNLESS` remain future controlled-grammar decisions rather than being accepted merely for corpus coverage.

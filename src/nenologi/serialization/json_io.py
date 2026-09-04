@@ -8,7 +8,7 @@ from copy import deepcopy
 from typing import Any, Callable, TypeVar
 
 from ..models import (
-    Ambiguity, Analysis, Comparison, ComparisonMode, Confidence, Difference,
+    Ambiguity, Analysis, Comparison, ComparisonMode, Condition, Confidence, Difference,
     DifferenceType, DiscourseRelation, DiscourseRelationType, Document, Entity,
     Inference, InterpretationStatus, LocalizedText, LogicalExpression, LogicalRelation, NumericConstraint, NumericOperator, Operator,
     Proposition, SCHEMA_VERSION, SemanticItem, Severity, Span, StructuralNode,
@@ -180,6 +180,30 @@ def _numeric_from_dict(value: Any, location: str) -> NumericConstraint:
     )
 
 
+def _condition_to_dict(value: Condition) -> dict[str, Any]:
+    result = {
+        "id": value.id, "antecedent": list(value.antecedent), "consequent": list(value.consequent),
+        "interpretation_status": value.interpretation_status.value,
+        "confidence": _confidence_to_dict(value.confidence),
+    }
+    if value.span is not None:
+        result["span"] = _span_to_dict(value.span)
+    return result
+
+
+def _condition_from_dict(value: Any, location: str) -> Condition:
+    required = {"id", "antecedent", "consequent", "interpretation_status", "confidence"}
+    data = _object(value, required, {"span"}, location)
+    return _construct(
+        Condition, location, id=data["id"],
+        antecedent=tuple(_array(data["antecedent"], f"{location}.antecedent")),
+        consequent=tuple(_array(data["consequent"], f"{location}.consequent")),
+        interpretation_status=_status(data["interpretation_status"], f"{location}.interpretation_status"),
+        confidence=_confidence_from_dict(data["confidence"], f"{location}.confidence"),
+        span=_span_from_dict(data["span"], f"{location}.span") if "span" in data else None,
+    )
+
+
 def _node_to_dict(value: StructuralNode) -> dict[str, Any]:
     result: dict[str, Any] = {"id": value.id, "span": _span_to_dict(value.span)}
     if value.parent_id is not None: result["parent_id"] = value.parent_id
@@ -268,7 +292,7 @@ def analysis_to_dict(value: Analysis) -> dict[str, Any]:
         "modality": [_operator_to_dict(item) for item in value.modality],
         "negation": [_operator_to_dict(item) for item in value.negation],
         "numeric_constraints": [_numeric_to_dict(item) for item in value.numeric_constraints],
-        "conditions": [_semantic_to_dict(item) for item in value.conditions],
+        "conditions": [_condition_to_dict(item) for item in value.conditions],
         "temporal_relations": [_semantic_to_dict(item) for item in value.temporal_relations],
         "sets": [_semantic_to_dict(item) for item in value.sets],
         "logical_representation": [_logical_to_dict(item) for item in value.logical_representation],
@@ -299,7 +323,7 @@ def analysis_from_dict(value: Mapping[str, Any]) -> Analysis:
         profile=data["profile"], structure=structure, entities=items("entities", _entity_from_dict),
         propositions=items("propositions", _proposition_from_dict), relations=items("relations", _semantic_from_dict),
         quantifiers=items("quantifiers", _operator_from_dict), modality=items("modality", _operator_from_dict),
-        negation=items("negation", _operator_from_dict), numeric_constraints=items("numeric_constraints", _numeric_from_dict), conditions=items("conditions", _semantic_from_dict),
+        negation=items("negation", _operator_from_dict), numeric_constraints=items("numeric_constraints", _numeric_from_dict), conditions=items("conditions", _condition_from_dict),
         temporal_relations=items("temporal_relations", _semantic_from_dict), sets=items("sets", _semantic_from_dict),
         logical_representation=items("logical_representation", _logical_from_dict),
         inferences=items("inferences", _inference_from_dict), ambiguities=items("ambiguities", _ambiguity_from_dict),

@@ -2,7 +2,7 @@ import unittest
 from decimal import Decimal
 
 from nenologi import (
-    Ambiguity, Confidence, DifferenceType, DomainValidationError, Inference,
+    Ambiguity, Condition, Confidence, DifferenceType, DomainValidationError, Inference,
     InterpretationStatus, NumericConstraint, NumericOperator, Severity,
 )
 
@@ -49,6 +49,10 @@ class DomainModelTests(unittest.TestCase):
                 "numeric_001", NumericOperator.EQUAL, 18.5, ("prop_001",),
                 InterpretationStatus.EXPLICIT, Confidence(1.0),
             )
+
+    def test_condition_requires_both_proposition_roles(self) -> None:
+        with self.assertRaises(DomainValidationError):
+            Condition("condition_001", (), ("prop_001",), InterpretationStatus.EXPLICIT, Confidence(1.0))
 
 
 if __name__ == "__main__":

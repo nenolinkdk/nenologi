@@ -38,6 +38,8 @@ Propositions use stable uppercase statuses: `EXPLICIT`, `ENTAILED`, `PROBABLE`, 
 
 `numeric_constraints` contains authoritative normalized thresholds with `operator`, canonical string `value`, optional `unit`, and semantic `scope`. Operators are `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `LESS_THAN`, `LESS_THAN_OR_EQUAL`, and `EQUAL`. Values are strings to preserve exact decimal meaning across JSON implementations; display symbols are derived.
 
+`conditions` contains structured `Condition` objects with stable identity and non-empty `antecedent` and `consequent` proposition-reference arrays, plus status, confidence, and optional span. The referenced propositions and their existing operators/constraints remain authoritative; conditions do not duplicate their semantic content as text. A logical `P → Q` string is derived only for display.
+
 ## Comparison
 
 ```json

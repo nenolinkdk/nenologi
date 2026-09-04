@@ -11,16 +11,17 @@ if __name__ == "__main__":
 
     analyzer = ControlledEnglishAnalyzer()
     comparator = DeterministicComparator()
-    source = analyzer.analyze("All scores must be at least 18.")
-    target = analyzer.analyze("Some scores must be more than 21.")
+    source = analyzer.analyze("If the temperature is above 30°C, the system must stop.")
+    target = analyzer.analyze("The system must stop.")
     result = comparator.compare(source, target)
 
-    for label, analysis in (("Source", source), ("Target", target)):
-        constraint = analysis.numeric_constraints[0]
-        print(
-            f"{label} constraint: operator={constraint.operator.value}, "
-            f"value={constraint.value}, unit={constraint.unit or 'NONE'}"
-        )
+    condition = source.conditions[0]
+    propositions = {item.id: item for item in source.propositions}
+    constraint = source.numeric_constraints[0]
+    print(f"Condition: {condition.id}")
+    print(f"Antecedent: {propositions[condition.antecedent[0]]}")
+    print(f"Antecedent constraint: {constraint.operator.value} {constraint.value} {constraint.unit}")
+    print(f"Consequent: {propositions[condition.consequent[0]]}")
     print(f"Source formula: {source.logical_representation[0].display}")
     print(f"Target formula: {target.logical_representation[0].display}")
     print("Differences:")

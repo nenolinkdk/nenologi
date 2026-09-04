@@ -3,7 +3,7 @@
 from .analysis import Analyzer, ControlledEnglishAnalyzer, UnsupportedConstructionError
 from .comparison import Comparator, DeterministicComparator, UnsupportedComparisonError
 from .models import (
-    Ambiguity, Analysis, Comparison, ComparisonMode, Confidence, Difference,
+    Ambiguity, Analysis, Comparison, ComparisonMode, Condition, Confidence, Difference,
     DifferenceType, DiscourseRelation, DiscourseRelationType, Document,
     DomainValidationError, Entity, Inference, InterpretationStatus,
     LocalizedText, LogicalExpression, LogicalRelation, NumericConstraint, NumericOperator, Operator, Proposition, SemanticItem,
@@ -17,7 +17,7 @@ from .serialization import (
 )
 
 __all__ = [
-    "Ambiguity", "Analysis", "Analyzer", "Comparator", "Comparison",
+    "Ambiguity", "Analysis", "Analyzer", "Comparator", "Comparison", "Condition",
     "ComparisonMode", "Confidence", "ControlledEnglishAnalyzer",
     "DeterministicComparator",
     "Difference", "DifferenceType", "DiscourseRelation", "DiscourseRelationType",

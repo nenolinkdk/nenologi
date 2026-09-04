@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 
 from ..models import (
-    Analysis, Confidence, Document, Entity, InterpretationStatus, LocalizedText,
+    Analysis, Condition, Confidence, Document, Entity, InterpretationStatus, LocalizedText,
     LogicalExpression, NumericConstraint, NumericOperator, Operator, Proposition, SemanticItem, Span,
     StructuralNode, Structure,
 )
@@ -21,13 +21,14 @@ _DETERMINERS = {"a", "an", "the"}
 _COPULAS = {"is", "are"}
 _ACTIONS = {
     "access", "approve", "bring", "choose", "enter", "open", "receive", "register",
-    "report", "restart", "select", "submit", "vote", "wear",
+    "report", "restart", "select", "stop", "submit", "vote", "wear",
 }
 _NUMBER_WORDS = {"zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10"}
 _UNITS = {"year": "year", "years": "year", "kg": "kg", "%": "%", "°c": "°C", "degree": "degree", "degrees": "degree", "copy": "copy", "copies": "copy", "file": "file", "files": "file"}
 _NUMERIC_FORMS = {
     ("more", "than"): NumericOperator.GREATER_THAN,
     ("greater", "than"): NumericOperator.GREATER_THAN,
+    ("above",): NumericOperator.GREATER_THAN,
     ("at", "least"): NumericOperator.GREATER_THAN_OR_EQUAL,
     ("less", "than"): NumericOperator.LESS_THAN,
     ("below",): NumericOperator.LESS_THAN,
@@ -360,6 +361,8 @@ class ControlledEnglishAnalyzer:
     def analyze(self, text: str, *, language: str = "en", profile: str = "general") -> Analysis:
         if language != "en":
             raise UnsupportedConstructionError("ControlledEnglishAnalyzer supports only language='en'")
+        if isinstance(text, str) and text.lstrip().lower().startswith("if "):
+            return self._analyze_condition(text, language=language, profile=profile)
         tokens = _tokens(text)
         parsed = _parse(tokens)
         certain = Confidence(1.0, "Deterministic Controlled English v0.1 rule")
@@ -422,3 +425,89 @@ class ControlledEnglishAnalyzer:
         )
         validate_analysis(analysis)
         return analysis
+
+    def _analyze_condition(self, text: str, *, language: str, profile: str) -> Analysis:
+        stripped = text.strip()
+        if stripped[-1:] in "?!":
+            raise UnsupportedConstructionError("only declarative IF sentences are supported")
+        body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
+        if body.count(",") != 1:
+            raise UnsupportedConstructionError("controlled IF requires exactly one comma and two clauses")
+        antecedent_text, consequent_text = (part.strip() for part in body[3:].split(",", 1))
+        if not antecedent_text or not consequent_text:
+            raise UnsupportedConstructionError("controlled IF requires an antecedent and consequent")
+        if re.search(r"\bmay\s+not\b", f"{antecedent_text} {consequent_text}", re.IGNORECASE):
+            raise UnsupportedConstructionError("MAY NOT ambiguity is unsupported inside conditions")
+        if re.search(r"\b(if|unless|else)\b", antecedent_text, re.IGNORECASE) or re.search(r"\b(if|unless|else)\b", consequent_text, re.IGNORECASE):
+            raise UnsupportedConstructionError("nested, chained, and alternate conditions are unsupported")
+
+        antecedent = self.analyze(antecedent_text + ".", language=language, profile=profile)
+        consequent = self.analyze(consequent_text + ".", language=language, profile=profile)
+        if len(antecedent.propositions) != 1 or len(consequent.propositions) != 1:
+            raise UnsupportedConstructionError("condition clauses require one proposition each")
+        if antecedent.quantifiers or antecedent.modality or antecedent.negation or antecedent.relations:
+            raise UnsupportedConstructionError("antecedents support only one simple property or numeric threshold")
+
+        leading = len(text) - len(text.lstrip())
+        comma_index = body.index(",")
+        antecedent_offset = leading + body.index(antecedent_text, 2, comma_index)
+        consequent_offset = leading + body.index(consequent_text, comma_index + 1)
+
+        def shifted(span: Span | None, offset: int) -> Span | None:
+            return None if span is None else Span(span.start + offset, span.end + offset)
+
+        def renamed(analysis: Analysis, prefix: str, offset: int) -> dict[str, tuple]:
+            semantic = (
+                *analysis.entities, *analysis.propositions, *analysis.relations,
+                *analysis.quantifiers, *analysis.modality, *analysis.negation,
+                *analysis.numeric_constraints,
+            )
+            identifiers = {item.id: f"{prefix}_{item.id}" for item in semantic}
+            def refs(values: tuple[str, ...]) -> tuple[str, ...]:
+                return tuple(identifiers[value] for value in values)
+            return {
+                "entities": tuple(replace(item, id=identifiers[item.id], span=shifted(item.span, offset)) for item in analysis.entities),
+                "propositions": tuple(replace(item, id=identifiers[item.id], arguments=refs(item.arguments), derived_from=refs(item.derived_from), span=shifted(item.span, offset)) for item in analysis.propositions),
+                "relations": tuple(replace(item, id=identifiers[item.id], arguments=refs(item.arguments), derived_from=refs(item.derived_from), span=shifted(item.span, offset)) for item in analysis.relations),
+                "quantifiers": tuple(replace(item, id=identifiers[item.id], scope=refs(item.scope), span=shifted(item.span, offset)) for item in analysis.quantifiers),
+                "modality": tuple(replace(item, id=identifiers[item.id], scope=refs(item.scope), span=shifted(item.span, offset)) for item in analysis.modality),
+                "negation": tuple(replace(item, id=identifiers[item.id], scope=refs(item.scope), span=shifted(item.span, offset)) for item in analysis.negation),
+                "numeric_constraints": tuple(replace(item, id=identifiers[item.id], scope=refs(item.scope), span=shifted(item.span, offset)) for item in analysis.numeric_constraints),
+            }
+
+        left = renamed(antecedent, "antecedent", antecedent_offset)
+        right = renamed(consequent, "consequent", consequent_offset)
+        condition = Condition(
+            "condition_001", (left["propositions"][0].id,), (right["propositions"][0].id,),
+            InterpretationStatus.EXPLICIT, Confidence(1.0, "Deterministic Controlled English v0.1 IF rule"),
+            Span(leading, leading + len(body)),
+        )
+        all_semantic_ids = [item.id for values in (*left.values(), *right.values()) for item in values]
+        formula = f"({antecedent.logical_representation[0].display}) → ({consequent.logical_representation[0].display})"
+        certain = condition.confidence
+        result = Analysis(
+            document=Document("doc_001", language, text), profile=profile,
+            structure=Structure(
+                (StructuralNode("sentence_001", Span(leading, leading + len(body)), kind="sentence"),),
+                (
+                    StructuralNode("antecedent_001", Span(antecedent_offset, antecedent_offset + len(antecedent_text)), "sentence_001", "antecedent_clause"),
+                    StructuralNode("consequent_001", Span(consequent_offset, consequent_offset + len(consequent_text)), "sentence_001", "consequent_clause"),
+                ),
+            ),
+            entities=left["entities"] + right["entities"],
+            propositions=left["propositions"] + right["propositions"],
+            relations=left["relations"] + right["relations"],
+            quantifiers=left["quantifiers"] + right["quantifiers"],
+            modality=left["modality"] + right["modality"],
+            negation=left["negation"] + right["negation"],
+            numeric_constraints=left["numeric_constraints"] + right["numeric_constraints"],
+            conditions=(condition,),
+            logical_representation=(LogicalExpression(
+                "logic_001", {"operator": "IF", "antecedent": list(condition.antecedent), "consequent": list(condition.consequent)},
+                InterpretationStatus.EXPLICIT, certain, formula, (condition.id, *all_semantic_ids),
+            ),),
+            confidence=certain,
+            plain_language_interpretation=LocalizedText("en", f"The sentence states that if {antecedent_text}, then {consequent_text}."),
+        )
+        validate_analysis(result)
+        return result

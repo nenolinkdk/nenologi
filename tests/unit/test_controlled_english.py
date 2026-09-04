@@ -151,7 +151,6 @@ class ControlledEnglishAnalyzerTests(unittest.TestCase):
             "The request was approved by Alice.",
             "Employees must register and vote.",
             "Submit form A and form B and form C.",
-            "If the light is green, employees may enter.",
             "Must employees register?",
             "Employees registered yesterday.",
         )
