@@ -101,4 +101,4 @@ Normalization regressions cover `Every → ALL`, `at least 18 → >= 18`, weekda
 
 ## Recommended next milestone
 
-Scope v0.1 is now implemented as documented in [Scope v0.1](scope-v0.1.md). The recommended next milestone is limited proposition alignment as preparation for explicit addition/omission semantics; it should remain narrow and must not introduce lexical similarity, inference, or NLI.
+Scope v0.1 and [Proposition Alignment v0.1](proposition-alignment-v0.1.md) are now implemented. The recommended next milestone is explicit addition/omission semantics over the aligner's conservative unaligned sets; it should remain narrow and must not introduce lexical similarity, inference, or NLI.

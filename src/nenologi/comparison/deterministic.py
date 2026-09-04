@@ -11,6 +11,7 @@ from ..models import (
 )
 from ..serialization.validation import validate_analysis, validate_comparison
 from .interface import UnsupportedComparisonError
+from .alignment import DeterministicPropositionAligner
 from .rules import CANONICAL_DIFFERENCE_ORDER, CONJUNCTION_RULES, MODALITY_RULES, NEGATION_RULES, QUANTIFIER_RULES, TransitionRule
 
 _CONFIDENCE = Confidence(1.0, "Exact deterministic comparison of normalized values")
@@ -291,6 +292,17 @@ class DeterministicComparator:
         validate_analysis(target)
         source_condition, source_antecedent, source_prop = _condition_parts(source, "source")
         target_condition, target_antecedent, target_prop = _condition_parts(target, "target")
+        alignment = DeterministicPropositionAligner().align(
+            source, target, allow_structural_counterparts=True,
+        )
+        aligned_pairs = {
+            (item.source_proposition_id, item.target_proposition_id) for item in alignment.alignments
+        }
+        if (source_prop.id, target_prop.id) not in aligned_pairs:
+            raise UnsupportedComparisonError("main propositions are not uniquely structurally aligned")
+        if source_antecedent is not None and target_antecedent is not None:
+            if (source_antecedent.id, target_antecedent.id) not in aligned_pairs:
+                raise UnsupportedComparisonError("condition antecedents are not uniquely structurally aligned")
         _reject_unsupported_dimensions(source, target, source_prop, target_prop)
         (source_prop, target_prop, source_entities, target_entities,
          entity_changes, predicate_changed) = _corresponding_propositions(source, target, source_prop, target_prop)
