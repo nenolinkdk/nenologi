@@ -1,4 +1,6 @@
-# Minimum viable product
+# Minimum viable product (legacy summary)
+
+The canonical Phase 1 scope is [Nenologi Core v0.1 MVP specification](mvp-specification.md). This file remains as a concise historical summary.
 
 ## Goal
 
@@ -14,7 +16,7 @@ Prove that Nenologi can convert short texts into useful semantic structures and 
 
 Entities, relations, negation, conjunction/disjunction, quantifiers, modality, conditions, temporal relations, numerical thresholds, additions, omissions and contradictions.
 
-## MVP Windows UI
+## Later Windows UI
 
 - analysis profile selector
 - mode selector
@@ -26,9 +28,9 @@ Entities, relations, negation, conjunction/disjunction, quantifiers, modality, c
 - findings panel
 - optional logical representation
 - JSON/debug view
-- PDF export
+- future export options
 
-The first version is deliberately **not** a full editor.
+The client is deliberately **not** a full editor. Its implementation and PDF export are not part of Phase 1.
 
 ## Comparison statuses
 

@@ -1,0 +1,29 @@
+# Test corpus strategy
+
+The future corpus is organized by purpose:
+
+```text
+test_corpus/
+  synthetic/
+  biography/
+  news/
+  procedure/
+  technical/
+  translation/
+  prompt-output/
+  seo/
+  literary/
+  ambiguous/
+```
+
+It contains three complementary categories:
+
+1. Controlled minimal examples that isolate one operator or relation.
+2. Real texts that exercise normal variation and interacting phenomena.
+3. Source/target pairs with deliberately inserted semantic differences.
+
+Each committed case records an ID, category, input language, profile, mode, expected structures or findings, provenance/license metadata, and reviewer notes. Tests should distinguish exact stable expectations from acceptable alternatives for ambiguous text.
+
+The initial gold standard targets approximately 30 controlled cases. Priority coverage includes negation, conjunction, quantification, modality, conditions, temporal order, scope, entity relations, addition/omission, contradiction, and numeric thresholds. See [Gold standard](gold-standard.md).
+
+Reference analyses and intermediate representations should remain versioned. Changes require review because they support regression tests, architecture demonstrations, future benchmarks, and conference material.

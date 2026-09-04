@@ -14,12 +14,12 @@ Create minimal pairs:
 
 **Deliverable:** stable specification and test corpus.
 
-## Phase 1 — Nenologi Core
-Implement input validation, segmentation, semantic extraction, normalized representation, entities/relations, logical operators, quantification, modality, time, conditions, comparison rules, confidence and plain-language explanations.
+## Phase 1 — Nenologi Core v0.1
+Implement a UI-independent core with input validation, segmentation, semantic extraction, normalized representation, entities/relations, logical operators, quantification, modality, time, conditions, comparison rules, confidence and plain-language explanations. Begin with controlled English and the General text and Translation comparison profiles. See the [canonical MVP specification](../project/mvp-specification.md) and [build preparation](../project/build-preparation.md).
 
 Start with General text and Translation comparison.
 
-**Deliverable:** callable core engine with structured output and tests.
+**Deliverable:** callable core engine with structured JSON, plain-English interpretation, logical representation, source/target comparison, and tests. No GUI or external AI provider is part of this milestone.
 
 ## Phase 2 — Standalone Windows prototype
 Build a small Windows client around the engine.
