@@ -23,12 +23,11 @@ A <-> B         -> semantic/logical findings
 ## Recommended implementation order
 
 1. Choose Python/package tooling and record the decision.
-2. Turn the conceptual v0.1 model into a JSON Schema and typed domain models.
+2. Add typed domain models corresponding to the committed v0.1 JSON Schemas.
 3. Add request validation and controlled-English structural segmentation.
-4. Implement enough semantic normalization for the first gold cases.
+4. Implement enough semantic normalization for the committed gold cases.
 5. Add logical expression objects and cautious plain-English rendering.
 6. Implement deterministic comparison rules for critical minimal pairs.
-7. Expand the gold corpus toward 30 reviewed cases.
 
 ## Definition of ready
 
@@ -42,8 +41,8 @@ Development should preserve minimal pairs, reference analyses, intermediate repr
 
 - Supported Python version, package layout, and dependency management
 - Structural parser strategy and whether initial parsing is rule-based or library-assisted
-- Formal JSON Schema details, identifier/span conventions, and expression AST
-- Confidence scale and calibration method
+- Exact expression AST beyond the deliberately open v0.1 operator object
+- Confidence calibration method beyond the v0.1 numeric representation
 - Exact Phase 1 subset of priority profiles beyond General and Translation comparison
 - Final edition limits, licensing, and distribution approach (post-Phase 1)
 - Provider strategy for later AI-assisted extraction; no provider is selected now

@@ -57,7 +57,7 @@ The result must report both `MODALITY_CHANGE` (obligation becomes permission or 
 
 ## Interpretation and findings
 
-Allowed interpretation states are `explicit`, `entailed`, `probable`, `ambiguous`, `unsupported`, `contradicted`, and `cannot_be_safely_formalized`. Ambiguous inputs may carry multiple candidate readings. Severity expresses potential impact; confidence expresses support for an analysis. Neither determines the other.
+Allowed interpretation states are `EXPLICIT`, `ENTAILED`, `PROBABLE`, `AMBIGUOUS`, `UNSUPPORTED`, `CONTRADICTED`, and `CANNOT_BE_SAFELY_FORMALIZED`. Ambiguous inputs may carry multiple candidate readings. `PROBABLE` is not entailment. Severity expresses potential impact; confidence expresses support for an analysis. Neither determines the other. The exact v0.1 representations are documented in [Analysis Schema v0.1](../architecture/semantic-json-schema.md).
 
 ## Out of scope for Phase 1
 

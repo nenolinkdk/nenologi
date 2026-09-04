@@ -1,6 +1,6 @@
 # Initial gold standard
 
-The first gold standard should contain approximately 30 controlled cases: at least two per critical difference class, plus single-text interpretation, ambiguity, and safe-formalization cases. Each case should change as little as possible, making failures diagnosable.
+The initial v0.1 gold standard contains 30 controlled change cases, 5 semantic-equivalence cases, and 7 inference-status cases. Each case changes as little as possible, making failures diagnosable. The machine-readable files and contribution instructions are in the [gold-standard directory](../../tests/gold_standard/README.md).
 
 ```json
 {
@@ -18,12 +18,9 @@ The first gold standard should contain approximately 30 controlled cases: at lea
 
 ## Initial allocation
 
-- 12 comparison cases: one for each v0.1 difference type
-- 7 additional critical minimal pairs: MUST/MAY, AND/OR, ALL/SOME, BEFORE/AFTER, `>`/`>=`, negation, and condition changes
-- 4 single-text structural/semantic cases
-- 3 scope or reference ambiguity cases
-- 2 bounded-entailment cases
-- 2 `cannot_be_safely_formalized` or unsupported cases
+- 30 comparison cases with material changes, covering all 12 v0.1 difference types
+- 5 controlled semantic-equivalence cases
+- 7 inference cases covering all v0.1 interpretation statuses
 
 Expected data may include multiple acceptable analyses when ambiguity is intentional. Severity is expected only for findings; confidence is independently evaluated with tolerances or categorical expectations. Cases should be small enough for human review and schema validation.
 

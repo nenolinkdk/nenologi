@@ -1,0 +1,12 @@
+{
+  "schema_version": "0.1",
+  "cases": [
+    {"id":"entailment_001","case_type":"INFERENCE","category":"entailment","description":"Candidate is stated directly","statement":"The door is open.","candidate_inference":"The door is open.","source_language":"en","expected":{"interpretation_status":"EXPLICIT"}},
+    {"id":"entailment_002","case_type":"INFERENCE","category":"entailment","description":"Universal rule and membership entail the candidate","statement":"All marked boxes are inspected. Box A is marked.","candidate_inference":"Box A is inspected.","source_language":"en","expected":{"interpretation_status":"ENTAILED"}},
+    {"id":"entailment_003","case_type":"INFERENCE","category":"entailment","description":"Repeated observation supports prediction but does not entail it","statement":"The light flickered on each of the last five evenings.","candidate_inference":"The light will flicker this evening.","source_language":"en","expected":{"interpretation_status":"PROBABLE"}},
+    {"id":"entailment_004","case_type":"INFERENCE","category":"entailment","description":"Residence does not entail language fluency","statement":"Peter lived in Paris for five years.","candidate_inference":"Peter speaks fluent French.","source_language":"en","expected":{"interpretation_status":"UNSUPPORTED"}},
+    {"id":"entailment_005","case_type":"INFERENCE","category":"entailment","description":"Candidate explicitly conflicts with the statement","statement":"The switch is off.","candidate_inference":"The switch is on.","source_language":"en","expected":{"interpretation_status":"CONTRADICTED"}},
+    {"id":"entailment_006","case_type":"INFERENCE","category":"entailment","description":"Pronoun reference permits more than one reading","statement":"Alex told Sam that they had won.","candidate_inference":"Alex had won.","source_language":"en","expected":{"interpretation_status":"AMBIGUOUS"}},
+    {"id":"entailment_007","case_type":"INFERENCE","category":"entailment","description":"Metaphor is not forced into a literal formal claim","statement":"Time is a thief.","candidate_inference":"Time commits theft.","source_language":"en","expected":{"interpretation_status":"CANNOT_BE_SAFELY_FORMALIZED"}}
+  ]
+}

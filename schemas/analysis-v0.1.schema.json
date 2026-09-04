@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "analysis-v0.1.schema.json",
+  "title": "Nenologi single-text analysis v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "document", "profile", "structure", "entities", "propositions", "relations", "quantifiers", "modality", "negation", "conditions", "temporal_relations", "sets", "logical_representation", "inferences", "ambiguities", "confidence", "plain_language_interpretation"],
+  "properties": {
+    "schema_version": {"const": "0.1"},
+    "document": {"$ref": "#/$defs/document"},
+    "profile": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+    "structure": {"$ref": "#/$defs/structure"},
+    "entities": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "propositions": {"type": "array", "items": {"$ref": "#/$defs/proposition"}},
+    "relations": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
+    "quantifiers": {"type": "array", "items": {"$ref": "#/$defs/operator"}},
+    "modality": {"type": "array", "items": {"$ref": "#/$defs/operator"}},
+    "negation": {"type": "array", "items": {"$ref": "#/$defs/operator"}},
+    "conditions": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
+    "temporal_relations": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
+    "sets": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
+    "logical_representation": {"type": "array", "items": {"$ref": "#/$defs/logicalExpression"}},
+    "inferences": {"type": "array", "items": {"$ref": "#/$defs/inference"}},
+    "ambiguities": {"type": "array", "items": {"$ref": "#/$defs/ambiguity"}},
+    "confidence": {"$ref": "#/$defs/confidence"},
+    "plain_language_interpretation": {"$ref": "#/$defs/localizedText"}
+  },
+  "$defs": {
+    "identifier": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"},
+    "language": {"type": "string", "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"},
+    "interpretationStatus": {"enum": ["EXPLICIT", "ENTAILED", "PROBABLE", "AMBIGUOUS", "UNSUPPORTED", "CONTRADICTED", "CANNOT_BE_SAFELY_FORMALIZED"]},
+    "confidence": {
+      "type": "object", "additionalProperties": false, "required": ["value"],
+      "properties": {"value": {"type": "number", "minimum": 0, "maximum": 1}, "rationale": {"type": "string"}}
+    },
+    "span": {
+      "type": "object", "additionalProperties": false, "required": ["start", "end"],
+      "properties": {"start": {"type": "integer", "minimum": 0}, "end": {"type": "integer", "minimum": 0}}
+    },
+    "document": {
+      "type": "object", "additionalProperties": false, "required": ["id", "language", "text"],
+      "properties": {"id": {"$ref": "#/$defs/identifier"}, "language": {"$ref": "#/$defs/language"}, "text": {"type": "string", "minLength": 1}}
+    },
+    "structuralNode": {
+      "type": "object", "additionalProperties": false, "required": ["id", "span"],
+      "properties": {"id": {"$ref": "#/$defs/identifier"}, "span": {"$ref": "#/$defs/span"}, "parent_id": {"$ref": "#/$defs/identifier"}, "kind": {"type": "string"}}
+    },
+    "discourseRelation": {
+      "type": "object", "additionalProperties": false, "required": ["id", "type", "source_id", "target_id"],
+      "properties": {"id": {"$ref": "#/$defs/identifier"}, "type": {"enum": ["COORDINATION", "SUBORDINATION", "SEQUENCE", "CONTRAST", "EXCEPTION", "CAUSE", "CONSEQUENCE"]}, "source_id": {"$ref": "#/$defs/identifier"}, "target_id": {"$ref": "#/$defs/identifier"}}
+    },
+    "structure": {
+      "type": "object", "additionalProperties": false, "required": ["sentences", "clauses", "discourse_relations"],
+      "properties": {"sentences": {"type": "array", "items": {"$ref": "#/$defs/structuralNode"}}, "clauses": {"type": "array", "items": {"$ref": "#/$defs/structuralNode"}}, "discourse_relations": {"type": "array", "items": {"$ref": "#/$defs/discourseRelation"}}}
+    },
+    "entity": {
+      "type": "object", "additionalProperties": false, "required": ["id", "type", "label", "interpretation_status", "confidence"],
+      "properties": {"id": {"$ref": "#/$defs/identifier"}, "type": {"type": "string"}, "label": {"type": "string"}, "span": {"$ref": "#/$defs/span"}, "interpretation_status": {"$ref": "#/$defs/interpretationStatus"}, "confidence": {"$ref": "#/$defs/confidence"}}
+    },
+    "semanticItem": {
+      "type": "object", "additionalProperties": false, "required": ["id", "type", "arguments", "interpretation_status", "confidence"],
+      "properties": {"id": {"$ref": "#/$defs/identifier"}, "type": {"type": "string"}, "arguments": {"type": "array", "items": {"$ref": "#/$defs/identifier"}}, "span": {"$ref": "#/$defs/span"}, "derived_from": {"type": "array", "items": {"$ref": "#/$defs/identifier"}}, "interpretation_status": {"$ref": "#/$defs/interpretationStatus"}, "confidence": {"$ref": "#/$defs/confidence"}}
+    },
+    "proposition": {
+      "type": "object", "additionalProperties": false, "required": ["id", "predicate", "arguments", "interpretation_status", "confidence"],
+      "properties": {"id": {"$ref": "#/$defs/identifier"}, "predicate": {"type": "string"}, "arguments": {"type": "array", "items": {"$ref": "#/$defs/identifier"}}, "span": {"$ref": "#/$defs/span"}, "derived_from": {"type": "array", "items": {"$ref": "#/$defs/identifier"}}, "interpretation_status": {"$ref": "#/$defs/interpretationStatus"}, "confidence": {"$ref": "#/$defs/confidence"}}
+    },
+    "operator": {
+      "type": "object", "additionalProperties": false, "required": ["id", "operator", "scope", "interpretation_status", "confidence"],
+      "properties": {"id": {"$ref": "#/$defs/identifier"}, "operator": {"type": "string"}, "scope": {"type": "array", "items": {"$ref": "#/$defs/identifier"}, "minItems": 1}, "span": {"$ref": "#/$defs/span"}, "interpretation_status": {"$ref": "#/$defs/interpretationStatus"}, "confidence": {"$ref": "#/$defs/confidence"}}
+    },
+    "logicalExpression": {
+      "type": "object", "additionalProperties": false, "required": ["id", "expression", "interpretation_status", "confidence"],
+      "properties": {"id": {"$ref": "#/$defs/identifier"}, "expression": {"type": "object", "required": ["operator"], "properties": {"operator": {"type": "string"}}, "additionalProperties": true}, "display": {"type": "string"}, "derived_from": {"type": "array", "items": {"$ref": "#/$defs/identifier"}}, "interpretation_status": {"$ref": "#/$defs/interpretationStatus"}, "confidence": {"$ref": "#/$defs/confidence"}}
+    },
+    "inference": {
+      "type": "object", "additionalProperties": false, "required": ["id", "claim", "interpretation_status", "confidence"],
+      "properties": {"id": {"$ref": "#/$defs/identifier"}, "claim": {"type": "string"}, "derived_from": {"type": "array", "items": {"$ref": "#/$defs/identifier"}}, "rule": {"type": "string"}, "interpretation_status": {"$ref": "#/$defs/interpretationStatus"}, "confidence": {"$ref": "#/$defs/confidence"}}
+    },
+    "ambiguity": {
+      "type": "object", "additionalProperties": false, "required": ["id", "description", "reading_ids", "confidence"],
+      "properties": {"id": {"$ref": "#/$defs/identifier"}, "description": {"type": "string"}, "reading_ids": {"type": "array", "items": {"$ref": "#/$defs/identifier"}, "minItems": 2}, "confidence": {"$ref": "#/$defs/confidence"}}
+    },
+    "localizedText": {
+      "type": "object", "additionalProperties": false, "required": ["language", "text"],
+      "properties": {"language": {"$ref": "#/$defs/language"}, "text": {"type": "string"}}
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "comparison-v0.1.schema.json",
+  "title": "Nenologi comparison v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "mode", "source_analysis", "target_analysis", "differences"],
+  "properties": {
+    "schema_version": {"const": "0.1"},
+    "mode": {"enum": ["SOURCE_TRANSLATION", "VERSION_COMPARISON", "PROMPT_OUTPUT", "SEO_LOCALIZATION"]},
+    "source_analysis": {"$ref": "analysis-v0.1.schema.json"},
+    "target_analysis": {"$ref": "analysis-v0.1.schema.json"},
+    "differences": {"type": "array", "items": {"$ref": "#/$defs/difference"}}
+  },
+  "$defs": {
+    "differenceType": {"enum": ["NEGATION_CHANGE", "CONJUNCTION_CHANGE", "QUANTIFIER_CHANGE", "MODALITY_CHANGE", "CONDITION_CHANGE", "TEMPORAL_CHANGE", "SCOPE_CHANGE", "ENTITY_RELATION_CHANGE", "ADDITION", "OMISSION", "CONTRADICTION", "NUMERIC_THRESHOLD_CHANGE"]},
+    "severity": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]},
+    "confidence": {"type": "object", "additionalProperties": false, "required": ["value"], "properties": {"value": {"type": "number", "minimum": 0, "maximum": 1}, "rationale": {"type": "string"}}},
+    "difference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "difference_type", "source_value", "target_value", "severity", "confidence", "explanation", "references"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"},
+        "difference_type": {"$ref": "#/$defs/differenceType"},
+        "source_value": {},
+        "target_value": {},
+        "severity": {"$ref": "#/$defs/severity"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "explanation": {"type": "string", "minLength": 1},
+        "references": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

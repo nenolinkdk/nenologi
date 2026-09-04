@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "test-case-v0.1.schema.json",
+  "title": "Nenologi gold-standard case collection v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "cases"],
+  "properties": {
+    "schema_version": {"const": "0.1"},
+    "cases": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/testCase"}}
+  },
+  "$defs": {
+    "language": {"type": "string", "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"},
+    "differenceType": {"enum": ["NEGATION_CHANGE", "CONJUNCTION_CHANGE", "QUANTIFIER_CHANGE", "MODALITY_CHANGE", "CONDITION_CHANGE", "TEMPORAL_CHANGE", "SCOPE_CHANGE", "ENTITY_RELATION_CHANGE", "ADDITION", "OMISSION", "CONTRADICTION", "NUMERIC_THRESHOLD_CHANGE"]},
+    "status": {"enum": ["EXPLICIT", "ENTAILED", "PROBABLE", "AMBIGUOUS", "UNSUPPORTED", "CONTRADICTED", "CANNOT_BE_SAFELY_FORMALIZED"]},
+    "severity": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]},
+    "testCase": {
+      "oneOf": [
+        {"$ref": "#/$defs/comparisonCase"},
+        {"$ref": "#/$defs/equivalenceCase"},
+        {"$ref": "#/$defs/inferenceCase"}
+      ]
+    },
+    "baseComparison": {
+      "type": "object",
+      "required": ["id", "case_type", "category", "description", "source", "target", "source_language", "target_language", "expected"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "case_type": {"enum": ["CHANGE", "EQUIVALENCE"]},
+        "category": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "description": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "target": {"type": "string", "minLength": 1},
+        "source_language": {"$ref": "#/$defs/language"},
+        "target_language": {"$ref": "#/$defs/language"},
+        "expected": {"type": "object"}
+      }
+    },
+    "comparisonCase": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        {"$ref": "#/$defs/baseComparison"},
+        {
+          "type": "object",
+          "properties": {
+            "case_type": {"const": "CHANGE"},
+            "expected": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["material_difference", "differences"],
+              "properties": {
+                "material_difference": {"const": true},
+                "differences": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/expectedDifference"}}
+              }
+            }
+          }
+        }
+      ]
+    },
+    "equivalenceCase": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        {"$ref": "#/$defs/baseComparison"},
+        {
+          "type": "object",
+          "properties": {
+            "case_type": {"const": "EQUIVALENCE"},
+            "expected": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["material_difference", "differences"],
+              "properties": {
+                "material_difference": {"const": false},
+                "differences": {"type": "array", "maxItems": 0}
+              }
+            }
+          }
+        }
+      ]
+    },
+    "expectedDifference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["difference_type", "source_value", "target_value", "severity"],
+      "properties": {"difference_type": {"$ref": "#/$defs/differenceType"}, "source_value": {}, "target_value": {}, "severity": {"$ref": "#/$defs/severity"}}
+    },
+    "inferenceCase": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "case_type", "category", "description", "statement", "candidate_inference", "source_language", "expected"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "case_type": {"const": "INFERENCE"},
+        "category": {"const": "entailment"},
+        "description": {"type": "string", "minLength": 1},
+        "statement": {"type": "string", "minLength": 1},
+        "candidate_inference": {"type": "string", "minLength": 1},
+        "source_language": {"$ref": "#/$defs/language"},
+        "expected": {"type": "object", "additionalProperties": false, "required": ["interpretation_status"], "properties": {"interpretation_status": {"$ref": "#/$defs/status"}}}
+      }
+    }
+  }
+}

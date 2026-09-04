@@ -1,0 +1,10 @@
+{
+  "schema_version": "0.1",
+  "cases": [
+    {"id":"equivalence_001","case_type":"EQUIVALENCE","category":"equivalence","description":"Every and all express the same controlled universal requirement","source":"Every employee must register.","target":"All employees must register.","source_language":"en","target_language":"en","expected":{"material_difference":false,"differences":[]}},
+    {"id":"equivalence_002","case_type":"EQUIVALENCE","category":"equivalence","description":"Active and passive voice preserve the controlled relation","source":"Alice approved the request.","target":"The request was approved by Alice.","source_language":"en","target_language":"en","expected":{"material_difference":false,"differences":[]}},
+    {"id":"equivalence_003","case_type":"EQUIVALENCE","category":"equivalence","description":"At least and inclusive numeric notation are equivalent","source":"Bring at least three copies.","target":"Bring three or more copies.","source_language":"en","target_language":"en","expected":{"material_difference":false,"differences":[]}},
+    {"id":"equivalence_004","case_type":"EQUIVALENCE","category":"equivalence","description":"Contraction does not change negation","source":"The valve is not open.","target":"The valve isn't open.","source_language":"en","target_language":"en","expected":{"material_difference":false,"differences":[]}},
+    {"id":"equivalence_005","case_type":"EQUIVALENCE","category":"equivalence","description":"Reordered symmetric conjunction preserves both requirements","source":"Submit form A and form B.","target":"Submit form B and form A.","source_language":"en","target_language":"en","expected":{"material_difference":false,"differences":[]}}
+  ]
+}
