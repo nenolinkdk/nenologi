@@ -33,11 +33,11 @@ A <-> B         -> semantic/logical findings
 
 Phase 1 is complete. The reproducible exit decision, 42-case pipeline matrix, quality baseline, and single recommended Phase 2 milestone are maintained in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
-After the first Phase 2 parser milestone, the callable pipeline covers 21 exact end-to-end gold cases out of 42. The reproducible audit classifies the remainder as 12 parser-unsupported, 2 comparator-unsupported, and 7 inference-not-implemented, with no analyzable-but-inexact cases. See the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md) and [Simple Past Transitive Clauses v0.1](../architecture/simple-past-transitive-v0.1.md).
+After the second Phase 2 parser milestone, the callable pipeline covers 22 exact end-to-end gold cases out of 42. The reproducible audit classifies the remainder as 11 parser-unsupported, 2 comparator-unsupported, and 7 inference-not-implemented, with no analyzable-but-inexact cases. See [Simple Passive Transitive Clauses v0.2](../architecture/simple-passive-transitive-v0.2.md).
 
 ## Next implementation milestone
 
-The next recommended parser milestone is **Controlled Parser Expansion v0.2: Simple Passive Transitive Clauses**. It should reuse the new canonical past predicates while keeping passive normalization explicit and bounded; `equivalence_002` is the direct gold target.
+The next recommended Phase 2 milestone is **Controlled Contraction Expansion v0.1**, narrowly targeting `equivalence_004` without introducing general token rewriting or ambiguity guessing.
 
 ## Definition of ready
 

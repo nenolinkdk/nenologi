@@ -148,7 +148,6 @@ class ControlledEnglishAnalyzerTests(unittest.TestCase):
     def test_unsupported_constructions_are_rejected(self) -> None:
         unsupported = (
             "All employees who work remotely must register.",
-            "The request was approved by Alice.",
             "Employees must register and vote.",
             "Submit form A and form B and form C.",
             "Must employees register?",

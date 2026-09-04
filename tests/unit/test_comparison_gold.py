@@ -14,6 +14,7 @@ SUPPORTED_CASE_IDS = {
     "numeric_001", "numeric_002", "numeric_003", "numeric_004", "equivalence_003",
     "condition_001",
     "temporal_002",
+    "equivalence_002",
 }
 
 

@@ -67,7 +67,7 @@ python tests/validation/audit_gold_coverage.py --json
 | addition_002 | addition | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_MULTI_SENTENCE |
 | omission_002 | omission | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_COORDINATED_PREDICATES |
 | equivalence_001 | equivalence | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
-| equivalence_002 | equivalence | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_PASSIVE_VOICE |
+| equivalence_002 | equivalence | YES | YES | YES | EXACT | NA | END_TO_END_EXACT | NONE |
 | equivalence_003 | equivalence | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
 | equivalence_004 | equivalence | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_CONTRACTION |
 | equivalence_005 | equivalence | OK | AV | UN | NO | NA | COMPARATOR_UNSUPPORTED | UNSUPPORTED_SYMMETRIC_CONJUNCTION_ALIGNMENT |
@@ -79,7 +79,7 @@ python tests/validation/audit_gold_coverage.py --json
 | entailment_006 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
 | entailment_007 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
 
-Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are **21 END_TO_END_EXACT, 0 ANALYZABLE_BUT_NOT_EXACT, 12 PARSER_UNSUPPORTED, 2 COMPARATOR_UNSUPPORTED, 7 INFERENCE_NOT_IMPLEMENTED.**
+Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are **22 END_TO_END_EXACT, 0 ANALYZABLE_BUT_NOT_EXACT, 11 PARSER_UNSUPPORTED, 2 COMPARATOR_UNSUPPORTED, 7 INFERENCE_NOT_IMPLEMENTED.**
 
 ## Comparator-unsupported investigations
 
@@ -101,7 +101,7 @@ Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are
 
 | Construction | Cases | Domain/comparator readiness | Risk | Exact gold likely unlocked |
 | --- | --- | --- | --- | ---: |
-| Passive transitive | equivalence_002 | Active past now exists; passive canonicalization does not | MEDIUM | 1 |
+| Passive transitive | equivalence_002 | Implemented in Simple Passive Transitive v0.2 | COMPLETE | 1 |
 | Suffix IF | condition_002, omission_001 | Condition model/comparator exist; omission_001 taxonomy conflicts with condition precedence | MEDIUM | 1 |
 | Embedded verbs | scope_001, scope_002 | Scope chains exist; embedded propositions/alignment do not | HIGH | 2 |
 | Event temporal anchor | temporal_001 | Temporal type exists; event-anchor proposition does not | HIGH | 1 |
@@ -167,7 +167,7 @@ Gold coverage did not rise after Addition/Omission because no existing gold inpu
 
 ## Quality baseline and exit criteria
 
-The current baseline passes 109 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
+The current baseline passes 115 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
 
 | Exit criterion | Result | Evidence |
 | --- | --- | --- |
@@ -194,4 +194,4 @@ The current baseline passes 109 unit/validation tests, gold validation (30 chang
 | Additional semantic categories | Low now | New schema/taxonomy | High | None identified | Breadth without current corpus demand |
 | UI/application work | Product value | Stable core API | Medium | None | Exercises client boundary, not semantic coverage |
 
-Simple Past Transitive Clauses v0.1 completed the audit's recommendation and unlocked `entity_relation_001` and `entity_relation_002`. The next recommended parser milestone is **Controlled Parser Expansion v0.2: Simple Passive Transitive Clauses**, narrowly targeting canonical active/passive identity for `equivalence_002` without general voice or tense reasoning.
+Simple Past Transitive Clauses v0.1 unlocked `entity_relation_001` and `entity_relation_002`. Simple Passive Transitive Clauses v0.2 subsequently unlocked `equivalence_002` through canonical active/passive identity without general voice or tense reasoning. The next recommended Phase 2 milestone is narrowly controlled contraction expansion for `equivalence_004`.

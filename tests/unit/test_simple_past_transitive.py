@@ -62,7 +62,6 @@ class SimplePastTransitiveV01Tests(unittest.TestCase):
 
     def test_neighboring_past_constructions_remain_explicitly_unsupported(self) -> None:
         cases = (
-            "The firm was acquired by the company.",
             "The company has acquired the firm.",
             "The company had acquired the firm.",
             "The company was acquiring the firm.",

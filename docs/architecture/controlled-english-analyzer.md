@@ -105,6 +105,10 @@ Exactly one fronted form is supported: `Not all SUBJECT [MODAL] PREDICATE`. It n
 
 The parser accepts the explicit affirmative active forms documented in [Simple Past Transitive Clauses v0.1](simple-past-transitive-v0.1.md). Each requires a determiner-led object and maps through a closed verb lexicon to the existing canonical predicate. Tense is not represented as a semantic operator or comparison dimension.
 
+## Simple passive transitive v0.2
+
+The parser accepts the singular controlled `PATIENT + WAS + PAST_PARTICIPLE + BY + AGENT` form documented in [Simple Passive Transitive Clauses v0.2](simple-passive-transitive-v0.2.md). It reorders surface roles into the same agent/patient semantics as active clauses. Auxiliary `WAS`, surface voice, and tense add no semantic operator or difference type.
+
 ## Explicitly unsupported
 
 - More than one sentence
@@ -112,7 +116,7 @@ The parser accepts the explicit affirmative active forms documented in [Simple P
 - Questions and exclamations
 - Subject/predicate coordination, nested/repeated coordination, and subordination
 - Relative clauses and conditions
-- Passive voice and complex tense/aspect
+- Passive constructions outside the single explicit v0.2 form, including `WERE`, agentless, perfect, progressive, modal, future, infinitival, and embedded passives
 - Multiword noun phrases beyond a determiner plus one noun
 - Ranges, fractions, scientific notation, signed values, arithmetic, approximation, locale decimals, and unit conversion
 - Multiple temporal phrases, event-clause references, durations, relative dates, `before or on`, `after or on`, `since`, `during`, `when`, `by`, and `within`
@@ -129,6 +133,6 @@ Both sides of these existing comparison cases are analyzable and compared exactl
 - `contradiction_001`
 - `entity_relation_001` and `entity_relation_002`
 
-The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), numeric equivalence case `equivalence_003`, prefix-IF removal case `condition_001`, and weekday case `temporal_002`.
+The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), active/passive equivalence case `equivalence_002`, numeric equivalence case `equivalence_003`, prefix-IF removal case `condition_001`, and weekday case `temporal_002`.
 
 Other cases remain intentionally outside this grammar. Gold expected results are unchanged; use the [machine-readable audit](phase-1-completion-audit.md) for current status.

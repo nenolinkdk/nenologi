@@ -92,6 +92,8 @@ class _Parsed:
     numeric_unit: _Token | None
     numeric_span: Span | None
     fronted_negation: _Token | None = None
+    surface_subject_span: Span | None = None
+    by_agent_span: Span | None = None
 
 
 def _numeric_phrase(tokens: tuple[_Token, ...]) -> tuple[NumericOperator, Decimal, _Token | None, Span] | None:
@@ -168,6 +170,9 @@ def _tokens(text: str) -> tuple[_Token, ...]:
 
 def _parse(tokens: tuple[_Token, ...]) -> _Parsed:
     words = [token.normalized for token in tokens]
+    passive = _parse_simple_passive(tokens)
+    if passive is not None:
+        return passive
     if any(word in _UNSUPPORTED_MARKERS for word in words):
         marker = next(word for word in words if word in _UNSUPPORTED_MARKERS)
         raise UnsupportedConstructionError(f"unsupported construction marker: {marker}")
@@ -272,6 +277,44 @@ def _parse(tokens: tuple[_Token, ...]) -> _Parsed:
         second_determiner, second_objects = None, ()
     return _Parsed(quantifier, subject, modal, negation, predicate, object_determiner, objects,
                    conjunction, second_determiner, second_objects, False, subject_start, predicate_start, None, None, None, None)
+
+
+def _parse_simple_passive(tokens: tuple[_Token, ...]) -> _Parsed | None:
+    """Normalize PATIENT + WAS + PARTICIPLE + BY + AGENT to active semantic roles."""
+    words = [token.normalized for token in tokens]
+    if not any(word in {"was", "were"} for word in words):
+        return None
+    if "were" in words:
+        raise UnsupportedConstructionError("simple passive v0.2 supports singular WAS agreement only")
+    if words.count("was") != 1 or words.count("by") != 1:
+        raise UnsupportedConstructionError("simple passive requires PATIENT + WAS + PARTICIPLE + BY + AGENT")
+    was_index = words.index("was")
+    by_index = words.index("by")
+    if by_index != was_index + 2 or was_index < 1:
+        raise UnsupportedConstructionError("simple passive requires PATIENT + WAS + PARTICIPLE + BY + AGENT")
+    participle = tokens[was_index + 1]
+    if participle.normalized not in _PAST_ACTIONS:
+        raise UnsupportedConstructionError(f"unsupported passive participle: {participle.text}")
+
+    patient_values = tokens[:was_index]
+    patient_determiner = patient_values[0] if patient_values[0].normalized in _DETERMINERS else None
+    patient = patient_values[1:] if patient_determiner else patient_values
+    agent_values = tokens[by_index + 1:]
+    agent_determiner = agent_values[0] if agent_values and agent_values[0].normalized in _DETERMINERS else None
+    agent = agent_values[1:] if agent_determiner else agent_values
+    if not 1 <= len(patient) <= 2 or len(agent) != 1:
+        raise UnsupportedConstructionError("simple passive requires controlled patient and one-word BY-agent")
+    if patient_determiner is None:
+        raise UnsupportedConstructionError("simple passive patient must be determiner-led")
+
+    surface_subject_start = patient_determiner.start
+    by_agent_start = agent_determiner.start if agent_determiner else agent[0].start
+    return _Parsed(
+        None, agent[0], None, None, participle, patient_determiner, tuple(patient),
+        None, None, (), False, by_agent_start, participle.start, None, None, None, None,
+        surface_subject_span=Span(surface_subject_start, patient[-1].end),
+        by_agent_span=Span(by_agent_start, agent[0].end),
+    )
 
 
 def _predicate_display(parsed: _Parsed) -> str:
@@ -407,9 +450,11 @@ class ControlledEnglishAnalyzer:
         sentence_start = len(text) - len(text.lstrip())
         sentence_end = len(text.rstrip())
         clauses = [
-            StructuralNode("subject_001", Span(parsed.subject_start, parsed.subject.end), "sentence_001", "subject_phrase"),
+            StructuralNode("subject_001", parsed.surface_subject_span or Span(parsed.subject_start, parsed.subject.end), "sentence_001", "subject_phrase"),
             StructuralNode("predicate_001", Span(parsed.predicate_start, tokens[-1].end), "sentence_001", "predicate_phrase"),
         ]
+        if parsed.by_agent_span:
+            clauses.append(StructuralNode("by_agent_001", parsed.by_agent_span, "predicate_001", "by_agent_phrase"))
         if parsed.modal:
             clauses.append(StructuralNode("modal_001", parsed.modal.span, "predicate_001", "modal"))
         if parsed.negation:
