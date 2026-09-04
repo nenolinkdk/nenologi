@@ -22,11 +22,11 @@ A <-> B         -> semantic/logical findings
 
 ## Recommended implementation order
 
-1. Choose Python/package tooling and record the decision.
-2. Add typed domain models corresponding to the committed v0.1 JSON Schemas.
-3. Add request validation and controlled-English structural segmentation.
+1. ~~Choose Python/package tooling and record the decision.~~ Python 3.11+, `src` layout, and standard-library runtime selected.
+2. ~~Add typed domain models corresponding to the committed v0.1 JSON Schemas.~~ Implemented with explicit serialization and validation.
+3. Add controlled-English structural segmentation behind a parser-neutral interface.
 4. Implement enough semantic normalization for the committed gold cases.
-5. Add logical expression objects and cautious plain-English rendering.
+5. Add cautious plain-English rendering over structured expressions.
 6. Implement deterministic comparison rules for critical minimal pairs.
 
 ## Definition of ready
@@ -39,7 +39,6 @@ Development should preserve minimal pairs, reference analyses, intermediate repr
 
 ## Decisions still to make
 
-- Supported Python version, package layout, and dependency management
 - Structural parser strategy and whether initial parsing is rule-based or library-assisted
 - Exact expression AST beyond the deliberately open v0.1 operator object
 - Confidence calibration method beyond the v0.1 numeric representation

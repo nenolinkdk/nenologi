@@ -42,4 +42,4 @@ nenologi_core/
   validation/      # request and output validation
 ```
 
-Exact Python packaging, supported Python version, and parsing dependencies remain Phase 1 decisions.
+The first implementation fixes Python 3.11 as the minimum and provides the typed/serialization layer described in [Python core domain layer](python-core.md). Parser dependencies and strategy remain unresolved.
