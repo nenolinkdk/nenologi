@@ -2,13 +2,30 @@
 
 from dataclasses import dataclass
 
-from ..models import Severity
+from ..models import DifferenceType, Severity
 
 
 @dataclass(frozen=True, slots=True)
 class TransitionRule:
     severity: Severity
     explanation: str
+
+
+# Public taxonomy order. Implemented findings use these positions; the final
+# three reserve deterministic locations for future existing taxonomy support.
+CANONICAL_DIFFERENCE_ORDER = (
+    DifferenceType.QUANTIFIER_CHANGE,
+    DifferenceType.MODALITY_CHANGE,
+    DifferenceType.NEGATION_CHANGE,
+    DifferenceType.CONJUNCTION_CHANGE,
+    DifferenceType.NUMERIC_THRESHOLD_CHANGE,
+    DifferenceType.CONDITION_CHANGE,
+    DifferenceType.TEMPORAL_CHANGE,
+    DifferenceType.SCOPE_CHANGE,
+    DifferenceType.ENTITY_RELATION_CHANGE,
+    DifferenceType.ADDITION,
+    DifferenceType.OMISSION,
+)
 
 
 MODALITY_RULES: dict[tuple[str, str], TransitionRule] = {

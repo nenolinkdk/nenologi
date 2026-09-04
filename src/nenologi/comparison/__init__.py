@@ -1,4 +1,5 @@
 from .deterministic import DeterministicComparator
 from .interface import Comparator, UnsupportedComparisonError
+from .rules import CANONICAL_DIFFERENCE_ORDER
 
-__all__ = ["Comparator", "DeterministicComparator", "UnsupportedComparisonError"]
+__all__ = ["CANONICAL_DIFFERENCE_ORDER", "Comparator", "DeterministicComparator", "UnsupportedComparisonError"]

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import replace
 
 from ..models import (
     Analysis, Comparison, ComparisonMode, Condition, Confidence, Difference,
@@ -10,7 +11,7 @@ from ..models import (
 )
 from ..serialization.validation import validate_analysis, validate_comparison
 from .interface import UnsupportedComparisonError
-from .rules import CONJUNCTION_RULES, MODALITY_RULES, NEGATION_RULES, QUANTIFIER_RULES, TransitionRule
+from .rules import CANONICAL_DIFFERENCE_ORDER, CONJUNCTION_RULES, MODALITY_RULES, NEGATION_RULES, QUANTIFIER_RULES, TransitionRule
 
 _CONFIDENCE = Confidence(1.0, "Exact deterministic comparison of normalized values")
 
@@ -165,7 +166,13 @@ def _append_numeric_change(findings: list[Difference], source: Analysis, target:
         findings, DifferenceType.NUMERIC_THRESHOLD_CHANGE,
         _numeric_display(source_numeric, include_unit=source_numeric.unit != target_numeric.unit),
         _numeric_display(target_numeric, include_unit=source_numeric.unit != target_numeric.unit),
-        TransitionRule(severity, f"The target changes the normalized numeric threshold {', '.join(changed)}; no domain consequence is inferred."),
+        TransitionRule(
+            severity,
+            "The numeric threshold changes from "
+            f"{_numeric_display(source_numeric, include_unit=True)} to "
+            f"{_numeric_display(target_numeric, include_unit=True)} ({', '.join(changed)}); "
+            "no domain consequence is inferred.",
+        ),
         (f"source.{source_numeric.id}", f"target.{target_numeric.id}"),
     )
     return True
@@ -210,6 +217,12 @@ def _transition(
         explanation=rule.explanation,
         references=references,
     ))
+
+
+def _canonical_findings(findings: list[Difference]) -> tuple[Difference, ...]:
+    positions = {difference_type: index for index, difference_type in enumerate(CANONICAL_DIFFERENCE_ORDER)}
+    ordered = sorted(enumerate(findings), key=lambda item: (positions[item[1].difference_type], item[0]))
+    return tuple(replace(finding, id=f"difference_{index:03d}") for index, (_, finding) in enumerate(ordered, 1))
 
 
 class DeterministicComparator:
@@ -340,7 +353,8 @@ class DeterministicComparator:
                 findings, DifferenceType.TEMPORAL_CHANGE, source_value, target_value,
                 TransitionRule(
                     Severity.HIGH if reversed_order else Severity.MEDIUM,
-                    f"The target changes the normalized temporal {' and '.join(changed)}; no temporal consequence is inferred.",
+                    f"The temporal constraint changes from {source_value} to {target_value} "
+                    f"({' and '.join(changed)}); no temporal consequence is inferred.",
                 ),
                 tuple(reference for reference in (
                     f"source.{source_temporal.id}" if source_temporal else f"source.{source_prop.id}",
@@ -372,9 +386,10 @@ class DeterministicComparator:
                 (f"source.{source_prop.id}", f"target.{target_prop.id}"),
             )
 
-        if not findings:
+        canonical_findings = _canonical_findings(findings)
+        if not canonical_findings:
             logical_relation = LogicalRelation.EQUIVALENT
-        elif len(findings) == 1 and findings[0].difference_type is DifferenceType.NEGATION_CHANGE:
+        elif len(canonical_findings) == 1 and canonical_findings[0].difference_type is DifferenceType.NEGATION_CHANGE:
             logical_relation = LogicalRelation.CONTRADICTORY
         else:
             logical_relation = LogicalRelation.UNDETERMINED
@@ -382,7 +397,7 @@ class DeterministicComparator:
             mode=mode,
             source_analysis=source,
             target_analysis=target,
-            differences=tuple(findings),
+            differences=canonical_findings,
             logical_relation=logical_relation,
         )
         validate_comparison(comparison)

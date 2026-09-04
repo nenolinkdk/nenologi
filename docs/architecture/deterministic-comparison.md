@@ -104,7 +104,7 @@ Exactly one structured temporal relation may govern an aligned proposition. It c
 
 Temporal relations can govern a condition consequent because the `Condition` continues to reference that proposition rather than duplicating temporal content. Clock references such as `18:00` never enter `NumericConstraint`. Changed temporal relations use logical relation `UNDETERMINED`; no calendar, interval, or entailment reasoning is performed.
 
-Gold coverage increased from 17 to 18 exact cases by activating weekday case `temporal_002`. Event-clause case `temporal_001` and nested `until after` case `temporal_003` remain unsupported without changing their expectations. The public task terminology “temporal relation change” maps to the already committed machine identifier `TEMPORAL_CHANGE`.
+Temporal v0.1 activated weekday case `temporal_002`. The consolidated audit reports 19 exact cases overall because already-supported `equivalence_001` is now counted too. Event-clause case `temporal_001` and nested `until after` case `temporal_003` remain unsupported without changing their expectations. The public task terminology “temporal relation change” maps to the already committed machine identifier `TEMPORAL_CHANGE`.
 
 ## Unsupported comparisons
 

@@ -1,7 +1,7 @@
 """Public API for Nenologi Core v0.1 domain representation."""
 
 from .analysis import Analyzer, ControlledEnglishAnalyzer, UnsupportedConstructionError
-from .comparison import Comparator, DeterministicComparator, UnsupportedComparisonError
+from .comparison import CANONICAL_DIFFERENCE_ORDER, Comparator, DeterministicComparator, UnsupportedComparisonError
 from .models import (
     Ambiguity, Analysis, Comparison, ComparisonMode, Condition, Confidence, Difference,
     DifferenceType, DiscourseRelation, DiscourseRelationType, Document,
@@ -17,7 +17,7 @@ from .serialization import (
 )
 
 __all__ = [
-    "Ambiguity", "Analysis", "Analyzer", "Comparator", "Comparison", "Condition",
+    "Ambiguity", "Analysis", "Analyzer", "CANONICAL_DIFFERENCE_ORDER", "Comparator", "Comparison", "Condition",
     "ComparisonMode", "Confidence", "ControlledEnglishAnalyzer",
     "DeterministicComparator",
     "Difference", "DifferenceType", "DiscourseRelation", "DiscourseRelationType",

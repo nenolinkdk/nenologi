@@ -31,7 +31,7 @@ A <-> B         -> semantic/logical findings
 
 ## Current Phase 1 status
 
-The callable pipeline now covers 18 exact comparison/equivalence gold cases. Temporal Relations v0.1 supports four typed relations, weekdays and exact clock references, condition consequents, and deterministic add/remove/change findings without generic addition/omission duplicates.
+The callable pipeline covers 19 exact end-to-end gold cases out of 42. The reproducible consolidation audit classifies the remainder as 14 parser-unsupported, 2 comparator-unsupported, and 7 inference-not-implemented, with no analyzable-but-inexact cases. See [Semantic Core Consolidation](../architecture/semantic-core-consolidation.md).
 
 ## Next implementation milestone
 
