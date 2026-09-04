@@ -27,7 +27,7 @@ A <-> B         -> semantic/logical findings
 3. ~~Add controlled-English structural segmentation behind a parser-neutral interface.~~ Initial narrow analyzer implemented.
 4. Expand deterministic semantic normalization and grammar coverage for selected committed gold cases.
 5. Add cautious plain-English rendering over structured expressions.
-6. Implement deterministic comparison rules for critical minimal pairs.
+6. ~~Implement initial deterministic comparison rules.~~ Modality, quantifier, explicit negation, and equivalence are implemented; extend only after alignment/taxonomy decisions.
 
 ## Definition of ready
 

@@ -44,7 +44,7 @@ Within this controlled grammar, `MAY NOT` is compositionally represented as `May
 
 ## Normalization and preservation
 
-Recognition is case-insensitive; runs of whitespace are insignificant; one final period is optional. `EVERY` normalizes to `ALL`, and `NO` to `NONE`. A small deterministic singularizer is used only for display text. No synonym expansion, tense conversion, or world-knowledge inference occurs.
+Recognition is case-insensitive; runs of whitespace are insignificant; one final period is optional. `EVERY` normalizes to `ALL`, and `NO` to `NONE`. A small deterministic singularizer normalizes the simple controlled entity label and supports display text, allowing `employee` and `employees` to align. No broad morphology, synonym expansion, tense conversion, or world-knowledge inference occurs.
 
 `document.text` always preserves the caller's exact input. Token spans refer to that original string. Equivalent normalized inputs produce the same positional ID sequence and semantic identifiers, although original text and spans may differ.
 

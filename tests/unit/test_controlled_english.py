@@ -48,7 +48,7 @@ class ControlledEnglishAnalyzerTests(unittest.TestCase):
         result = self.analyzer.analyze("All employees must submit reports.")
         self.assertEqual(result.propositions[0].predicate, "SUBMIT")
         self.assertEqual(result.propositions[0].arguments, ("entity_001", "entity_002"))
-        self.assertEqual(result.entities[1].label, "reports")
+        self.assertEqual(result.entities[1].label, "report")
         self.assertEqual(result.relations[0].type, "ACTION_RELATION")
         self.assertIn("object_phrase", {node.kind for node in result.structure.clauses})
 

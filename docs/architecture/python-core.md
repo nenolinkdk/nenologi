@@ -10,11 +10,11 @@ src/nenologi/
   serialization/   # explicit JSON conversion and deterministic validation
 ```
 
-The package has no GUI, AI-provider, web-framework, database, or persistence dependency. The first parser-neutral interface and deliberately narrow implementation are documented in [Controlled English Analyzer v0.1](controlled-english-analyzer.md).
+The package has no GUI, AI-provider, web-framework, database, or persistence dependency. The first parser-neutral interface and deliberately narrow implementation are documented in [Controlled English Analyzer v0.1](controlled-english-analyzer.md). Normalized analyses can be compared through the separate [deterministic comparator](deterministic-comparison.md).
 
 ## Public API
 
-Common construction requires only imports from `nenologi`. The public surface includes `Analyzer`, `ControlledEnglishAnalyzer`, `UnsupportedConstructionError`, `Analysis`, `Comparison`, `Difference`, `Confidence`, stable enums, component dataclasses, JSON conversion functions, and `validate_analysis` / `validate_comparison`. Internal token and grammar helpers are not public API.
+Common construction requires only imports from `nenologi`. The public surface includes `Analyzer`, `ControlledEnglishAnalyzer`, `Comparator`, `DeterministicComparator`, their explicit unsupported-operation errors, domain models, stable enums, JSON conversion functions, and validation functions. Internal token, grammar, alignment, and rule-application helpers are not public API.
 
 ```python
 from nenologi import (

@@ -240,10 +240,10 @@ class ControlledEnglishAnalyzer:
         if parsed.objects:
             object_start = parsed.object_determiner.start if parsed.object_determiner else parsed.objects[0].start
             clauses.append(StructuralNode("object_001", Span(object_start, parsed.objects[0].end), "predicate_001", "object_phrase"))
-        entities = [Entity("entity_001", "ENTITY_CLASS", parsed.subject.normalized, status, certain, parsed.subject.span)]
+        entities = [Entity("entity_001", "ENTITY_CLASS", _singular(parsed.subject.normalized), status, certain, parsed.subject.span)]
         arguments = ["entity_001"]
         if parsed.objects:
-            entities.append(Entity("entity_002", "OBJECT", parsed.objects[0].normalized, status, certain, parsed.objects[0].span))
+            entities.append(Entity("entity_002", "OBJECT", _singular(parsed.objects[0].normalized), status, certain, parsed.objects[0].span))
             arguments.append("entity_002")
         proposition = Proposition("prop_001", parsed.predicate.normalized.upper(), tuple(arguments), status, certain, parsed.predicate.span)
         relations = ()
