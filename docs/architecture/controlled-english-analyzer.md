@@ -101,6 +101,10 @@ Exactly one fronted form is supported: `Not all SUBJECT [MODAL] PREDICATE`. It n
 
 `MAY NOT` retains the fixed controlled reading `MAY > NOT > proposition`; this is not general natural-language disambiguation. See [Scope v0.1](scope-v0.1.md).
 
+## Simple past transitive v0.1
+
+The parser accepts the explicit affirmative active forms documented in [Simple Past Transitive Clauses v0.1](simple-past-transitive-v0.1.md). Each requires a determiner-led object and maps through a closed verb lexicon to the existing canonical predicate. Tense is not represented as a semantic operator or comparison dimension.
+
 ## Explicitly unsupported
 
 - More than one sentence
@@ -117,13 +121,14 @@ Exactly one fronted form is supported: `Not all SUBJECT [MODAL] PREDICATE`. It n
 
 ## Gold-standard compatibility
 
-Both sides of these existing comparison cases are individually analyzable (automatic difference detection is not yet implemented):
+Both sides of these existing comparison cases are analyzable and compared exactly:
 
 - `modality_001` through `modality_003`
 - `quantifier_001` through `quantifier_003`
 - `negation_001` and `negation_002`
 - `contradiction_001`
+- `entity_relation_001` and `entity_relation_002`
 
 The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), numeric equivalence case `equivalence_003`, prefix-IF removal case `condition_001`, and weekday case `temporal_002`.
 
-Other cases remain intentionally outside this grammar. Gold expected results are unchanged.
+Other cases remain intentionally outside this grammar. Gold expected results are unchanged; use the [machine-readable audit](phase-1-completion-audit.md) for current status.

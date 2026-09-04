@@ -47,8 +47,9 @@ The second is a source/target comparison in which both texts are independently r
 10. [Proposition Alignment v0.1](docs/architecture/proposition-alignment-v0.1.md)
 11. [Addition/Omission v0.1](docs/architecture/addition-omission-v0.1.md)
 12. [Phase 1 completion audit](docs/architecture/phase-1-completion-audit.md)
-13. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
-14. [Build preparation](docs/project/build-preparation.md)
+13. [Simple Past Transitive Clauses v0.1](docs/architecture/simple-past-transitive-v0.1.md)
+14. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
+15. [Build preparation](docs/project/build-preparation.md)
 
 For a non-technical introduction, see [Nenologi – Looking Beneath the Words](docs/public/what-is-nenologi.md). The older topic-oriented documents under `docs/01-concept` through `docs/08-integrations` remain useful background; the files linked above are the canonical Phase 0 specification.
 

@@ -29,4 +29,6 @@ python -m unittest discover -s tests/validation -p "test_*.py"
 
 For the complete per-case pipeline matrix, including concrete blocker codes, run `python tests/validation/audit_gold_coverage.py --json`. The human-readable baseline is the [Phase 1 completion audit](../../docs/architecture/phase-1-completion-audit.md).
 
+Simple Past Transitive v0.1 activates `entity_relation_001` and `entity_relation_002` without changing their expectations. Current coverage is 21 exact, 12 parser-unsupported, 2 comparator-unsupported, and 7 inference-not-implemented.
+
 The validator uses only the Python standard library. It verifies that all schema JSON parses, required case fields exist, IDs are globally unique, enum values and language tags are valid, required difference/status coverage exists, and equivalence cases cannot masquerade as change cases.

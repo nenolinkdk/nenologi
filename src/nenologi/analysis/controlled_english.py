@@ -20,8 +20,14 @@ _MODALS = {"must": "MUST", "may": "MAY", "should": "SHOULD"}
 _DETERMINERS = {"a", "an", "the"}
 _COPULAS = {"is", "are"}
 _ACTIONS = {
-    "access", "approve", "bring", "choose", "enter", "open", "pay", "receive", "register",
-    "report", "restart", "select", "stop", "submit", "vote", "wear",
+    "access", "acquire", "approve", "bring", "buy", "choose", "discover", "enter", "make",
+    "open", "pay", "receive", "register", "report", "restart", "select", "sell", "stop",
+    "submit", "vote", "wear",
+}
+_PAST_ACTIONS = {
+    "acquired": "acquire", "approved": "approve", "discovered": "discover",
+    "opened": "open", "registered": "register",
+    "bought": "buy", "made": "make", "sold": "sell",
 }
 _NUMBER_WORDS = {"zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10"}
 _UNITS = {"year": "year", "years": "year", "kg": "kg", "%": "%", "°c": "°C", "degree": "degree", "degrees": "degree", "copy": "copy", "copies": "copy", "file": "file", "files": "file"}
@@ -126,6 +132,10 @@ def _class_name(word: str) -> str:
     return _singular(word).capitalize()
 
 
+def _canonical_action(word: str) -> str | None:
+    return word if word in _ACTIONS else _PAST_ACTIONS.get(word)
+
+
 def _object_label(tokens: tuple[_Token, ...]) -> str:
     return "_".join(_singular(token.normalized) for token in tokens)
 
@@ -218,10 +228,14 @@ def _parse(tokens: tuple[_Token, ...]) -> _Parsed:
     if index >= len(tokens):
         raise UnsupportedConstructionError("action predicate is missing")
     predicate = tokens[index]
-    if predicate.normalized not in _ACTIONS:
+    if _canonical_action(predicate.normalized) is None:
         raise UnsupportedConstructionError(f"unsupported action predicate: {predicate.text}")
     index += 1
     remaining = tokens[index:]
+    if predicate.normalized in _PAST_ACTIONS and (
+        not remaining or remaining[0].normalized not in _DETERMINERS
+    ):
+        raise UnsupportedConstructionError("simple past transitive requires one determiner-led object")
     numeric = _numeric_phrase(tuple(remaining)) if remaining else None
     if numeric is not None:
         operator, value, unit, numeric_span = numeric
@@ -274,7 +288,7 @@ def _predicate_display(parsed: _Parsed) -> str:
             object_display = f", {_object_display(parsed.objects)}" if parsed.objects else ""
             result = f"{_class_name(parsed.predicate.normalized)}(x{object_display}) {symbols[parsed.numeric_operator]} {value}{unit}"
     else:
-        predicate = _class_name(parsed.predicate.normalized)
+        predicate = _class_name(_canonical_action(parsed.predicate.normalized) or parsed.predicate.normalized)
         def atom(objects: tuple[_Token, ...]) -> str:
             arguments = "x" + (f", {_object_display(objects)}" if objects else "")
             return f"{predicate}({arguments})"
@@ -419,7 +433,8 @@ class ControlledEnglishAnalyzer:
         if parsed.second_objects:
             entities.append(Entity("entity_003", "OBJECT", _object_label(parsed.second_objects), status, certain, Span(parsed.second_objects[0].start, parsed.second_objects[-1].end)))
             arguments.append("entity_003")
-        proposition = Proposition("prop_001", parsed.predicate.normalized.upper(), tuple(arguments), status, certain, parsed.predicate.span)
+        canonical_predicate = _canonical_action(parsed.predicate.normalized) or parsed.predicate.normalized
+        proposition = Proposition("prop_001", canonical_predicate.upper(), tuple(arguments), status, certain, parsed.predicate.span)
         relations = ()
         if parsed.objects:
             relation_items = [SemanticItem("relation_001", "ACTION_RELATION", tuple(arguments), status, certain, derived_from=("prop_001",))]
