@@ -27,4 +27,6 @@ python tests/validation/validate_gold_standard.py
 python -m unittest discover -s tests/validation -p "test_*.py"
 ```
 
+For the complete per-case pipeline matrix, including concrete blocker codes, run `python tests/validation/audit_gold_coverage.py --json`. The human-readable baseline is the [Phase 1 completion audit](../../docs/architecture/phase-1-completion-audit.md).
+
 The validator uses only the Python standard library. It verifies that all schema JSON parses, required case fields exist, IDs are globally unique, enum values and language tags are valid, required difference/status coverage exists, and equivalence cases cannot masquerade as change cases.

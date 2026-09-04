@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from collections import Counter, defaultdict
 from dataclasses import dataclass
@@ -10,7 +11,7 @@ from enum import StrEnum
 from pathlib import Path
 
 from nenologi import (
-    ControlledEnglishAnalyzer, DeterministicComparator,
+    ControlledEnglishAnalyzer, DeterministicComparator, DeterministicPropositionAligner,
     UnsupportedComparisonError, UnsupportedConstructionError,
 )
 
@@ -35,6 +36,30 @@ class AuditResult:
     case_status: dict[str, ImplementationStatus]
     totals: Counter[ImplementationStatus]
     by_feature: dict[str, Counter[ImplementationStatus]]
+    cases: tuple[dict[str, object], ...] = ()
+
+
+PARSER_BLOCKERS = {
+    "temporal_001": "UNSUPPORTED_EVENT_TEMPORAL_ANCHOR",
+    "temporal_003": "UNSUPPORTED_NESTED_TEMPORAL_PHRASE",
+    "condition_002": "UNSUPPORTED_SUFFIX_IF",
+    "condition_003": "UNSUPPORTED_UNLESS",
+    "entity_relation_001": "UNSUPPORTED_PAST_TRANSITIVE",
+    "entity_relation_002": "UNSUPPORTED_PAST_TRANSITIVE",
+    "entity_relation_003": "UNSUPPORTED_SPATIAL_RELATION",
+    "omission_001": "UNSUPPORTED_SUFFIX_IF",
+    "scope_001": "UNSUPPORTED_EMBEDDED_VERB",
+    "scope_002": "UNSUPPORTED_EMBEDDED_VERB",
+    "addition_002": "UNSUPPORTED_MULTI_SENTENCE",
+    "omission_002": "UNSUPPORTED_COORDINATED_PREDICATES",
+    "equivalence_002": "UNSUPPORTED_PAST_TRANSITIVE",
+    "equivalence_004": "UNSUPPORTED_CONTRACTION",
+}
+
+COMPARATOR_BLOCKERS = {
+    "addition_001": "UNSUPPORTED_COORDINATED_PREDICATE_REPRESENTATION",
+    "equivalence_005": "UNSUPPORTED_SYMMETRIC_CONJUNCTION_ALIGNMENT",
+}
 
 
 def _actual_differences(comparison) -> list[dict[str, object]]:
@@ -55,23 +80,60 @@ def audit_gold_coverage() -> AuditResult:
     case_status: dict[str, ImplementationStatus] = {}
     totals: Counter[ImplementationStatus] = Counter()
     by_feature: dict[str, Counter[ImplementationStatus]] = defaultdict(Counter)
+    case_results: list[dict[str, object]] = []
 
     for path in CASE_FILES:
         cases = json.loads(path.read_text(encoding="utf-8"))["cases"]
         for case in cases:
             if case["case_type"] == "INFERENCE":
                 status = ImplementationStatus.INFERENCE_NOT_IMPLEMENTED
+                parsed = []
+                for field in ("statement", "candidate_inference"):
+                    try:
+                        analyzer.analyze(case[field])
+                    except UnsupportedConstructionError:
+                        parsed.append(False)
+                    else:
+                        parsed.append(True)
+                pipeline = {
+                    "parser": "SUPPORTED" if all(parsed) else "UNSUPPORTED",
+                    "analysis": "AVAILABLE" if all(parsed) else "INCOMPLETE",
+                    "alignment": "NOT_APPLICABLE", "comparator": "NOT_APPLICABLE",
+                    "inference": "NOT_IMPLEMENTED", "blocking_reason": "INFERENCE_REQUIRED",
+                }
             else:
                 try:
                     source = analyzer.analyze(case["source"])
                     target = analyzer.analyze(case["target"])
-                except UnsupportedConstructionError:
+                except UnsupportedConstructionError as exc:
                     status = ImplementationStatus.PARSER_UNSUPPORTED
+                    pipeline = {
+                        "parser": "UNSUPPORTED", "analysis": "NOT_REACHED",
+                        "alignment": "NOT_REACHED", "comparator": "NOT_REACHED",
+                        "inference": "NOT_APPLICABLE",
+                        "blocking_reason": PARSER_BLOCKERS.get(case["id"], "UNCLASSIFIED_PARSER_BLOCKER"),
+                        "detail": str(exc),
+                    }
                 else:
+                    alignment = DeterministicPropositionAligner().align(
+                        source, target, allow_structural_counterparts=True,
+                    )
+                    alignment_status = (
+                        "ALIGNED" if alignment.alignments else
+                        "AMBIGUOUS" if alignment.ambiguous_source_ids or alignment.ambiguous_target_ids else
+                        "UNALIGNED"
+                    )
                     try:
                         comparison = comparator.compare(source, target)
-                    except UnsupportedComparisonError:
+                    except UnsupportedComparisonError as exc:
                         status = ImplementationStatus.COMPARATOR_UNSUPPORTED
+                        pipeline = {
+                            "parser": "SUPPORTED", "analysis": "AVAILABLE",
+                            "alignment": alignment_status, "comparator": "UNSUPPORTED",
+                            "inference": "NOT_APPLICABLE",
+                            "blocking_reason": COMPARATOR_BLOCKERS.get(case["id"], "UNCLASSIFIED_COMPARATOR_BLOCKER"),
+                            "detail": str(exc),
+                        }
                     else:
                         exact = _actual_differences(comparison) == case["expected"]["differences"]
                         expected_relation = case["expected"].get("logical_relation")
@@ -81,15 +143,34 @@ def audit_gold_coverage() -> AuditResult:
                             ImplementationStatus.END_TO_END_EXACT
                             if exact else ImplementationStatus.ANALYZABLE_BUT_NOT_EXACT
                         )
+                        pipeline = {
+                            "parser": "SUPPORTED", "analysis": "AVAILABLE",
+                            "alignment": alignment_status, "comparator": "SUPPORTED",
+                            "inference": "NOT_APPLICABLE", "blocking_reason": "NONE",
+                        }
             case_status[case["id"]] = status
             totals[status] += 1
             by_feature[case["category"]][status] += 1
+            case_results.append({
+                "case_id": case["id"], "category": case["category"], **pipeline,
+                "final_status": status.value,
+            })
 
-    return AuditResult(case_status, totals, dict(by_feature))
+    return AuditResult(case_status, totals, dict(by_feature), tuple(case_results))
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--json", action="store_true", help="emit the complete per-case pipeline matrix as JSON")
+    args = parser.parse_args()
     result = audit_gold_coverage()
+    if args.json:
+        print(json.dumps({
+            "total": sum(result.totals.values()),
+            "totals": {status.value: result.totals[status] for status in ImplementationStatus},
+            "cases": result.cases,
+        }, indent=2))
+        return 0
     print(f"TOTAL {sum(result.totals.values())}")
     for status in ImplementationStatus:
         print(f"{status.value} {result.totals[status]}")

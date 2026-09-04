@@ -183,6 +183,18 @@ class SemanticConsolidationTests(unittest.TestCase):
         self.assertEqual(audit.totals[ImplementationStatus.PARSER_UNSUPPORTED], 14)
         self.assertEqual(audit.totals[ImplementationStatus.COMPARATOR_UNSUPPORTED], 2)
         self.assertEqual(audit.totals[ImplementationStatus.INFERENCE_NOT_IMPLEMENTED], 7)
+        self.assertEqual(len(audit.cases), 42)
+        self.assertEqual(len({item["case_id"] for item in audit.cases}), 42)
+        self.assertFalse(any(
+            str(item["blocking_reason"]).startswith("UNCLASSIFIED_") for item in audit.cases
+        ))
+        for item in audit.cases:
+            self.assertIn("parser", item)
+            self.assertIn("analysis", item)
+            self.assertIn("alignment", item)
+            self.assertIn("comparator", item)
+            self.assertIn("inference", item)
+            self.assertIn("final_status", item)
 
     def test_comparator_accepts_normalized_models_without_parser_dependency(self) -> None:
         source = employee_analysis("MUST")

@@ -17,7 +17,7 @@ Nenologi does not assume that natural language has one uniquely correct formaliz
 
 ## Project status
 
-Phase 0—the project specification—is complete. The next milestone is **Phase 1: Nenologi Core v0.1**. No GUI, external AI provider, PDF export, licensing system, or Trawedit integration is part of Phase 1.
+Phase 0 and **Phase 1: Nenologi Core v0.1** are complete. The canonical evidence and Phase 2 recommendation are recorded in the [Phase 1 completion audit](docs/architecture/phase-1-completion-audit.md). No GUI, external AI provider, PDF export, licensing system, or Trawedit integration was part of Phase 1.
 
 The first success criterion is:
 
@@ -46,8 +46,9 @@ The second is a source/target comparison in which both texts are independently r
 9. [Scope v0.1](docs/architecture/scope-v0.1.md)
 10. [Proposition Alignment v0.1](docs/architecture/proposition-alignment-v0.1.md)
 11. [Addition/Omission v0.1](docs/architecture/addition-omission-v0.1.md)
-12. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
-13. [Build preparation](docs/project/build-preparation.md)
+12. [Phase 1 completion audit](docs/architecture/phase-1-completion-audit.md)
+13. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
+14. [Build preparation](docs/project/build-preparation.md)
 
 For a non-technical introduction, see [Nenologi – Looking Beneath the Words](docs/public/what-is-nenologi.md). The older topic-oriented documents under `docs/01-concept` through `docs/08-integrations` remain useful background; the files linked above are the canonical Phase 0 specification.
 

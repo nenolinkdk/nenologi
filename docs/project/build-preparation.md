@@ -27,15 +27,17 @@ A <-> B         -> semantic/logical findings
 3. ~~Add controlled-English structural segmentation behind a parser-neutral interface.~~ Initial narrow analyzer implemented.
 4. Expand deterministic semantic normalization and grammar coverage for selected committed gold cases. Flat object conjunction, positional entity/predicate correspondence, exact numeric thresholds, structured prefix-IF, and proposition-scoped temporal relations are now supported.
 5. Add cautious plain-English rendering over structured expressions.
-6. ~~Implement initial deterministic comparison rules.~~ Modality, quantifier, explicit negation, flat conjunction, positional entity/predicate change, and equivalence are implemented.
+6. ~~Implement deterministic comparison rules.~~ The complete controlled Phase 1 taxonomy, alignment, and safe addition/omission are implemented.
 
 ## Current Phase 1 status
+
+Phase 1 is complete. The reproducible exit decision, 42-case pipeline matrix, quality baseline, and single recommended Phase 2 milestone are maintained in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
 The callable pipeline covers 19 exact end-to-end gold cases out of 42. The reproducible consolidation audit classifies the remainder as 14 parser-unsupported, 2 comparator-unsupported, and 7 inference-not-implemented, with no analyzable-but-inexact cases. See [Semantic Core Consolidation](../architecture/semantic-core-consolidation.md).
 
 ## Next implementation milestone
 
-Implement Scope v0.1 as the next isolated deterministic extension, beginning with a deliberately small normalized scope representation. Keep `MAY NOT` ambiguity, general negation raising, broad clause parsing, and inference outside that milestone.
+Implement **Controlled Parser Expansion v0.1: Simple Past Transitive Clauses**. Normalize only the narrow `SUBJECT approved OBJECT` family to the existing proposition/entity structure; keep passive voice, lexical generalization, and inference outside that milestone. The evidence is detailed in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
 ## Definition of ready
 
