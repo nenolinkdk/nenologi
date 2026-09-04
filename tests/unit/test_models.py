@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from nenologi import (
     Ambiguity, Condition, Confidence, DifferenceType, DomainValidationError, Inference,
-    InterpretationStatus, NumericConstraint, NumericOperator, Severity,
+    InterpretationStatus, NumericConstraint, NumericOperator, Severity, TemporalRelation, TemporalRelationType,
 )
 
 
@@ -53,6 +53,18 @@ class DomainModelTests(unittest.TestCase):
     def test_condition_requires_both_proposition_roles(self) -> None:
         with self.assertRaises(DomainValidationError):
             Condition("condition_001", (), ("prop_001",), InterpretationStatus.EXPLICIT, Confidence(1.0))
+
+    def test_temporal_relation_requires_typed_relation_and_reference(self) -> None:
+        temporal = TemporalRelation(
+            "temporal_001", "prop_001", TemporalRelationType.BEFORE, "Friday",
+            InterpretationStatus.EXPLICIT, Confidence(1.0),
+        )
+        self.assertIs(temporal.relation, TemporalRelationType.BEFORE)
+        with self.assertRaises(DomainValidationError):
+            TemporalRelation(
+                "temporal_001", "prop_001", TemporalRelationType.BEFORE, "",
+                InterpretationStatus.EXPLICIT, Confidence(1.0),
+            )
 
 
 if __name__ == "__main__":

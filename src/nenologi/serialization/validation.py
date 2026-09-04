@@ -49,7 +49,7 @@ def validate_analysis_references(analysis: Analysis) -> None:
             _require(reference, entity_ids, f"proposition {proposition.id}")
         for reference in proposition.derived_from:
             _require(reference, all_ids, f"proposition {proposition.id}")
-    for collection in (analysis.relations, analysis.temporal_relations, analysis.sets):
+    for collection in (analysis.relations, analysis.sets):
         for item in collection:
             for reference in (*item.arguments, *item.derived_from):
                 _require(reference, all_ids, f"semantic item {item.id}")
@@ -57,6 +57,8 @@ def validate_analysis_references(analysis: Analysis) -> None:
     for condition in analysis.conditions:
         for reference in (*condition.antecedent, *condition.consequent):
             _require(reference, proposition_ids, f"condition {condition.id}")
+    for temporal in analysis.temporal_relations:
+        _require(temporal.proposition, proposition_ids, f"temporal relation {temporal.id}")
     for collection in (analysis.quantifiers, analysis.modality, analysis.negation, analysis.numeric_constraints):
         for operator in collection:
             for reference in operator.scope:

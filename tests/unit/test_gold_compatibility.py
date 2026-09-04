@@ -13,6 +13,7 @@ COMPATIBLE_CASE_IDS = {
     "conjunction_001", "conjunction_002",
     "numeric_001", "numeric_002", "numeric_003", "numeric_004",
     "condition_001",
+    "temporal_002",
 }
 
 

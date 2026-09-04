@@ -49,6 +49,7 @@ Finite operator transitions are explicit data in `comparison/rules.py`; structur
 | Predicate identity | changed | `HIGH` |
 | Numeric threshold | operator/value/unit changed | `MEDIUM`, or `HIGH` when exact equality is entered/left |
 | Condition | prefix IF added, removed, or antecedent identity changed | `HIGH` |
+| Temporal relation | relation/reference added, removed, or changed | `MEDIUM`; `BEFORE ↔ AFTER` is `HIGH` |
 
 These severities indicate a material controlled semantic change, not legal, safety, or real-world impact. Every supported exact comparison uses confidence `1.0` with a deterministic rationale. Confidence remains independent of severity.
 
@@ -64,7 +65,8 @@ Findings are emitted in fixed dimension order:
 4. `CONJUNCTION_CHANGE`
 5. `NUMERIC_THRESHOLD_CHANGE`
 6. `CONDITION_CHANGE`
-7. `ENTITY_RELATION_CHANGE`
+7. `TEMPORAL_CHANGE`
+8. `ENTITY_RELATION_CHANGE`
 
 IDs (`difference_001`, and so on) follow that order. All dimensions are checked, so one comparison may produce multiple findings. Equivalent normalized analyses use `differences = []`; no artificial no-change difference type or severity is introduced.
 
@@ -96,6 +98,14 @@ A condition aligns its consequent with the other main proposition and holds expl
 
 Condition comparison establishes neither contradiction nor conditional entailment, so changed conditions use `UNDETERMINED`. Gold coverage increased from 16 to 17 exact cases by activating `condition_001`. Suffix-IF `condition_002` and `UNLESS` case `condition_003` remain outside the grammar; their expected results were not changed.
 
+## Temporal relations
+
+Exactly one structured temporal relation may govern an aligned proposition. It contains a typed `BEFORE`, `AFTER`, `ON`, or `UNTIL` relation and a canonical weekday or 24-hour clock reference. Comparator values retain the relation and include the reference whenever it changed or the temporal constraint was added/removed. Those cases produce the existing v0.1 taxonomy value `TEMPORAL_CHANGE`; they do not additionally produce `ADDITION` or `OMISSION`.
+
+Temporal relations can govern a condition consequent because the `Condition` continues to reference that proposition rather than duplicating temporal content. Clock references such as `18:00` never enter `NumericConstraint`. Changed temporal relations use logical relation `UNDETERMINED`; no calendar, interval, or entailment reasoning is performed.
+
+Gold coverage increased from 17 to 18 exact cases by activating weekday case `temporal_002`. Event-clause case `temporal_001` and nested `until after` case `temporal_003` remain unsupported without changing their expectations. The public task terminology “temporal relation change” maps to the already committed machine identifier `TEMPORAL_CHANGE`.
+
 ## Unsupported comparisons
 
 - Multiple unscoped propositions or non-`EXPLICIT` aligned propositions
@@ -105,6 +115,7 @@ Condition comparison establishes neither contradiction nor conditional entailmen
 - General contradiction/coordination/alignment, temporal, conditional, interval, scope, or addition/omission logic
 - Adding/removing a numeric constraint, multiple numeric constraints, ranges, conversions, or numeric entailment
 - Multiple, nested, suffix, `UNLESS`, `ELSE`, biconditional, chained, counterfactual, or causally interpreted conditions
+- Multiple/nested temporal phrases, event anchors, durations, relative dates, time zones, calendar arithmetic, recurrence, tense/aspect, or temporal entailment
 - `MAY NOT` scope resolution
 
 A runnable end-to-end example is available at [`examples/semantic_comparison.py`](../../examples/semantic_comparison.py).

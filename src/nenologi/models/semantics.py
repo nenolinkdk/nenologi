@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 
-from .common import Confidence, DomainValidationError, InterpretationStatus, NumericOperator, Span, validate_identifier
+from .common import Confidence, DomainValidationError, InterpretationStatus, NumericOperator, Span, TemporalRelationType, validate_identifier
 
 _DECIMAL_PATTERN = re.compile(r"^(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$")
 
@@ -150,4 +150,26 @@ class Condition:
             raise DomainValidationError("condition requires antecedent and consequent references")
         _validate_references(self.antecedent, "antecedent")
         _validate_references(self.consequent, "consequent")
+        _validate_status_and_confidence(self.interpretation_status, self.confidence)
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalRelation:
+    """A normalized temporal relation governing one proposition."""
+
+    id: str
+    proposition: str
+    relation: TemporalRelationType
+    temporal_reference: str
+    interpretation_status: InterpretationStatus
+    confidence: Confidence
+    span: Span | None = None
+
+    def __post_init__(self) -> None:
+        validate_identifier(self.id)
+        validate_identifier(self.proposition, "proposition")
+        if not isinstance(self.relation, TemporalRelationType):
+            raise DomainValidationError("temporal relation must be a TemporalRelationType")
+        if not isinstance(self.temporal_reference, str) or not self.temporal_reference:
+            raise DomainValidationError("temporal reference must be non-empty text")
         _validate_status_and_confidence(self.interpretation_status, self.confidence)

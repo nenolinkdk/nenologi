@@ -18,7 +18,7 @@
     "negation": {"type": "array", "items": {"$ref": "#/$defs/operator"}},
     "numeric_constraints": {"type": "array", "items": {"$ref": "#/$defs/numericConstraint"}},
     "conditions": {"type": "array", "items": {"$ref": "#/$defs/condition"}},
-    "temporal_relations": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
+    "temporal_relations": {"type": "array", "items": {"$ref": "#/$defs/temporalRelation"}},
     "sets": {"type": "array", "items": {"$ref": "#/$defs/semanticItem"}},
     "logical_representation": {"type": "array", "items": {"$ref": "#/$defs/logicalExpression"}},
     "inferences": {"type": "array", "items": {"$ref": "#/$defs/inference"}},
@@ -91,6 +91,19 @@
         "id": {"$ref": "#/$defs/identifier"},
         "antecedent": {"type": "array", "items": {"$ref": "#/$defs/identifier"}, "minItems": 1},
         "consequent": {"type": "array", "items": {"$ref": "#/$defs/identifier"}, "minItems": 1},
+        "span": {"$ref": "#/$defs/span"},
+        "interpretation_status": {"$ref": "#/$defs/interpretationStatus"},
+        "confidence": {"$ref": "#/$defs/confidence"}
+      }
+    },
+    "temporalRelation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "proposition", "relation", "temporal_reference", "interpretation_status", "confidence"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "proposition": {"$ref": "#/$defs/identifier"},
+        "relation": {"enum": ["BEFORE", "AFTER", "ON", "UNTIL"]},
+        "temporal_reference": {"type": "string", "minLength": 1},
         "span": {"$ref": "#/$defs/span"},
         "interpretation_status": {"$ref": "#/$defs/interpretationStatus"},
         "confidence": {"$ref": "#/$defs/confidence"}

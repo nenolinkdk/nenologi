@@ -65,6 +65,12 @@ class ValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ReferenceValidationError, "prop_999"):
             validate_analysis(data)
 
+    def test_temporal_relation_requires_known_proposition_reference(self) -> None:
+        data = analysis_to_dict(ControlledEnglishAnalyzer().analyze("Employees must register before Friday."))
+        data["temporal_relations"][0]["proposition"] = "prop_999"
+        with self.assertRaisesRegex(ReferenceValidationError, "prop_999"):
+            validate_analysis(data)
+
     def test_duplicate_semantic_id_is_reference_error(self) -> None:
         base = employee_analysis()
         duplicate = Entity("prop_001", "SET", "duplicate", InterpretationStatus.EXPLICIT, Confidence(1.0))

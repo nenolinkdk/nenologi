@@ -31,3 +31,5 @@ Taxonomy correction: `contradiction_001` now expects a `NEGATION_CHANGE` and sep
 The deterministic comparator currently executes 16 exact cases. Numeric Thresholds v0.1 raised coverage from 11 to 16 by activating `numeric_001` through `numeric_004` plus `equivalence_003`; expected gold results were not changed.
 
 Conditions v0.1 raises exact coverage from 16 to 17 by activating prefix-IF removal case `condition_001`. Suffix-IF `condition_002` and `UNLESS` case `condition_003` remain intentionally inactive; no gold expectation was changed.
+
+Temporal Relations v0.1 raises exact coverage from 17 to 18 through `temporal_002`. `temporal_001` requires an event-clause reference and `temporal_003` requires a nested `until after` relation, so both remain inactive; expected data was unchanged.

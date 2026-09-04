@@ -30,6 +30,7 @@ VERB OBJECT [AND | OR] OBJECT
 [ALL | EVERY | SOME | NO] SUBJECT ([MUST | MAY | SHOULD] BE | IS | ARE) NUMERIC_CONSTRAINT
 VERB NUMERIC_CONSTRAINT [UNIT]
 IF SIMPLE_ANTECEDENT, CONSEQUENT
+PROPOSITION [BEFORE | AFTER | ON | UNTIL] TEMPORAL_REFERENCE
 ```
 
 The quantifier and article are optional. Subjects contain one noun. An object contains one or two controlled words and may have `the`, `a`, or `an`. Exactly two object phrases may be joined by one `AND` or `OR`. The imperative form exists only for this same controlled object grammar. The controlled action vocabulary is `access`, `approve`, `choose`, `enter`, `open`, `receive`, `register`, `report`, `restart`, `submit`, `vote`, and `wear`. A small copular form supports one complement.
@@ -47,6 +48,7 @@ Supported semantic features are:
 - Integer values, simple dot decimals, and the number words zero through ten; `VALUE or more` is the one additional equivalence form used by the committed gold standard
 - A proposition, optional action relation, entities, operators, source spans, and structural phrase nodes
 - One prefix `IF` condition whose antecedent is one simple copular property or numeric threshold and whose consequent is one otherwise supported controlled proposition
+- One proposition-final temporal phrase using `before`, `after`, `on`, or `until` with a weekday or 24-hour `HH:MM` clock time
 
 Within this controlled grammar, `MAY NOT` is compositionally represented as `May(¬P)`. Ordinary English can also use “may not” as prohibition; inputs requiring that alternate reading need a future ambiguity-aware grammar.
 
@@ -84,6 +86,9 @@ Must(Score(x) ≥ 18)
 
 If the temperature is above 30 °C, the system must stop.
 (Temperature(x) > 30 °C) → (Must(Stop(System)))
+
+Employees must register before Friday.
+Before(Must(Register(Employee)), Friday)
 ```
 
 Plain-language output uses fixed templates, such as “The sentence states that every employee is required to register.”
@@ -100,6 +105,7 @@ A runnable example is available at [`examples/controlled_english.py`](../../exam
 - Passive voice and complex tense/aspect
 - Multiword noun phrases beyond a determiner plus one noun
 - Ranges, fractions, scientific notation, signed values, arithmetic, approximation, locale decimals, and unit conversion
+- Multiple temporal phrases, event-clause references, durations, relative dates, `before or on`, `after or on`, `since`, `during`, `when`, `by`, and `within`
 - Idioms, metaphor, broad synonymy, and unknown action verbs
 - Languages other than English
 
@@ -112,6 +118,6 @@ Both sides of these existing comparison cases are individually analyzable (autom
 - `negation_001` and `negation_002`
 - `contradiction_001`
 
-The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), numeric equivalence case `equivalence_003`, and prefix-IF removal case `condition_001`.
+The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), numeric equivalence case `equivalence_003`, prefix-IF removal case `condition_001`, and weekday case `temporal_002`.
 
 Other cases remain intentionally outside this grammar. Gold expected results are unchanged.

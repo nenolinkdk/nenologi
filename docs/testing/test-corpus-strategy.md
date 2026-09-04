@@ -31,3 +31,5 @@ Reference analyses and intermediate representations should remain versioned. Cha
 Numeric Thresholds v0.1 executes all four committed numeric change cases and the controlled numeric equivalence case. General ranges, conversion, approximation, and entailment remain future corpus targets rather than current parser promises.
 
 Conditions v0.1 executes the prefix-IF removal case. Suffix conditions and `UNLESS` remain future controlled-grammar decisions rather than being accepted merely for corpus coverage.
+
+Temporal Relations v0.1 executes the weekday-based `BEFORE → ON` case. Event-clause anchors and nested temporal relations remain future grammar decisions.

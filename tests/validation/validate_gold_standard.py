@@ -29,6 +29,7 @@ STATUSES = {
 }
 LOGICAL_RELATIONS = {"EQUIVALENT", "CONTRADICTORY", "UNDETERMINED"}
 NUMERIC_OPERATORS = {"GREATER_THAN", "GREATER_THAN_OR_EQUAL", "LESS_THAN", "LESS_THAN_OR_EQUAL", "EQUAL"}
+TEMPORAL_RELATIONS = {"BEFORE", "AFTER", "ON", "UNTIL"}
 CASE_FILES = (
     GOLD_DIR / "comparison" / "cases.json",
     GOLD_DIR / "equivalence" / "cases.json",
@@ -73,6 +74,10 @@ def validate_schemas() -> None:
         raise ValidationError("analysis conditions must use the structured condition definition")
     if set(analysis_schema["$defs"]["condition"]["required"]) != {"id", "antecedent", "consequent", "interpretation_status", "confidence"}:
         raise ValidationError("condition schema fields are out of sync")
+    if analysis_schema["properties"]["temporal_relations"]["items"].get("$ref") != "#/$defs/temporalRelation":
+        raise ValidationError("analysis temporal relations must use the structured definition")
+    if set(analysis_schema["$defs"]["temporalRelation"]["properties"]["relation"]["enum"]) != TEMPORAL_RELATIONS:
+        raise ValidationError("temporal-relation enum is out of sync")
     comparison_differences = set(loaded["comparison-v0.1.schema.json"]["$defs"]["differenceType"]["enum"])
     comparison_severities = set(loaded["comparison-v0.1.schema.json"]["$defs"]["severity"]["enum"])
     comparison_relations = set(loaded["comparison-v0.1.schema.json"]["$defs"]["logicalRelation"]["enum"])

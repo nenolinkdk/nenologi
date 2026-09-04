@@ -58,6 +58,8 @@ The result must report both `MODALITY_CHANGE` (obligation becomes permission or 
 
 For controlled IF comparisons, `CONDITION_CHANGE` describes adding, removing, or changing the governing antecedent. Removing an antecedent is not also an `OMISSION`, and adding one is not also an `ADDITION`. A numeric change inside an otherwise aligned antecedent uses the more specific `NUMERIC_THRESHOLD_CHANGE` without a duplicate generic condition finding.
 
+For controlled temporal comparisons, `TEMPORAL_CHANGE` covers relation/reference changes and addition/removal of a proposition-scoped temporal constraint. These changes are not duplicated as `ADDITION` or `OMISSION`; clock references remain separate from numeric thresholds.
+
 ## Interpretation and findings
 
 Allowed interpretation states are `EXPLICIT`, `ENTAILED`, `PROBABLE`, `AMBIGUOUS`, `UNSUPPORTED`, `CONTRADICTED`, and `CANNOT_BE_SAFELY_FORMALIZED`. Ambiguous inputs may carry multiple candidate readings. `PROBABLE` is not entailment. Severity expresses potential impact; confidence expresses support for an analysis. Neither determines the other. The exact v0.1 representations are documented in [Analysis Schema v0.1](../architecture/semantic-json-schema.md).

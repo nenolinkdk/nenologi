@@ -67,6 +67,13 @@ class NumericOperator(StrEnum):
     EQUAL = "EQUAL"
 
 
+class TemporalRelationType(StrEnum):
+    BEFORE = "BEFORE"
+    AFTER = "AFTER"
+    ON = "ON"
+    UNTIL = "UNTIL"
+
+
 def validate_identifier(value: str, field_name: str = "id") -> None:
     if not isinstance(value, str) or not IDENTIFIER_PATTERN.fullmatch(value):
         raise DomainValidationError(f"{field_name} is not a valid Nenologi identifier: {value!r}")

@@ -6,7 +6,7 @@ from collections.abc import Sequence
 
 from ..models import (
     Analysis, Comparison, ComparisonMode, Condition, Confidence, Difference,
-    DifferenceType, InterpretationStatus, LogicalRelation, NumericConstraint, NumericOperator, Operator, Proposition, Severity,
+    DifferenceType, InterpretationStatus, LogicalRelation, NumericConstraint, NumericOperator, Operator, Proposition, Severity, TemporalRelation,
 )
 from ..serialization.validation import validate_analysis, validate_comparison
 from .interface import UnsupportedComparisonError
@@ -53,7 +53,7 @@ def _corresponding_propositions(source: Analysis, target: Analysis, source_prop=
 
 
 def _reject_unsupported_dimensions(source: Analysis, target: Analysis, source_prop: Proposition, target_prop: Proposition) -> None:
-    for name in ("temporal_relations", "sets", "inferences", "ambiguities"):
+    for name in ("sets", "inferences", "ambiguities"):
         if getattr(source, name) or getattr(target, name):
             raise UnsupportedComparisonError(f"{name} comparison is not supported")
     source_relations = [item for item in source.relations if item.type not in {"AND", "OR"} and source_prop.id in item.derived_from]
@@ -174,6 +174,22 @@ def _append_numeric_change(findings: list[Difference], source: Analysis, target:
 def _condition_value(analysis: Analysis, antecedent: Proposition) -> str:
     numeric = _numeric_constraint(analysis, antecedent.id, "condition")
     return f"IF_{_numeric_display(numeric).replace(' ', '_')}" if numeric else f"IF_{antecedent.predicate}"
+
+
+def _temporal_relation(analysis: Analysis, proposition_id: str, side: str) -> TemporalRelation | None:
+    relations = tuple(item for item in analysis.temporal_relations if item.proposition == proposition_id)
+    if len(relations) > 1:
+        raise UnsupportedComparisonError(f"multiple {side} temporal relations are unsupported")
+    if not relations:
+        return None
+    relation = relations[0]
+    if relation.interpretation_status is not InterpretationStatus.EXPLICIT:
+        raise UnsupportedComparisonError(f"{side} temporal relation must have EXPLICIT interpretation status")
+    return relation
+
+
+def _temporal_value(relation: TemporalRelation, *, include_reference: bool) -> str:
+    return f"{relation.relation.value} {relation.temporal_reference}" if include_reference else relation.relation.value
 
 
 def _transition(
@@ -298,6 +314,38 @@ class DeterministicComparator:
                 findings, DifferenceType.CONDITION_CHANGE,
                 condition_source_value, condition_target_value,
                 TransitionRule(Severity.HIGH, condition_explanation), condition_refs,
+            )
+
+        source_temporal = _temporal_relation(source, source_prop.id, "source")
+        target_temporal = _temporal_relation(target, target_prop.id, "target")
+        source_temporal_signature = None if source_temporal is None else (source_temporal.relation, source_temporal.temporal_reference)
+        target_temporal_signature = None if target_temporal is None else (target_temporal.relation, target_temporal.temporal_reference)
+        if source_temporal_signature != target_temporal_signature:
+            reference_changed = (
+                source_temporal is not None and target_temporal is not None
+                and source_temporal.temporal_reference != target_temporal.temporal_reference
+            )
+            source_value = "NONE" if source_temporal is None else _temporal_value(source_temporal, include_reference=reference_changed or target_temporal is None)
+            target_value = "NONE" if target_temporal is None else _temporal_value(target_temporal, include_reference=reference_changed or source_temporal is None)
+            reversed_order = (
+                source_temporal is not None and target_temporal is not None
+                and {source_temporal.relation.value, target_temporal.relation.value} == {"BEFORE", "AFTER"}
+            )
+            changed = []
+            if source_temporal is None or target_temporal is None or source_temporal.relation != target_temporal.relation:
+                changed.append("relation")
+            if reference_changed:
+                changed.append("reference")
+            _transition(
+                findings, DifferenceType.TEMPORAL_CHANGE, source_value, target_value,
+                TransitionRule(
+                    Severity.HIGH if reversed_order else Severity.MEDIUM,
+                    f"The target changes the normalized temporal {' and '.join(changed)}; no temporal consequence is inferred.",
+                ),
+                tuple(reference for reference in (
+                    f"source.{source_temporal.id}" if source_temporal else f"source.{source_prop.id}",
+                    f"target.{target_temporal.id}" if target_temporal else f"target.{target_prop.id}",
+                ) if reference),
             )
 
         if entity_changes:

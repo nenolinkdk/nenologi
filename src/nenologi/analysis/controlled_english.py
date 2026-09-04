@@ -9,7 +9,7 @@ from decimal import Decimal
 from ..models import (
     Analysis, Condition, Confidence, Document, Entity, InterpretationStatus, LocalizedText,
     LogicalExpression, NumericConstraint, NumericOperator, Operator, Proposition, SemanticItem, Span,
-    StructuralNode, Structure,
+    StructuralNode, Structure, TemporalRelation, TemporalRelationType,
 )
 from ..serialization.validation import validate_analysis
 from .interface import UnsupportedConstructionError
@@ -20,7 +20,7 @@ _MODALS = {"must": "MUST", "may": "MAY", "should": "SHOULD"}
 _DETERMINERS = {"a", "an", "the"}
 _COPULAS = {"is", "are"}
 _ACTIONS = {
-    "access", "approve", "bring", "choose", "enter", "open", "receive", "register",
+    "access", "approve", "bring", "choose", "enter", "open", "pay", "receive", "register",
     "report", "restart", "select", "stop", "submit", "vote", "wear",
 }
 _NUMBER_WORDS = {"zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10"}
@@ -42,9 +42,16 @@ _NUMERIC_FORMS = {
 }
 _UNSUPPORTED_MARKERS = {
     "who", "which", "that", "because", "unless", "if",
-    "before", "after", "while", "was", "were", "been", "being", "will",
+    "before", "after", "until", "since", "during", "when", "by", "within", "while",
+    "was", "were", "been", "being", "will",
     "would", "could", "might", "has", "have", "had",
 }
+_WEEKDAYS = {name.lower(): name for name in ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")}
+_TEMPORAL_RE = re.compile(
+    r"^(?P<base>.+?)\s+(?P<relation>before|after|on|until)\s+"
+    r"(?P<reference>Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|(?:[01][0-9]|2[0-3]):[0-5][0-9])$",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -363,6 +370,12 @@ class ControlledEnglishAnalyzer:
             raise UnsupportedConstructionError("ControlledEnglishAnalyzer supports only language='en'")
         if isinstance(text, str) and text.lstrip().lower().startswith("if "):
             return self._analyze_condition(text, language=language, profile=profile)
+        temporal_match = self._temporal_match(text)
+        if temporal_match is not None:
+            return self._analyze_temporal(text, temporal_match, language=language, profile=profile)
+        if isinstance(text, str) and re.search(r"\b(on|until)\b", text, re.IGNORECASE):
+            if not re.search(r"\b(?:is|are)\s+(?:not\s+)?on\s*\.?\s*$", text, re.IGNORECASE):
+                raise UnsupportedConstructionError("unsupported or malformed temporal phrase")
         tokens = _tokens(text)
         parsed = _parse(tokens)
         certain = Confidence(1.0, "Deterministic Controlled English v0.1 rule")
@@ -426,6 +439,58 @@ class ControlledEnglishAnalyzer:
         validate_analysis(analysis)
         return analysis
 
+    @staticmethod
+    def _temporal_match(text: str):
+        if not isinstance(text, str) or not text.strip():
+            return None
+        stripped = text.strip()
+        body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
+        return _TEMPORAL_RE.fullmatch(body)
+
+    def _analyze_temporal(self, text: str, match, *, language: str, profile: str) -> Analysis:
+        leading = len(text) - len(text.lstrip())
+        base_text = match.group("base")
+        base = self.analyze(" " * leading + base_text + ".", language=language, profile=profile)
+        if len(base.propositions) != 1 or base.conditions or base.temporal_relations:
+            raise UnsupportedConstructionError("temporal phrases require one simple proposition")
+        relation_word = match.group("relation").lower()
+        reference_word = match.group("reference")
+        reference = _WEEKDAYS.get(reference_word.lower(), reference_word)
+        relation = TemporalRelationType(relation_word.upper())
+        phrase_start = leading + match.start("relation")
+        phrase_end = leading + match.end("reference")
+        certain = Confidence(1.0, "Deterministic Controlled English v0.1 temporal rule")
+        temporal = TemporalRelation(
+            "temporal_001", base.propositions[0].id, relation, reference,
+            InterpretationStatus.EXPLICIT, certain, Span(phrase_start, phrase_end),
+        )
+        expression = base.logical_representation[0]
+        display = f"{relation_word.title()}({expression.display}, {reference})"
+        sentence_start = leading
+        sentence_end = len(text.rstrip())
+        structure = replace(
+            base.structure,
+            sentences=(replace(base.structure.sentences[0], span=Span(sentence_start, sentence_end)),),
+            clauses=base.structure.clauses + (
+                StructuralNode("temporal_001_clause", temporal.span, "predicate_001", "temporal_phrase"),
+            ),
+        )
+        result = replace(
+            base,
+            document=Document("doc_001", language, text), structure=structure,
+            temporal_relations=(temporal,),
+            logical_representation=(replace(
+                expression, display=display,
+                derived_from=expression.derived_from + (temporal.id,),
+            ),),
+            confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en", f"{base.plain_language_interpretation.text[:-1]} {relation_word} {reference}."
+            ),
+        )
+        validate_analysis(result)
+        return result
+
     def _analyze_condition(self, text: str, *, language: str, profile: str) -> Analysis:
         stripped = text.strip()
         if stripped[-1:] in "?!":
@@ -445,7 +510,7 @@ class ControlledEnglishAnalyzer:
         consequent = self.analyze(consequent_text + ".", language=language, profile=profile)
         if len(antecedent.propositions) != 1 or len(consequent.propositions) != 1:
             raise UnsupportedConstructionError("condition clauses require one proposition each")
-        if antecedent.quantifiers or antecedent.modality or antecedent.negation or antecedent.relations:
+        if antecedent.quantifiers or antecedent.modality or antecedent.negation or antecedent.relations or antecedent.temporal_relations:
             raise UnsupportedConstructionError("antecedents support only one simple property or numeric threshold")
 
         leading = len(text) - len(text.lstrip())
@@ -461,6 +526,7 @@ class ControlledEnglishAnalyzer:
                 *analysis.entities, *analysis.propositions, *analysis.relations,
                 *analysis.quantifiers, *analysis.modality, *analysis.negation,
                 *analysis.numeric_constraints,
+                *analysis.temporal_relations,
             )
             identifiers = {item.id: f"{prefix}_{item.id}" for item in semantic}
             def refs(values: tuple[str, ...]) -> tuple[str, ...]:
@@ -473,6 +539,7 @@ class ControlledEnglishAnalyzer:
                 "modality": tuple(replace(item, id=identifiers[item.id], scope=refs(item.scope), span=shifted(item.span, offset)) for item in analysis.modality),
                 "negation": tuple(replace(item, id=identifiers[item.id], scope=refs(item.scope), span=shifted(item.span, offset)) for item in analysis.negation),
                 "numeric_constraints": tuple(replace(item, id=identifiers[item.id], scope=refs(item.scope), span=shifted(item.span, offset)) for item in analysis.numeric_constraints),
+                "temporal_relations": tuple(replace(item, id=identifiers[item.id], proposition=identifiers[item.proposition], span=shifted(item.span, offset)) for item in analysis.temporal_relations),
             }
 
         left = renamed(antecedent, "antecedent", antecedent_offset)
@@ -501,6 +568,7 @@ class ControlledEnglishAnalyzer:
             modality=left["modality"] + right["modality"],
             negation=left["negation"] + right["negation"],
             numeric_constraints=left["numeric_constraints"] + right["numeric_constraints"],
+            temporal_relations=left["temporal_relations"] + right["temporal_relations"],
             conditions=(condition,),
             logical_representation=(LogicalExpression(
                 "logic_001", {"operator": "IF", "antecedent": list(condition.antecedent), "consequent": list(condition.consequent)},

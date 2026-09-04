@@ -40,6 +40,8 @@ Propositions use stable uppercase statuses: `EXPLICIT`, `ENTAILED`, `PROBABLE`, 
 
 `conditions` contains structured `Condition` objects with stable identity and non-empty `antecedent` and `consequent` proposition-reference arrays, plus status, confidence, and optional span. The referenced propositions and their existing operators/constraints remain authoritative; conditions do not duplicate their semantic content as text. A logical `P → Q` string is derived only for display.
 
+`temporal_relations` contains structured objects with a proposition reference, typed relation (`BEFORE`, `AFTER`, `ON`, or `UNTIL`), canonical temporal reference, status, confidence, and optional span. Clock strings remain temporal references and are never numeric thresholds. Formula wrappers such as `Before(P, Friday)` are derived displays.
+
 ## Comparison
 
 ```json

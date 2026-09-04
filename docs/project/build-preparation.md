@@ -25,17 +25,17 @@ A <-> B         -> semantic/logical findings
 1. ~~Choose Python/package tooling and record the decision.~~ Python 3.11+, `src` layout, and standard-library runtime selected.
 2. ~~Add typed domain models corresponding to the committed v0.1 JSON Schemas.~~ Implemented with explicit serialization and validation.
 3. ~~Add controlled-English structural segmentation behind a parser-neutral interface.~~ Initial narrow analyzer implemented.
-4. Expand deterministic semantic normalization and grammar coverage for selected committed gold cases. Flat object conjunction, positional entity/predicate correspondence, exact numeric thresholds, and one structured prefix-IF condition are now supported.
+4. Expand deterministic semantic normalization and grammar coverage for selected committed gold cases. Flat object conjunction, positional entity/predicate correspondence, exact numeric thresholds, structured prefix-IF, and proposition-scoped temporal relations are now supported.
 5. Add cautious plain-English rendering over structured expressions.
 6. ~~Implement initial deterministic comparison rules.~~ Modality, quantifier, explicit negation, flat conjunction, positional entity/predicate change, and equivalence are implemented.
 
 ## Current Phase 1 status
 
-The callable pipeline now covers 17 exact comparison/equivalence gold cases. Conditions reference normalized antecedent/consequent propositions, reuse numeric constraints, and compare add/remove or changed antecedents without duplicate omission/addition findings.
+The callable pipeline now covers 18 exact comparison/equivalence gold cases. Temporal Relations v0.1 supports four typed relations, weekdays and exact clock references, condition consequents, and deterministic add/remove/change findings without generic addition/omission duplicates.
 
 ## Next implementation milestone
 
-Implement Temporal Relations v0.1 as the next isolated deterministic extension. Keep general tense parsing, causal readings, condition chains, and broad scope resolution outside that milestone.
+Implement Scope v0.1 as the next isolated deterministic extension, beginning with a deliberately small normalized scope representation. Keep `MAY NOT` ambiguity, general negation raising, broad clause parsing, and inference outside that milestone.
 
 ## Definition of ready
 

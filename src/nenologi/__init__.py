@@ -7,7 +7,7 @@ from .models import (
     DifferenceType, DiscourseRelation, DiscourseRelationType, Document,
     DomainValidationError, Entity, Inference, InterpretationStatus,
     LocalizedText, LogicalExpression, LogicalRelation, NumericConstraint, NumericOperator, Operator, Proposition, SemanticItem,
-    Severity, Span, StructuralNode, Structure,
+    Severity, Span, StructuralNode, Structure, TemporalRelation, TemporalRelationType,
 )
 from .serialization import (
     ReferenceValidationError, SchemaValidationError, analysis_from_dict,
@@ -24,7 +24,7 @@ __all__ = [
     "Document", "DomainValidationError", "Entity", "Inference",
     "InterpretationStatus", "LocalizedText", "LogicalExpression", "LogicalRelation", "NumericConstraint", "NumericOperator", "Operator",
     "Proposition", "ReferenceValidationError", "SchemaValidationError",
-    "SemanticItem", "Severity", "Span", "StructuralNode", "Structure",
+    "SemanticItem", "Severity", "Span", "StructuralNode", "Structure", "TemporalRelation", "TemporalRelationType",
     "UnsupportedComparisonError", "UnsupportedConstructionError",
     "analysis_from_dict", "analysis_from_json", "analysis_to_dict",
     "analysis_to_json", "comparison_from_dict", "comparison_from_json",
