@@ -13,6 +13,7 @@ from .common import (
     DifferenceType,
     DomainValidationError,
     Severity,
+    LogicalRelation,
     validate_identifier,
 )
 
@@ -53,11 +54,14 @@ class Comparison:
     target_analysis: Analysis
     differences: tuple[Difference, ...] = field(default_factory=tuple)
     schema_version: str = SCHEMA_VERSION
+    logical_relation: LogicalRelation = LogicalRelation.UNDETERMINED
 
     def __post_init__(self) -> None:
         if self.schema_version != SCHEMA_VERSION:
             raise DomainValidationError(f"unsupported comparison schema version: {self.schema_version!r}")
         if not isinstance(self.mode, ComparisonMode):
             raise DomainValidationError("mode must be a ComparisonMode")
+        if not isinstance(self.logical_relation, LogicalRelation):
+            raise DomainValidationError("logical_relation must be a LogicalRelation")
         if not isinstance(self.source_analysis, Analysis) or not isinstance(self.target_analysis, Analysis):
             raise DomainValidationError("source_analysis and target_analysis must be Analysis values")

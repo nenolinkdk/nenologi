@@ -6,11 +6,11 @@ from collections.abc import Sequence
 
 from ..models import (
     Analysis, Comparison, ComparisonMode, Confidence, Difference,
-    DifferenceType, InterpretationStatus, Operator, Proposition,
+    DifferenceType, InterpretationStatus, LogicalRelation, Operator, Proposition, Severity,
 )
 from ..serialization.validation import validate_analysis, validate_comparison
 from .interface import UnsupportedComparisonError
-from .rules import MODALITY_RULES, NEGATION_RULES, QUANTIFIER_RULES, TransitionRule
+from .rules import CONJUNCTION_RULES, MODALITY_RULES, NEGATION_RULES, QUANTIFIER_RULES, TransitionRule
 
 _CONFIDENCE = Confidence(1.0, "Exact deterministic comparison of normalized values")
 
@@ -24,36 +24,56 @@ def _single_proposition(analysis: Analysis, side: str) -> Proposition:
     return proposition
 
 
-def _entity_signature(analysis: Analysis, proposition: Proposition, side: str) -> tuple[tuple[str, str], ...]:
+def _proposition_entities(analysis: Analysis, proposition: Proposition, side: str):
     entities = {entity.id: entity for entity in analysis.entities}
-    signature = []
+    aligned = []
     for reference in proposition.arguments:
         try:
             entity = entities[reference]
         except KeyError as exc:
             raise UnsupportedComparisonError(f"{side} proposition argument is not an entity: {reference}") from exc
-        signature.append((entity.type, entity.label.casefold()))
-    return tuple(signature)
+        aligned.append(entity)
+    return tuple(aligned)
 
 
-def _aligned_propositions(source: Analysis, target: Analysis) -> tuple[Proposition, Proposition]:
+def _corresponding_propositions(source: Analysis, target: Analysis):
     source_prop = _single_proposition(source, "source")
     target_prop = _single_proposition(target, "target")
-    if source_prop.predicate != target_prop.predicate:
-        raise UnsupportedComparisonError("proposition predicates are not deterministically aligned")
-    if _entity_signature(source, source_prop, "source") != _entity_signature(target, target_prop, "target"):
-        raise UnsupportedComparisonError("proposition entity roles are not deterministically aligned")
-    return source_prop, target_prop
+    source_entities = _proposition_entities(source, source_prop, "source")
+    target_entities = _proposition_entities(target, target_prop, "target")
+    if len(source_entities) != len(target_entities):
+        raise UnsupportedComparisonError("proposition argument counts are not structurally aligned")
+    if tuple(entity.type for entity in source_entities) != tuple(entity.type for entity in target_entities):
+        raise UnsupportedComparisonError("proposition entity roles are not structurally aligned")
+    changes = [index for index, (left, right) in enumerate(zip(source_entities, target_entities)) if left.label.casefold() != right.label.casefold()]
+    predicate_changed = source_prop.predicate != target_prop.predicate
+    if len(changes) > 1 or (changes and predicate_changed):
+        raise UnsupportedComparisonError("multiple entity/predicate alignment changes are unsupported")
+    return source_prop, target_prop, source_entities, target_entities, changes, predicate_changed
 
 
 def _reject_unsupported_dimensions(source: Analysis, target: Analysis) -> None:
     for name in ("conditions", "temporal_relations", "sets", "inferences", "ambiguities"):
         if getattr(source, name) or getattr(target, name):
             raise UnsupportedComparisonError(f"{name} comparison is not supported")
-    if len(source.relations) != len(target.relations):
+    source_relations = [item for item in source.relations if item.type not in {"AND", "OR"}]
+    target_relations = [item for item in target.relations if item.type not in {"AND", "OR"}]
+    if len(source_relations) != len(target_relations):
         raise UnsupportedComparisonError("relation structures are not deterministically aligned")
-    if tuple(item.type for item in source.relations) != tuple(item.type for item in target.relations):
+    if tuple(item.type for item in source_relations) != tuple(item.type for item in target_relations):
         raise UnsupportedComparisonError("relation types are not deterministically aligned")
+
+
+def _conjunction_value(analysis: Analysis, proposition: Proposition) -> tuple[str | None, str | None]:
+    conjunctions = [item for item in analysis.relations if item.type in {"AND", "OR"}]
+    if len(conjunctions) > 1:
+        raise UnsupportedComparisonError("multiple conjunctions are unsupported")
+    if not conjunctions:
+        return None, None
+    conjunction = conjunctions[0]
+    if conjunction.arguments != proposition.arguments[1:] or len(conjunction.arguments) != 2:
+        raise UnsupportedComparisonError("conjunction is not a simple pair of proposition objects")
+    return conjunction.type, conjunction.id
 
 
 def _scoped_value(operators: Sequence[Operator], proposition_id: str, dimension: str) -> tuple[str | None, str | None]:
@@ -115,7 +135,8 @@ class DeterministicComparator:
         validate_analysis(source)
         validate_analysis(target)
         _reject_unsupported_dimensions(source, target)
-        source_prop, target_prop = _aligned_propositions(source, target)
+        (source_prop, target_prop, source_entities, target_entities,
+         entity_changes, predicate_changed) = _corresponding_propositions(source, target)
         findings: list[Difference] = []
 
         # Stable finding order: quantifier, modality, then explicit negation.
@@ -151,6 +172,54 @@ class DeterministicComparator:
                 ) if reference),
             )
 
-        comparison = Comparison(mode, source, target, tuple(findings))
+        source_conjunction, source_conjunction_id = _conjunction_value(source, source_prop)
+        target_conjunction, target_conjunction_id = _conjunction_value(target, target_prop)
+        if source_conjunction != target_conjunction:
+            rule = CONJUNCTION_RULES.get((source_conjunction, target_conjunction))
+            if rule is None:
+                raise UnsupportedComparisonError(f"unsupported conjunction transition: {source_conjunction} -> {target_conjunction}")
+            _transition(
+                findings, DifferenceType.CONJUNCTION_CHANGE,
+                source_conjunction, target_conjunction, rule,
+                (f"source.{source_conjunction_id}", f"target.{target_conjunction_id}"),
+            )
+
+        if entity_changes:
+            index = entity_changes[0]
+            source_entity = source_entities[index]
+            target_entity = target_entities[index]
+            role = "SUBJECT" if index == 0 else "OBJECT"
+            explanation = (
+                f"The target changes the affected entity from {source_entity.label} to {target_entity.label}."
+                if index == 0 else
+                f"The target changes the object from {source_entity.label} to {target_entity.label}."
+            )
+            _transition(
+                findings, DifferenceType.ENTITY_RELATION_CHANGE,
+                f"{role}:{source_entity.label.upper()}", f"{role}:{target_entity.label.upper()}",
+                TransitionRule(Severity.HIGH, explanation),
+                (f"source.{source_entity.id}", f"target.{target_entity.id}"),
+            )
+        elif predicate_changed:
+            _transition(
+                findings, DifferenceType.ENTITY_RELATION_CHANGE,
+                f"PREDICATE:{source_prop.predicate}", f"PREDICATE:{target_prop.predicate}",
+                TransitionRule(Severity.HIGH, f"The target changes the action from {source_prop.predicate} to {target_prop.predicate}."),
+                (f"source.{source_prop.id}", f"target.{target_prop.id}"),
+            )
+
+        if not findings:
+            logical_relation = LogicalRelation.EQUIVALENT
+        elif len(findings) == 1 and findings[0].difference_type is DifferenceType.NEGATION_CHANGE:
+            logical_relation = LogicalRelation.CONTRADICTORY
+        else:
+            logical_relation = LogicalRelation.UNDETERMINED
+        comparison = Comparison(
+            mode=mode,
+            source_analysis=source,
+            target_analysis=target,
+            differences=tuple(findings),
+            logical_relation=logical_relation,
+        )
         validate_comparison(comparison)
         return comparison

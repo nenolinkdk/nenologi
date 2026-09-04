@@ -18,10 +18,12 @@ The initial v0.1 gold standard contains 30 controlled change cases, 5 semantic-e
 
 ## Initial allocation
 
-- 30 comparison cases with material changes, covering all 12 v0.1 difference types
+- 30 comparison cases with material changes, covering all 11 corrected v0.1 difference types plus a contradiction-relation case
 - 5 controlled semantic-equivalence cases
 - 7 inference cases covering all v0.1 interpretation statuses
 
 Expected data may include multiple acceptable analyses when ambiguity is intentional. Severity is expected only for findings; confidence is independently evaluated with tolerances or categorical expectations. Cases should be small enough for human review and schema validation.
 
 Gold updates require an explanation and review. A changed implementation must not silently rewrite expected outputs to make tests pass.
+
+Taxonomy correction: `contradiction_001` now expects a `NEGATION_CHANGE` and separate `CONTRADICTORY` logical relation. Its text did not change. This prevents contradiction (a proposition relation) from being confused with negation change (the textual/semantic cause).

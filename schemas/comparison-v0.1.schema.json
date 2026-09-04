@@ -8,13 +8,15 @@
   "properties": {
     "schema_version": {"const": "0.1"},
     "mode": {"enum": ["SOURCE_TRANSLATION", "VERSION_COMPARISON", "PROMPT_OUTPUT", "SEO_LOCALIZATION"]},
+    "logical_relation": {"$ref": "#/$defs/logicalRelation"},
     "source_analysis": {"$ref": "analysis-v0.1.schema.json"},
     "target_analysis": {"$ref": "analysis-v0.1.schema.json"},
     "differences": {"type": "array", "items": {"$ref": "#/$defs/difference"}}
   },
   "$defs": {
-    "differenceType": {"enum": ["NEGATION_CHANGE", "CONJUNCTION_CHANGE", "QUANTIFIER_CHANGE", "MODALITY_CHANGE", "CONDITION_CHANGE", "TEMPORAL_CHANGE", "SCOPE_CHANGE", "ENTITY_RELATION_CHANGE", "ADDITION", "OMISSION", "CONTRADICTION", "NUMERIC_THRESHOLD_CHANGE"]},
+    "differenceType": {"enum": ["NEGATION_CHANGE", "CONJUNCTION_CHANGE", "QUANTIFIER_CHANGE", "MODALITY_CHANGE", "CONDITION_CHANGE", "TEMPORAL_CHANGE", "SCOPE_CHANGE", "ENTITY_RELATION_CHANGE", "ADDITION", "OMISSION", "NUMERIC_THRESHOLD_CHANGE"]},
     "severity": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]},
+    "logicalRelation": {"enum": ["EQUIVALENT", "CONTRADICTORY", "UNDETERMINED"]},
     "confidence": {"type": "object", "additionalProperties": false, "required": ["value"], "properties": {"value": {"type": "number", "minimum": 0, "maximum": 1}, "rationale": {"type": "string"}}},
     "difference": {
       "type": "object", "additionalProperties": false,

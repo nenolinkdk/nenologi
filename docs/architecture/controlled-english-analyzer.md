@@ -24,11 +24,12 @@ Consumers can depend on this interface rather than parser internals. Future rule
 One optional-final-period declarative sentence is accepted:
 
 ```text
-[ALL | EVERY | SOME | NO] SUBJECT [MUST | MAY | SHOULD] [NOT] VERB [OBJECT]
+[ALL | EVERY | SOME | NO] SUBJECT [MUST | MAY | SHOULD] [NOT] VERB [OBJECT [AND | OR] OBJECT]
 [THE | A | AN] SUBJECT (IS | ARE) [NOT] COMPLEMENT
+VERB OBJECT [AND | OR] OBJECT
 ```
 
-The quantifier and article are optional. Subjects and objects contain one noun; an object may have `the`, `a`, or `an`. The controlled action vocabulary is `access`, `approve`, `enter`, `open`, `register`, `restart`, `submit`, `vote`, and `wear`. A small copular form supports one complement, primarily to connect existing controlled gold cases.
+The quantifier and article are optional. Subjects contain one noun. An object contains one or two controlled words and may have `the`, `a`, or `an`. Exactly two object phrases may be joined by one `AND` or `OR`. The imperative form exists only for this same controlled object grammar. The controlled action vocabulary is `access`, `approve`, `choose`, `enter`, `open`, `receive`, `register`, `report`, `restart`, `submit`, `vote`, and `wear`. A small copular form supports one complement.
 
 Supported semantic features are:
 
@@ -38,6 +39,7 @@ Supported semantic features are:
 - `MUST`, `MAY`, and `SHOULD`
 - `NOT` immediately after a modal, or after `is`/`are`
 - Intransitive actions and a single simple object
+- One flat `AND`/`OR` coordination between two simple objects
 - A proposition, optional action relation, entities, operators, source spans, and structural phrase nodes
 
 Within this controlled grammar, `MAY NOT` is compositionally represented as `May(¬P)`. Ordinary English can also use “may not” as prohibition; inputs requiring that alternate reading need a future ambiguity-aware grammar.
@@ -65,6 +67,9 @@ Some employees must register.
 
 No visitors may enter.
 ¬∃x (Visitor(x) ∧ May(Enter(x)))
+
+All patients must receive treatment A and treatment B.
+∀x (Patient(x) → Must((Receive(x, TreatmentA) ∧ Receive(x, TreatmentB))))
 ```
 
 Plain-language output uses fixed templates, such as “The sentence states that every employee is required to register.”
@@ -75,7 +80,7 @@ A runnable example is available at [`examples/controlled_english.py`](../../exam
 
 - More than one sentence
 - Questions and exclamations
-- Coordination and subordination
+- Subject/predicate coordination, nested/repeated coordination, and subordination
 - Relative clauses and conditions
 - Passive voice and complex tense/aspect
 - Multiword noun phrases beyond a determiner plus one noun
@@ -90,5 +95,7 @@ Both sides of these existing comparison cases are individually analyzable (autom
 - `quantifier_001` through `quantifier_003`
 - `negation_001` and `negation_002`
 - `contradiction_001`
+
+The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`).
 
 Other cases remain intentionally outside this grammar. Gold expected results are unchanged.

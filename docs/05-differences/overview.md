@@ -12,7 +12,6 @@ Initial semantic/logical difference classes:
 - Entity/relation change
 - Addition
 - Omission
-- Contradiction
 - Numerical/threshold change
 
 Example:
@@ -25,3 +24,5 @@ severity: HIGH
 ```
 
 Severity and confidence are separate dimensions.
+
+Contradiction is a logical relation between propositions, not a structural/semantic difference class. A negation change may cause a contradictory relation without creating a second textual-change finding. See [Deterministic semantic comparison](../architecture/deterministic-comparison.md).

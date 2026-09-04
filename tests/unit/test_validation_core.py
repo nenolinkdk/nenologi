@@ -1,9 +1,9 @@
 import unittest
 
 from nenologi import (
-    Analysis, Confidence, DomainValidationError, Entity, InterpretationStatus,
+    Analysis, Comparison, ComparisonMode, Confidence, DomainValidationError, Entity, InterpretationStatus,
     Proposition, ReferenceValidationError, SchemaValidationError,
-    analysis_to_dict, validate_analysis, validate_comparison,
+    analysis_to_dict, comparison_to_dict, validate_analysis, validate_comparison,
 )
 from tests.unit.support import employee_analysis
 
@@ -24,6 +24,13 @@ class ValidationTests(unittest.TestCase):
         data["entities"][0]["interpretation_status"] = "CERTAIN"
         with self.assertRaises(SchemaValidationError):
             validate_analysis(data)
+
+    def test_invalid_logical_relation_is_schema_error(self) -> None:
+        analysis = employee_analysis()
+        data = comparison_to_dict(Comparison(ComparisonMode.VERSION_COMPARISON, analysis, analysis))
+        data["logical_relation"] = "SIMILAR"
+        with self.assertRaises(SchemaValidationError):
+            validate_comparison(data)
 
     def test_invalid_domain_value_is_distinct(self) -> None:
         with self.assertRaises(DomainValidationError):

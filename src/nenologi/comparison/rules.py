@@ -27,3 +27,8 @@ NEGATION_RULES: dict[tuple[bool, bool], TransitionRule] = {
     (False, True): TransitionRule(Severity.HIGH, "The target changes the polarity by adding negation."),
     (True, False): TransitionRule(Severity.HIGH, "The target changes the polarity by removing negation."),
 }
+
+CONJUNCTION_RULES: dict[tuple[str, str], TransitionRule] = {
+    ("AND", "OR"): TransitionRule(Severity.HIGH, "The target changes a requirement involving both alternatives into a choice between alternatives."),
+    ("OR", "AND"): TransitionRule(Severity.HIGH, "The target changes a choice between alternatives into a requirement involving both alternatives."),
+}

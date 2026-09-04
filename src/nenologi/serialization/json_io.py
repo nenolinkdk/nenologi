@@ -10,7 +10,7 @@ from typing import Any, Callable, TypeVar
 from ..models import (
     Ambiguity, Analysis, Comparison, ComparisonMode, Confidence, Difference,
     DifferenceType, DiscourseRelation, DiscourseRelationType, Document, Entity,
-    Inference, InterpretationStatus, LocalizedText, LogicalExpression, Operator,
+    Inference, InterpretationStatus, LocalizedText, LogicalExpression, LogicalRelation, Operator,
     Proposition, SCHEMA_VERSION, SemanticItem, Severity, Span, StructuralNode,
     Structure,
 )
@@ -311,6 +311,7 @@ def comparison_to_dict(value: Comparison) -> dict[str, Any]:
     return {
         "schema_version": value.schema_version,
         "mode": value.mode.value,
+        "logical_relation": value.logical_relation.value,
         "source_analysis": analysis_to_dict(value.source_analysis),
         "target_analysis": analysis_to_dict(value.target_analysis),
         "differences": [_difference_to_dict(item) for item in value.differences],
@@ -318,11 +319,12 @@ def comparison_to_dict(value: Comparison) -> dict[str, Any]:
 
 
 def comparison_from_dict(value: Mapping[str, Any]) -> Comparison:
-    fields = {"schema_version", "mode", "source_analysis", "target_analysis", "differences"}
-    data = _object(value, fields, set(), "comparison")
+    required = {"schema_version", "mode", "source_analysis", "target_analysis", "differences"}
+    data = _object(value, required, {"logical_relation"}, "comparison")
     return _construct(
         Comparison, "comparison", schema_version=data["schema_version"],
         mode=_enum(ComparisonMode, data["mode"], "comparison.mode"),
+        logical_relation=_enum(LogicalRelation, data.get("logical_relation", "UNDETERMINED"), "comparison.logical_relation"),
         source_analysis=analysis_from_dict(data["source_analysis"]),
         target_analysis=analysis_from_dict(data["target_analysis"]),
         differences=tuple(_difference_from_dict(item, f"comparison.differences[{i}]") for i, item in enumerate(_array(data["differences"], "comparison.differences"))),

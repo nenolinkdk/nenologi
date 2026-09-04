@@ -10,6 +10,7 @@ SUPPORTED_CASE_IDS = {
     "modality_001", "modality_002", "modality_003",
     "quantifier_001", "quantifier_002", "quantifier_003",
     "negation_001", "negation_002",
+    "conjunction_001", "conjunction_002", "contradiction_001",
 }
 
 
@@ -33,17 +34,8 @@ class ComparatorGoldStandardTests(unittest.TestCase):
                     for finding in result.differences
                 ]
                 self.assertEqual(actual, case["expected"]["differences"])
-
-    def test_contradiction_case_exposes_documented_taxonomy_mismatch_without_duplicate(self) -> None:
-        data = json.loads((ROOT / "tests/gold_standard/comparison/cases.json").read_text(encoding="utf-8"))
-        case = next(item for item in data["cases"] if item["id"] == "contradiction_001")
-        analyzer = ControlledEnglishAnalyzer()
-        result = DeterministicComparator().compare(
-            analyzer.analyze(case["source"]), analyzer.analyze(case["target"])
-        )
-        self.assertEqual(len(result.differences), 1)
-        self.assertEqual(result.differences[0].difference_type.value, "NEGATION_CHANGE")
-        self.assertEqual(case["expected"]["differences"][0]["difference_type"], "CONTRADICTION")
+                if "logical_relation" in case["expected"]:
+                    self.assertEqual(result.logical_relation.value, case["expected"]["logical_relation"])
 
 
 if __name__ == "__main__":

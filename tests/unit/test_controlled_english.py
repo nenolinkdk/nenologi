@@ -52,6 +52,16 @@ class ControlledEnglishAnalyzerTests(unittest.TestCase):
         self.assertEqual(result.relations[0].type, "ACTION_RELATION")
         self.assertIn("object_phrase", {node.kind for node in result.structure.clauses})
 
+    def test_controlled_and_or_objects_and_serialization(self) -> None:
+        for word, normalized, symbol in (("and", "AND", "∧"), ("or", "OR", "∨")):
+            with self.subTest(word=word):
+                result = self.analyzer.analyze(f"All patients must receive treatment A {word} treatment B.")
+                conjunction = next(item for item in result.relations if item.type in {"AND", "OR"})
+                self.assertEqual(conjunction.type, normalized)
+                self.assertEqual(conjunction.arguments, ("entity_002", "entity_003"))
+                self.assertIn(symbol, result.logical_representation[0].display)
+                self.assertEqual(analysis_from_json(analysis_to_json(result)), result)
+
     def test_structure_includes_required_controlled_parts(self) -> None:
         result = self.analyzer.analyze("All operators must not restart the server.")
         self.assertEqual(len(result.structure.sentences), 1)
@@ -96,6 +106,7 @@ class ControlledEnglishAnalyzerTests(unittest.TestCase):
             "All employees who work remotely must register.",
             "The request was approved by Alice.",
             "Employees must register and vote.",
+            "Submit form A and form B and form C.",
             "If the light is green, employees may enter.",
             "Must employees register?",
             "Employees registered yesterday.",

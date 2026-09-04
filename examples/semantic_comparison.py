@@ -11,8 +11,8 @@ if __name__ == "__main__":
 
     analyzer = ControlledEnglishAnalyzer()
     comparator = DeterministicComparator()
-    source = analyzer.analyze("All employees must register.")
-    target = analyzer.analyze("Some employees may register.")
+    source = analyzer.analyze("All patients must receive treatment A and treatment B.")
+    target = analyzer.analyze("Some patients may receive treatment A or treatment B.")
     result = comparator.compare(source, target)
 
     print(f"Source formula: {source.logical_representation[0].display}")

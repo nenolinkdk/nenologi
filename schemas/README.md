@@ -8,6 +8,8 @@ Nenologi v0.1 uses JSON Schema draft 2020-12:
 
 Schema files use semantic artifact versions independent of the application version. Compatible clarifications retain `0.1`; incompatible changes require a new schema filename/version and an explicit migration decision. Relative `$id` values make local cross-schema references portable.
 
+Before the v0.1 release, one taxonomy correction removed `CONTRADICTION` from `DifferenceType` and added optional comparison-level `logical_relation`. This distinguishes what changed from the logical relation between propositions; the rationale is documented in [deterministic comparison](../docs/architecture/deterministic-comparison.md).
+
 The structured expression object is authoritative. Any `display` formula is derived for humans and must not be parsed as the canonical meaning.
 
 Run the repository validator as described in [the gold-standard guide](../tests/gold_standard/README.md).

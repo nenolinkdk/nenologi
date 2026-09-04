@@ -20,13 +20,14 @@ DIFFERENCE_TYPES = {
     "NEGATION_CHANGE", "CONJUNCTION_CHANGE", "QUANTIFIER_CHANGE",
     "MODALITY_CHANGE", "CONDITION_CHANGE", "TEMPORAL_CHANGE",
     "SCOPE_CHANGE", "ENTITY_RELATION_CHANGE", "ADDITION", "OMISSION",
-    "CONTRADICTION", "NUMERIC_THRESHOLD_CHANGE",
+    "NUMERIC_THRESHOLD_CHANGE",
 }
 SEVERITIES = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
 STATUSES = {
     "EXPLICIT", "ENTAILED", "PROBABLE", "AMBIGUOUS", "UNSUPPORTED",
     "CONTRADICTED", "CANNOT_BE_SAFELY_FORMALIZED",
 }
+LOGICAL_RELATIONS = {"EQUIVALENT", "CONTRADICTORY", "UNDETERMINED"}
 CASE_FILES = (
     GOLD_DIR / "comparison" / "cases.json",
     GOLD_DIR / "equivalence" / "cases.json",
@@ -67,6 +68,7 @@ def validate_schemas() -> None:
     analysis_statuses = set(loaded["analysis-v0.1.schema.json"]["$defs"]["interpretationStatus"]["enum"])
     comparison_differences = set(loaded["comparison-v0.1.schema.json"]["$defs"]["differenceType"]["enum"])
     comparison_severities = set(loaded["comparison-v0.1.schema.json"]["$defs"]["severity"]["enum"])
+    comparison_relations = set(loaded["comparison-v0.1.schema.json"]["$defs"]["logicalRelation"]["enum"])
     test_defs = loaded["test-case-v0.1.schema.json"]["$defs"]
     if analysis_statuses != STATUSES or set(test_defs["status"]["enum"]) != STATUSES:
         raise ValidationError("interpretation-status enums are out of sync")
@@ -74,6 +76,8 @@ def validate_schemas() -> None:
         raise ValidationError("difference-type enums are out of sync")
     if comparison_severities != SEVERITIES or set(test_defs["severity"]["enum"]) != SEVERITIES:
         raise ValidationError("severity enums are out of sync")
+    if comparison_relations != LOGICAL_RELATIONS or set(test_defs["logicalRelation"]["enum"]) != LOGICAL_RELATIONS:
+        raise ValidationError("logical-relation enums are out of sync")
 
 
 def validate_comparison(case: dict[str, Any], location: str) -> None:
@@ -87,6 +91,8 @@ def validate_comparison(case: dict[str, Any], location: str) -> None:
 
     expected = case["expected"]
     require_fields(expected, {"material_difference", "differences"}, f"{location}.expected")
+    if "logical_relation" in expected and expected["logical_relation"] not in LOGICAL_RELATIONS:
+        raise ValidationError(f"{location}.expected: invalid logical relation")
     if case["case_type"] == "CHANGE":
         if expected["material_difference"] is not True or not expected["differences"]:
             raise ValidationError(f"{location}: CHANGE must contain a material difference")

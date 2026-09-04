@@ -6,6 +6,7 @@ from .common import (
     Document,
     DomainValidationError,
     InterpretationStatus,
+    LogicalRelation,
     LocalizedText,
     Severity,
     Span,
@@ -19,7 +20,7 @@ __all__ = [
     "Ambiguity", "Analysis", "Comparison", "ComparisonMode", "Confidence",
     "Difference", "DifferenceType", "DiscourseRelation", "DiscourseRelationType",
     "Document", "DomainValidationError", "Entity", "Inference",
-    "InterpretationStatus", "LocalizedText", "LogicalExpression", "Operator",
+    "InterpretationStatus", "LocalizedText", "LogicalExpression", "LogicalRelation", "Operator",
     "Proposition", "SCHEMA_VERSION", "SemanticItem", "Severity", "Span",
     "StructuralNode", "Structure",
 ]

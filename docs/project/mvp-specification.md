@@ -43,8 +43,9 @@ Analysis profile and comparison mode are independent dimensions. A future profes
 - `ENTITY_RELATION_CHANGE`
 - `ADDITION`
 - `OMISSION`
-- `CONTRADICTION`
 - `NUMERIC_THRESHOLD_CHANGE`
+
+Comparison also carries a separate logical relation: `EQUIVALENT`, `CONTRADICTORY`, or `UNDETERMINED`. Contradiction is not a difference type: it describes the relation between propositions, while a difference identifies what changed.
 
 Critical minimal pairs include MUST/MAY, AND/OR, ALL/SOME, BEFORE/AFTER, `>`/`>=`, added or removed negation, and added or removed conditions.
 

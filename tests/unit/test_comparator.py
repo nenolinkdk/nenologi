@@ -3,7 +3,7 @@ from dataclasses import replace
 
 from nenologi import (
     ComparisonMode, Confidence, ControlledEnglishAnalyzer, DeterministicComparator,
-    DifferenceType, InterpretationStatus, SemanticItem, UnsupportedComparisonError,
+    DifferenceType, InterpretationStatus, LogicalRelation, SemanticItem, UnsupportedComparisonError,
     comparison_from_json, comparison_to_json,
 )
 
@@ -57,6 +57,7 @@ class DeterministicComparatorTests(unittest.TestCase):
     def test_every_and_all_are_equivalent(self) -> None:
         result = self.compare("Every employee must register.", "All employees must register.")
         self.assertEqual(result.differences, ())
+        self.assertIs(result.logical_relation, LogicalRelation.EQUIVALENT)
 
     def test_no_normalizes_to_none_without_duplicate_negation_finding(self) -> None:
         result = self.compare("No employees may enter.", "Some employees may enter.")
@@ -79,13 +80,24 @@ class DeterministicComparatorTests(unittest.TestCase):
         result = self.compare("All employees must register.", "Some employees may register.")
         self.assertEqual(comparison_from_json(comparison_to_json(result)), result)
 
-    def test_incompatible_predicates_and_entities_are_explicitly_rejected(self) -> None:
-        for source, target in (
-            ("All employees must register.", "All employees must vote."),
-            ("All employees must register.", "All visitors must register."),
-        ):
-            with self.subTest(source=source, target=target), self.assertRaises(UnsupportedComparisonError):
-                self.compare(source, target)
+    def test_subject_object_and_predicate_changes(self) -> None:
+        cases = (
+            ("All employees must register.", "All managers must register.", "SUBJECT:EMPLOYEE", "SUBJECT:MANAGER", "affected entity"),
+            ("All employees must submit the report.", "All employees must submit the form.", "OBJECT:REPORT", "OBJECT:FORM", "object"),
+            ("All employees must register.", "All employees must report.", "PREDICATE:REGISTER", "PREDICATE:REPORT", "action"),
+        )
+        for source, target, before, after, explanation in cases:
+            with self.subTest(before=before, after=after):
+                result = self.compare(source, target)
+                self.assertEqual(len(result.differences), 1)
+                finding = result.differences[0]
+                self.assertIs(finding.difference_type, DifferenceType.ENTITY_RELATION_CHANGE)
+                self.assertEqual((finding.source_value, finding.target_value), (before, after))
+                self.assertIn(explanation, finding.explanation)
+
+    def test_multiple_entity_and_predicate_changes_are_rejected(self) -> None:
+        with self.assertRaises(UnsupportedComparisonError):
+            self.compare("All employees must register.", "All managers must report.")
 
     def test_unsupported_transition_is_not_silently_equivalent(self) -> None:
         with self.assertRaisesRegex(UnsupportedComparisonError, "modality transition"):
@@ -108,6 +120,38 @@ class DeterministicComparatorTests(unittest.TestCase):
         self.assertEqual(result.target_analysis.logical_representation[0].display, "∃x (Employee(x) ∧ May(Register(x)))")
         self.assertIn("quantified scope", result.differences[0].explanation)
         self.assertIn("weakens", result.differences[1].explanation)
+
+    def test_conjunction_transitions_equivalence_and_formula(self) -> None:
+        source = "All patients must receive treatment A and treatment B."
+        target = "All patients must receive treatment A or treatment B."
+        result = self.compare(source, target)
+        self.assertEqual(result.differences[0].difference_type, DifferenceType.CONJUNCTION_CHANGE)
+        self.assertEqual((result.differences[0].source_value, result.differences[0].target_value), ("AND", "OR"))
+        self.assertIn("∧", result.source_analysis.logical_representation[0].display)
+        self.assertEqual(comparison_from_json(comparison_to_json(result)), result)
+        reverse = self.compare(target, source)
+        self.assertEqual((reverse.differences[0].source_value, reverse.differences[0].target_value), ("OR", "AND"))
+        equivalent = self.compare(
+            "ALL PATIENTS MUST RECEIVE TREATMENT A AND TREATMENT B",
+            "  All patients must receive treatment A and treatment B.  ",
+        )
+        self.assertEqual(equivalent.differences, ())
+
+    def test_quantifier_modality_and_conjunction_order(self) -> None:
+        result = self.compare(
+            "All patients must receive treatment A and treatment B.",
+            "Some patients may receive treatment A or treatment B.",
+        )
+        self.assertEqual(
+            [finding.difference_type for finding in result.differences],
+            [DifferenceType.QUANTIFIER_CHANGE, DifferenceType.MODALITY_CHANGE, DifferenceType.CONJUNCTION_CHANGE],
+        )
+        self.assertIs(result.logical_relation, LogicalRelation.UNDETERMINED)
+
+    def test_negation_is_one_difference_with_separate_logical_relation(self) -> None:
+        result = self.compare("The switch is on.", "The switch is not on.")
+        self.assertEqual([finding.difference_type for finding in result.differences], [DifferenceType.NEGATION_CHANGE])
+        self.assertIs(result.logical_relation, LogicalRelation.CONTRADICTORY)
 
 
 if __name__ == "__main__":

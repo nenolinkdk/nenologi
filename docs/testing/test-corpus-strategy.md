@@ -24,6 +24,6 @@ It contains three complementary categories:
 
 Each committed case records an ID, category, input language, profile, mode, expected structures or findings, provenance/license metadata, and reviewer notes. Tests should distinguish exact stable expectations from acceptable alternatives for ambiguous text.
 
-The initial gold standard targets approximately 30 controlled cases. Priority coverage includes negation, conjunction, quantification, modality, conditions, temporal order, scope, entity relations, addition/omission, contradiction, and numeric thresholds. See [Gold standard](gold-standard.md).
+The initial gold standard contains approximately 30 controlled change cases. Priority coverage includes negation, conjunction, quantification, modality, conditions, temporal order, scope, entity relations, addition/omission, contradiction relations, and numeric thresholds. See [Gold standard](gold-standard.md).
 
 Reference analyses and intermediate representations should remain versioned. Changes require review because they support regression tests, architecture demonstrations, future benchmarks, and conference material.

@@ -14,6 +14,7 @@ All collections conform to `schemas/test-case-v0.1.schema.json`. IDs are unique 
 2. Keep the example synthetic, short, and controlled; isolate one variable when possible.
 3. Use stable enum identifiers from the v0.1 schema.
 4. For a change case, set `material_difference` to `true` and provide one or more expected differences. For equivalence, use `false` and an empty `differences` list.
+   Use optional `logical_relation` only when the controlled expectation is independently `EQUIVALENT`, `CONTRADICTORY`, or `UNDETERMINED`; never substitute it for the difference that caused the relation.
 5. For inference, classify the candidate independently as `EXPLICIT`, `ENTAILED`, `PROBABLE`, `AMBIGUOUS`, `UNSUPPORTED`, `CONTRADICTED`, or `CANNOT_BE_SAFELY_FORMALIZED`.
 6. Run validation and review the expected result manually. Do not change gold output only to accommodate an implementation failure.
 

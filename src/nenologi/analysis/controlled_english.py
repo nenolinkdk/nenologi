@@ -19,11 +19,11 @@ _MODALS = {"must": "MUST", "may": "MAY", "should": "SHOULD"}
 _DETERMINERS = {"a", "an", "the"}
 _COPULAS = {"is", "are"}
 _ACTIONS = {
-    "access", "approve", "enter", "open", "register", "restart", "submit",
-    "vote", "wear",
+    "access", "approve", "choose", "enter", "open", "receive", "register",
+    "report", "restart", "submit", "vote", "wear",
 }
 _UNSUPPORTED_MARKERS = {
-    "and", "or", "who", "which", "that", "because", "unless", "if",
+    "who", "which", "that", "because", "unless", "if",
     "before", "after", "while", "was", "were", "been", "being", "will",
     "would", "could", "might", "has", "have", "had",
 }
@@ -50,6 +50,9 @@ class _Parsed:
     predicate: _Token
     object_determiner: _Token | None
     objects: tuple[_Token, ...]
+    conjunction: _Token | None
+    second_object_determiner: _Token | None
+    second_objects: tuple[_Token, ...]
     copular: bool
     subject_start: int
     predicate_start: int
@@ -65,6 +68,14 @@ def _singular(word: str) -> str:
 
 def _class_name(word: str) -> str:
     return _singular(word).capitalize()
+
+
+def _object_label(tokens: tuple[_Token, ...]) -> str:
+    return "_".join(_singular(token.normalized) for token in tokens)
+
+
+def _object_display(tokens: tuple[_Token, ...]) -> str:
+    return "".join(_class_name(token.normalized) for token in tokens)
 
 
 def _tokens(text: str) -> tuple[_Token, ...]:
@@ -94,15 +105,19 @@ def _parse(tokens: tuple[_Token, ...]) -> _Parsed:
     index = 0
     quantifier = None
     subject_start = tokens[0].start
-    if words[0] in _QUANTIFIERS:
+    imperative = words[0] in _ACTIONS
+    if imperative:
+        subject = _Token("implicit addressee", "addressee", tokens[0].start, tokens[0].start)
+    elif words[0] in _QUANTIFIERS:
         quantifier = _QUANTIFIERS[words[0]]
         index += 1
     elif words[0] in _DETERMINERS:
         index += 1
-    if index >= len(tokens):
-        raise UnsupportedConstructionError("subject noun is missing")
-    subject = tokens[index]
-    index += 1
+    if not imperative:
+        if index >= len(tokens):
+            raise UnsupportedConstructionError("subject noun is missing")
+        subject = tokens[index]
+        index += 1
     if index >= len(tokens):
         raise UnsupportedConstructionError("predicate is missing")
     predicate_start = tokens[index].start
@@ -117,7 +132,7 @@ def _parse(tokens: tuple[_Token, ...]) -> _Parsed:
         if index != len(tokens) - 1:
             raise UnsupportedConstructionError("copular predicates require one simple complement")
         predicate = tokens[index]
-        return _Parsed(quantifier, subject, modal, negation, predicate, None, (), True, subject_start, predicate_start)
+        return _Parsed(quantifier, subject, modal, negation, predicate, None, (), None, None, (), True, subject_start, predicate_start)
     if words[index] in _MODALS:
         modal = tokens[index]
         index += 1
@@ -132,22 +147,46 @@ def _parse(tokens: tuple[_Token, ...]) -> _Parsed:
     if predicate.normalized not in _ACTIONS:
         raise UnsupportedConstructionError(f"unsupported action predicate: {predicate.text}")
     index += 1
-    objects = tokens[index:]
-    object_determiner = None
-    if objects and objects[0].normalized in _DETERMINERS:
-        object_determiner = objects[0]
-        objects = objects[1:]
-    if len(objects) > 1:
-        raise UnsupportedConstructionError("only one simple object noun is supported")
-    return _Parsed(quantifier, subject, modal, negation, predicate, object_determiner, tuple(objects), False, subject_start, predicate_start)
+    remaining = tokens[index:]
+    connectors = [position for position, token in enumerate(remaining) if token.normalized in {"and", "or"}]
+    if len(connectors) > 1:
+        raise UnsupportedConstructionError("nested or repeated coordination is unsupported")
+
+    def object_phrase(values: tuple[_Token, ...]) -> tuple[_Token | None, tuple[_Token, ...]]:
+        determiner = values[0] if values and values[0].normalized in _DETERMINERS else None
+        content = values[1:] if determiner else values
+        if not 1 <= len(content) <= 2:
+            raise UnsupportedConstructionError("an object must contain one or two controlled words")
+        return determiner, tuple(content)
+
+    if connectors:
+        connector_index = connectors[0]
+        if connector_index == 0 or connector_index == len(remaining) - 1:
+            raise UnsupportedConstructionError("coordination requires two object phrases")
+        conjunction = remaining[connector_index]
+        object_determiner, objects = object_phrase(tuple(remaining[:connector_index]))
+        second_determiner, second_objects = object_phrase(tuple(remaining[connector_index + 1:]))
+    elif remaining:
+        conjunction = None
+        object_determiner, objects = object_phrase(tuple(remaining))
+        second_determiner, second_objects = None, ()
+    else:
+        conjunction = None
+        object_determiner, objects = None, ()
+        second_determiner, second_objects = None, ()
+    return _Parsed(quantifier, subject, modal, negation, predicate, object_determiner, objects,
+                   conjunction, second_determiner, second_objects, False, subject_start, predicate_start)
 
 
 def _predicate_display(parsed: _Parsed) -> str:
     predicate = _class_name(parsed.predicate.normalized)
-    arguments = "x"
-    if parsed.objects:
-        arguments += f", {_class_name(parsed.objects[0].normalized)}"
-    result = f"{predicate}({arguments})"
+    def atom(objects: tuple[_Token, ...]) -> str:
+        arguments = "x" + (f", {_object_display(objects)}" if objects else "")
+        return f"{predicate}({arguments})"
+    result = atom(parsed.objects)
+    if parsed.conjunction is not None:
+        symbol = "∧" if parsed.conjunction.normalized == "and" else "∨"
+        result = f"({result} {symbol} {atom(parsed.second_objects)})"
     if parsed.negation is not None:
         result = f"¬{result}"
     if parsed.modal is not None:
@@ -173,7 +212,10 @@ def _action_text(parsed: _Parsed) -> str:
     action = parsed.predicate.normalized
     if parsed.objects:
         determiner = f"{parsed.object_determiner.normalized} " if parsed.object_determiner else ""
-        action += f" {determiner}{parsed.objects[0].normalized}"
+        action += f" {determiner}{' '.join(token.normalized for token in parsed.objects)}"
+    if parsed.conjunction is not None:
+        determiner = f"{parsed.second_object_determiner.normalized} " if parsed.second_object_determiner else ""
+        action += f" {parsed.conjunction.normalized} {determiner}{' '.join(token.normalized for token in parsed.second_objects)}"
     return action
 
 
@@ -239,22 +281,32 @@ class ControlledEnglishAnalyzer:
             clauses.append(StructuralNode("negation_marker_001", parsed.negation.span, "predicate_001", "negation_marker"))
         if parsed.objects:
             object_start = parsed.object_determiner.start if parsed.object_determiner else parsed.objects[0].start
-            clauses.append(StructuralNode("object_001", Span(object_start, parsed.objects[0].end), "predicate_001", "object_phrase"))
+            clauses.append(StructuralNode("object_001", Span(object_start, parsed.objects[-1].end), "predicate_001", "object_phrase"))
+        if parsed.conjunction:
+            clauses.append(StructuralNode("conjunction_marker_001", parsed.conjunction.span, "predicate_001", "conjunction_marker"))
+            second_start = parsed.second_object_determiner.start if parsed.second_object_determiner else parsed.second_objects[0].start
+            clauses.append(StructuralNode("object_002", Span(second_start, parsed.second_objects[-1].end), "predicate_001", "object_phrase"))
         entities = [Entity("entity_001", "ENTITY_CLASS", _singular(parsed.subject.normalized), status, certain, parsed.subject.span)]
         arguments = ["entity_001"]
         if parsed.objects:
-            entities.append(Entity("entity_002", "OBJECT", _singular(parsed.objects[0].normalized), status, certain, parsed.objects[0].span))
+            entities.append(Entity("entity_002", "OBJECT", _object_label(parsed.objects), status, certain, Span(parsed.objects[0].start, parsed.objects[-1].end)))
             arguments.append("entity_002")
+        if parsed.second_objects:
+            entities.append(Entity("entity_003", "OBJECT", _object_label(parsed.second_objects), status, certain, Span(parsed.second_objects[0].start, parsed.second_objects[-1].end)))
+            arguments.append("entity_003")
         proposition = Proposition("prop_001", parsed.predicate.normalized.upper(), tuple(arguments), status, certain, parsed.predicate.span)
         relations = ()
         if parsed.objects:
-            relations = (SemanticItem("relation_001", "ACTION_RELATION", tuple(arguments), status, certain, derived_from=("prop_001",)),)
+            relation_items = [SemanticItem("relation_001", "ACTION_RELATION", tuple(arguments), status, certain, derived_from=("prop_001",))]
+            if parsed.conjunction:
+                relation_items.append(SemanticItem("conjunction_001", parsed.conjunction.normalized.upper(), tuple(arguments[1:]), status, certain, parsed.conjunction.span, ("prop_001",)))
+            relations = tuple(relation_items)
         quantifiers = () if parsed.quantifier is None else (Operator("quantifier_001", parsed.quantifier, ("prop_001",), status, certain, tokens[0].span),)
         modality = () if parsed.modal is None else (Operator("modality_001", _MODALS[parsed.modal.normalized], ("prop_001",), status, certain, parsed.modal.span),)
         negation = ()
         if parsed.negation is not None or parsed.quantifier == "NONE":
             negation = (Operator("negation_001", "NOT" if parsed.negation else "NOT_EXISTS", ("prop_001",), status, certain, parsed.negation.span if parsed.negation else tokens[0].span),)
-        derived = ["prop_001", *(["quantifier_001"] if quantifiers else []), *(["modality_001"] if modality else []), *(["negation_001"] if negation else [])]
+        derived = ["prop_001", *(["quantifier_001"] if quantifiers else []), *(["modality_001"] if modality else []), *(["negation_001"] if negation else []), *(["conjunction_001"] if parsed.conjunction else [])]
         analysis = Analysis(
             document=Document("doc_001", language, text), profile=profile,
             structure=Structure((StructuralNode("sentence_001", Span(sentence_start, sentence_end), kind="sentence"),), tuple(clauses)),

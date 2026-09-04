@@ -11,7 +11,8 @@
   },
   "$defs": {
     "language": {"type": "string", "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"},
-    "differenceType": {"enum": ["NEGATION_CHANGE", "CONJUNCTION_CHANGE", "QUANTIFIER_CHANGE", "MODALITY_CHANGE", "CONDITION_CHANGE", "TEMPORAL_CHANGE", "SCOPE_CHANGE", "ENTITY_RELATION_CHANGE", "ADDITION", "OMISSION", "CONTRADICTION", "NUMERIC_THRESHOLD_CHANGE"]},
+    "differenceType": {"enum": ["NEGATION_CHANGE", "CONJUNCTION_CHANGE", "QUANTIFIER_CHANGE", "MODALITY_CHANGE", "CONDITION_CHANGE", "TEMPORAL_CHANGE", "SCOPE_CHANGE", "ENTITY_RELATION_CHANGE", "ADDITION", "OMISSION", "NUMERIC_THRESHOLD_CHANGE"]},
+    "logicalRelation": {"enum": ["EQUIVALENT", "CONTRADICTORY", "UNDETERMINED"]},
     "status": {"enum": ["EXPLICIT", "ENTAILED", "PROBABLE", "AMBIGUOUS", "UNSUPPORTED", "CONTRADICTED", "CANNOT_BE_SAFELY_FORMALIZED"]},
     "severity": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]},
     "testCase": {
@@ -50,7 +51,8 @@
               "required": ["material_difference", "differences"],
               "properties": {
                 "material_difference": {"const": true},
-                "differences": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/expectedDifference"}}
+                "differences": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/expectedDifference"}},
+                "logical_relation": {"$ref": "#/$defs/logicalRelation"}
               }
             }
           }
@@ -71,7 +73,8 @@
               "required": ["material_difference", "differences"],
               "properties": {
                 "material_difference": {"const": false},
-                "differences": {"type": "array", "maxItems": 0}
+                "differences": {"type": "array", "maxItems": 0},
+                "logical_relation": {"$ref": "#/$defs/logicalRelation"}
               }
             }
           }

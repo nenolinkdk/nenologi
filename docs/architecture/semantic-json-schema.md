@@ -41,6 +41,7 @@ Propositions use stable uppercase statuses: `EXPLICIT`, `ENTAILED`, `PROBABLE`, 
 {
   "schema_version": "0.1",
   "mode": "source_translation",
+  "logical_relation": "UNDETERMINED",
   "source_analysis": {},
   "target_analysis": {},
   "differences": [
@@ -59,6 +60,8 @@ Propositions use stable uppercase statuses: `EXPLICIT`, `ENTAILED`, `PROBABLE`, 
 ```
 
 `source_analysis` and `target_analysis` are complete single analyses. Difference types are defined in the [MVP specification](../project/mvp-specification.md). Severity and confidence are separate required concepts.
+
+`differences` describe what changed. The optional comparison-level `logical_relation` independently records `EQUIVALENT`, `CONTRADICTORY`, or `UNDETERMINED`. Pure polarity reversal is therefore a `NEGATION_CHANGE` with a `CONTRADICTORY` relation, not two difference findings. `CONTRADICTION` was removed from `DifferenceType` as a v0.1 taxonomy correction before release.
 
 Severity v0.1 is `LOW`, `MEDIUM`, `HIGH`, or `CRITICAL`. It estimates the impact of a comparison finding in context; it does not express confidence. Equivalence is represented by an empty `differences` list, not a synthetic `NONE` severity.
 
