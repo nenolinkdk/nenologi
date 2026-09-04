@@ -45,8 +45,9 @@ The second is a source/target comparison in which both texts are independently r
 8. [Phase 1 semantic core consolidation](docs/architecture/semantic-core-consolidation.md)
 9. [Scope v0.1](docs/architecture/scope-v0.1.md)
 10. [Proposition Alignment v0.1](docs/architecture/proposition-alignment-v0.1.md)
-11. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
-12. [Build preparation](docs/project/build-preparation.md)
+11. [Addition/Omission v0.1](docs/architecture/addition-omission-v0.1.md)
+12. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
+13. [Build preparation](docs/project/build-preparation.md)
 
 For a non-technical introduction, see [Nenologi – Looking Beneath the Words](docs/public/what-is-nenologi.md). The older topic-oriented documents under `docs/01-concept` through `docs/08-integrations` remain useful background; the files linked above are the canonical Phase 0 specification.
 

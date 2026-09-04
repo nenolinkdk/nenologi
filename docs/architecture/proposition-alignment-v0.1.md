@@ -30,4 +30,4 @@ Condition antecedents align by their structured `Condition.antecedent` role, inc
 | **LIMITED** | Comparator-only single-position structural counterpart matching for existing entity/relation changes. |
 | **UNSUPPORTED** | Addition/omission findings, fuzzy matching, synonyms, embeddings, coreference, splitting/merging, one-to-many, many-to-one, discourse resolution, and multilingual parsing. |
 
-This milestone provides infrastructure only. Unaligned propositions do not yet emit `ADDITION` or `OMISSION`.
+Safe unmatched propositions now feed [Addition/Omission v0.1](addition-omission-v0.1.md). Ambiguous unaligned propositions remain explicitly excluded from those findings.

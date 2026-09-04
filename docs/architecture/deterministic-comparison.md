@@ -112,11 +112,12 @@ Temporal v0.1 activated weekday case `temporal_002`. The consolidated audit repo
 
 ## Unsupported comparisons
 
-- Multiple unscoped propositions or non-`EXPLICIT` aligned propositions
+- Ambiguous multiple propositions or non-`EXPLICIT` aligned propositions
 - Different argument counts/types, more than one changed entity, or simultaneous entity and predicate changes
-- Multiple/scoped-to-other-proposition operators
+- Multiple operators of one dimension on an aligned proposition
 - Any modality or quantifier transition absent from the rule tables
-- General contradiction/coordination/alignment, temporal, conditional, interval, scope, or addition/omission logic
+- General contradiction, coordination, alignment, temporal, conditional, interval, or scope reasoning
+- Fuzzy alignment, ambiguous addition/omission, proposition split/merge, and domain-specific importance ranking
 - Adding/removing a numeric constraint, multiple numeric constraints, ranges, conversions, or numeric entailment
 - Multiple, nested, suffix, `UNLESS`, `ELSE`, biconditional, chained, counterfactual, or causally interpreted conditions
 - Multiple/nested temporal phrases, event anchors, durations, relative dates, time zones, calendar arithmetic, recurrence, tense/aspect, or temporal entailment

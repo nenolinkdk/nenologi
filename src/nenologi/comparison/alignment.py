@@ -39,6 +39,28 @@ class AlignmentResult:
     alignments: tuple[PropositionAlignment, ...]
     unaligned_source_ids: tuple[str, ...]
     unaligned_target_ids: tuple[str, ...]
+    ambiguous_source_ids: tuple[str, ...] = ()
+    ambiguous_target_ids: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        source_ids = [item.source_proposition_id for item in self.alignments]
+        target_ids = [item.target_proposition_id for item in self.alignments]
+        if len(source_ids) != len(set(source_ids)) or len(target_ids) != len(set(target_ids)):
+            raise DomainValidationError("proposition alignment must be one-to-one")
+        if not set(self.ambiguous_source_ids) <= set(self.unaligned_source_ids):
+            raise DomainValidationError("ambiguous source IDs must be unaligned")
+        if not set(self.ambiguous_target_ids) <= set(self.unaligned_target_ids):
+            raise DomainValidationError("ambiguous target IDs must be unaligned")
+
+    @property
+    def safely_unmatched_source_ids(self) -> tuple[str, ...]:
+        ambiguous = set(self.ambiguous_source_ids)
+        return tuple(item for item in self.unaligned_source_ids if item not in ambiguous)
+
+    @property
+    def safely_unmatched_target_ids(self) -> tuple[str, ...]:
+        ambiguous = set(self.ambiguous_target_ids)
+        return tuple(item for item in self.unaligned_target_ids if item not in ambiguous)
 
 
 def _role(analysis: Analysis, proposition_id: str) -> str:
@@ -121,6 +143,20 @@ class DeterministicPropositionAligner:
                 "SINGLE_CORE_POSITION_CHANGE", AlignmentStatus.STRUCTURAL,
                 lambda left, right: _structural_counterpart(source, target, left, right),
             )
+        possible = {
+            source_id: tuple(target_id for target_id, right in unmatched_target.items() if (
+                proposition_signature(source, left) == proposition_signature(target, right)
+                or (allow_structural_counterparts and _structural_counterpart(source, target, left, right))
+            ))
+            for source_id, left in unmatched_source.items()
+        }
+        ambiguous_source = {
+            source_id for source_id, targets in possible.items() if targets
+        }
+        ambiguous_target = {
+            target_id for targets in possible.values() for target_id in targets
+        }
         return AlignmentResult(
             tuple(alignments), tuple(sorted(unmatched_source)), tuple(sorted(unmatched_target)),
+            tuple(sorted(ambiguous_source)), tuple(sorted(ambiguous_target)),
         )

@@ -6,7 +6,7 @@ This milestone hardens the existing semantic core without adding a semantic cate
 
 The taxonomy is consistent across Python enums, JSON Schemas, serialization, comparator tests, and gold data. `TEMPORAL_CHANGE` is the canonical machine name. `CONTRADICTION` is not a `DifferenceType`; comparison-level `logical_relation` separately records `EQUIVALENT`, `CONTRADICTORY`, or `UNDETERMINED`.
 
-`CANONICAL_DIFFERENCE_ORDER` defines the complete stable order, including reserved positions for taxonomy members whose behavior is not implemented:
+`CANONICAL_DIFFERENCE_ORDER` defines the complete stable order:
 
 1. `QUANTIFIER_CHANGE`
 2. `MODALITY_CHANGE`
@@ -17,8 +17,8 @@ The taxonomy is consistent across Python enums, JSON Schemas, serialization, com
 7. `TEMPORAL_CHANGE`
 8. `SCOPE_CHANGE` — implemented for explicit Scope v0.1 operator chains
 9. `ENTITY_RELATION_CHANGE`
-10. `ADDITION` — not implemented
-11. `OMISSION` — not implemented
+10. `ADDITION` — implemented for safely unmatched propositions
+11. `OMISSION` — implemented for safely unmatched propositions
 
 The comparator sorts findings by this explicit constant and then assigns deterministic IDs; enum, dictionary, and traversal order are not relied upon.
 
@@ -87,9 +87,9 @@ Gold expectations were not changed. The previous hand-maintained count omitted a
 
 | Status | Capability |
 | --- | --- |
-| **SUPPORTED** | Controlled quantification, modality, explicit negation, flat object conjunction, exact numeric thresholds, prefix IF, proposition-final temporal relations, deterministic JSON round-trip, conservative logical relation |
-| **LIMITED** | Positional entity/predicate comparison, one aligned main proposition, one condition, one temporal relation, controlled units/weekdays/clock times, fixed English explanations |
-| **UNSUPPORTED** | General scope and `MAY NOT` resolution, `UNLESS`, nested conditions, complex coordination, event-based temporal anchors, ranges/interval reasoning, addition/omission, broad proposition alignment, lexical semantics, multilingual parsing, general contradiction, inference/NLI, and providers/LLMs |
+| **SUPPORTED** | Controlled quantification, modality, explicit negation, flat object conjunction, exact numeric thresholds, prefix IF, proposition-final temporal relations, safe proposition addition/omission, deterministic JSON round-trip, conservative logical relation |
+| **LIMITED** | Positional entity/predicate comparison, unique multi-proposition alignment from normalized analyses, one condition, one temporal relation, controlled units/weekdays/clock times, fixed English explanations |
+| **UNSUPPORTED** | General scope and `MAY NOT` resolution, `UNLESS`, nested conditions, complex coordination, event-based temporal anchors, ranges/interval reasoning, ambiguous/fuzzy addition and omission, broad proposition alignment, lexical semantics, multilingual parsing, general contradiction, inference/NLI, and providers/LLMs |
 
 A rich round-trip regression combines a numeric antecedent with condition, quantified/modal consequent, and temporal relation. It verifies exact equality plus stable IDs, scopes, and references after `Analysis → JSON → Analysis`.
 
@@ -101,4 +101,4 @@ Normalization regressions cover `Every → ALL`, `at least 18 → >= 18`, weekda
 
 ## Recommended next milestone
 
-Scope v0.1 and [Proposition Alignment v0.1](proposition-alignment-v0.1.md) are now implemented. The recommended next milestone is explicit addition/omission semantics over the aligner's conservative unaligned sets; it should remain narrow and must not introduce lexical similarity, inference, or NLI.
+Scope v0.1, [Proposition Alignment v0.1](proposition-alignment-v0.1.md), and [Addition/Omission v0.1](addition-omission-v0.1.md) are now implemented. The recommended next milestone is a Phase 1 completion audit before any broader parser or inference work.

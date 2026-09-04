@@ -17,6 +17,47 @@ from .rules import CANONICAL_DIFFERENCE_ORDER, CONJUNCTION_RULES, MODALITY_RULES
 _CONFIDENCE = Confidence(1.0, "Exact deterministic comparison of normalized values")
 
 
+def _proposition_payload(analysis: Analysis, proposition_id: str, side: str) -> dict[str, object]:
+    propositions = {item.id: item for item in analysis.propositions}
+    entities = {item.id: item for item in analysis.entities}
+    proposition = propositions[proposition_id]
+    return {
+        "side": side,
+        "proposition_id": proposition.id,
+        "predicate": proposition.predicate,
+        "arguments": [
+            {"id": ref, "type": entities[ref].type, "label": entities[ref].label}
+            for ref in proposition.arguments
+        ],
+    }
+
+
+def _proposition_slice(analysis: Analysis, proposition_id: str) -> Analysis:
+    proposition = next(item for item in analysis.propositions if item.id == proposition_id)
+    entity_ids = set(proposition.arguments)
+    operator_ids = set()
+    changed = True
+    while changed:
+        changed = False
+        for operator in (*analysis.quantifiers, *analysis.modality, *analysis.negation):
+            if any(ref == proposition_id or ref in operator_ids for ref in operator.scope) and operator.id not in operator_ids:
+                operator_ids.add(operator.id)
+                changed = True
+    return replace(
+        analysis,
+        entities=tuple(item for item in analysis.entities if item.id in entity_ids),
+        propositions=(proposition,),
+        relations=tuple(item for item in analysis.relations if proposition_id in item.derived_from),
+        quantifiers=tuple(item for item in analysis.quantifiers if item.id in operator_ids),
+        modality=tuple(item for item in analysis.modality if item.id in operator_ids),
+        negation=tuple(item for item in analysis.negation if item.id in operator_ids),
+        numeric_constraints=tuple(item for item in analysis.numeric_constraints if proposition_id in item.scope),
+        conditions=(),
+        temporal_relations=tuple(item for item in analysis.temporal_relations if item.proposition == proposition_id),
+        logical_representation=(),
+    )
+
+
 def _single_proposition(analysis: Analysis, side: str) -> Proposition:
     if len(analysis.propositions) != 1:
         raise UnsupportedComparisonError(f"{side} analysis must contain exactly one proposition")
@@ -253,8 +294,8 @@ def _temporal_value(relation: TemporalRelation, *, include_reference: bool) -> s
 def _transition(
     findings: list[Difference],
     difference_type: DifferenceType,
-    source_value: str,
-    target_value: str,
+    source_value: object,
+    target_value: object,
     rule: TransitionRule,
     references: tuple[str, ...],
 ) -> None:
@@ -290,11 +331,36 @@ class DeterministicComparator:
             raise TypeError("source and target must be normalized Analysis objects")
         validate_analysis(source)
         validate_analysis(target)
-        source_condition, source_antecedent, source_prop = _condition_parts(source, "source")
-        target_condition, target_antecedent, target_prop = _condition_parts(target, "target")
         alignment = DeterministicPropositionAligner().align(
             source, target, allow_structural_counterparts=True,
         )
+        if not source.conditions and not target.conditions and (
+            len(source.propositions) != 1 or len(target.propositions) != 1
+        ):
+            ambiguous = bool(alignment.ambiguous_source_ids or alignment.ambiguous_target_ids)
+            if source.propositions and target.propositions and not alignment.alignments and not ambiguous:
+                raise UnsupportedComparisonError("analyses have no uniquely aligned proposition")
+            findings: list[Difference] = []
+            for item in alignment.alignments:
+                pair = self.compare(
+                    _proposition_slice(source, item.source_proposition_id),
+                    _proposition_slice(target, item.target_proposition_id),
+                    mode=mode,
+                )
+                findings.extend(pair.differences)
+            self._append_unmatched_findings(findings, source, target, alignment)
+            comparison = Comparison(
+                mode=mode, source_analysis=source, target_analysis=target,
+                differences=_canonical_findings(findings),
+                logical_relation=(
+                    LogicalRelation.EQUIVALENT if not findings and not ambiguous
+                    else LogicalRelation.UNDETERMINED
+                ),
+            )
+            validate_comparison(comparison)
+            return comparison
+        source_condition, source_antecedent, source_prop = _condition_parts(source, "source")
+        target_condition, target_antecedent, target_prop = _condition_parts(target, "target")
         aligned_pairs = {
             (item.source_proposition_id, item.target_proposition_id) for item in alignment.alignments
         }
@@ -475,6 +541,13 @@ class DeterministicComparator:
                 (f"source.{source_prop.id}", f"target.{target_prop.id}"),
             )
 
+        excluded_source = set(source_condition.antecedent) if source_condition else set()
+        excluded_target = set(target_condition.antecedent) if target_condition else set()
+        self._append_unmatched_findings(
+            findings, source, target, alignment,
+            excluded_source=excluded_source, excluded_target=excluded_target,
+        )
+
         canonical_findings = _canonical_findings(findings)
         if not canonical_findings:
             logical_relation = LogicalRelation.EQUIVALENT
@@ -491,3 +564,33 @@ class DeterministicComparator:
         )
         validate_comparison(comparison)
         return comparison
+
+    @staticmethod
+    def _append_unmatched_findings(
+        findings: list[Difference], source: Analysis, target: Analysis, alignment,
+        *, excluded_source: set[str] | None = None, excluded_target: set[str] | None = None,
+    ) -> None:
+        excluded_source = excluded_source or set()
+        excluded_target = excluded_target or set()
+        source_props = {item.id: item for item in source.propositions}
+        target_props = {item.id: item for item in target.propositions}
+        for proposition_id in alignment.safely_unmatched_target_ids:
+            if proposition_id in excluded_target:
+                continue
+            proposition = target_props[proposition_id]
+            _transition(
+                findings, DifferenceType.ADDITION, None,
+                _proposition_payload(target, proposition_id, "target"),
+                TransitionRule(Severity.MEDIUM, "The target adds a safely unmatched normalized proposition; no importance or logical consequence is inferred."),
+                tuple([f"target.{proposition.id}", *(f"target.{ref}" for ref in proposition.arguments)]),
+            )
+        for proposition_id in alignment.safely_unmatched_source_ids:
+            if proposition_id in excluded_source:
+                continue
+            proposition = source_props[proposition_id]
+            _transition(
+                findings, DifferenceType.OMISSION,
+                _proposition_payload(source, proposition_id, "source"), None,
+                TransitionRule(Severity.MEDIUM, "The target omits a safely unmatched normalized proposition; no importance or logical consequence is inferred."),
+                tuple([f"source.{proposition.id}", *(f"source.{ref}" for ref in proposition.arguments)]),
+            )
