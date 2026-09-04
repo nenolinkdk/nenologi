@@ -59,10 +59,30 @@ def validate_analysis_references(analysis: Analysis) -> None:
             _require(reference, proposition_ids, f"condition {condition.id}")
     for temporal in analysis.temporal_relations:
         _require(temporal.proposition, proposition_ids, f"temporal relation {temporal.id}")
-    for collection in (analysis.quantifiers, analysis.modality, analysis.negation, analysis.numeric_constraints):
+    semantic_operator_ids = {
+        item.id for item in (*analysis.quantifiers, *analysis.modality, *analysis.negation)
+    }
+    for collection in (analysis.quantifiers, analysis.modality, analysis.negation):
         for operator in collection:
             for reference in operator.scope:
                 _require(reference, all_ids, f"operator {operator.id}")
+                if reference not in semantic_operator_ids | proposition_ids:
+                    raise ReferenceValidationError(
+                        f"operator {operator.id} scope must target a semantic operator or proposition: {reference}"
+                    )
+            seen = {operator.id}
+            target = operator.scope[0]
+            operator_map = {
+                item.id: item for item in (*analysis.quantifiers, *analysis.modality, *analysis.negation)
+            }
+            while target in operator_map:
+                if target in seen:
+                    raise ReferenceValidationError(f"cyclic operator scope at {operator.id}")
+                seen.add(target)
+                target = operator_map[target].scope[0]
+    for operator in analysis.numeric_constraints:
+        for reference in operator.scope:
+            _require(reference, all_ids, f"operator {operator.id}")
     for expression in analysis.logical_representation:
         for reference in expression.derived_from:
             _require(reference, all_ids, f"logical expression {expression.id}")

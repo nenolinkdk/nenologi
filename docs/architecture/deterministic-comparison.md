@@ -2,6 +2,8 @@
 
 `DeterministicComparator` compares two already normalized `Analysis` objects. It never reads or compares raw document strings and has no dependency on `ControlledEnglishAnalyzer` internals.
 
+Scope v0.1 compares category-level topology among aligned quantifier, modality, and negation references. A topology change among operator dimensions present on both sides emits one structured `SCOPE_CHANGE`; operator identity changes remain separate findings, and scope movement of an existing negation is not duplicated as `NEGATION_CHANGE`. See [Scope v0.1](scope-v0.1.md).
+
 ```python
 from nenologi import ControlledEnglishAnalyzer, DeterministicComparator
 
@@ -25,7 +27,7 @@ A polarity reversal therefore yields one `NEGATION_CHANGE` and `CONTRADICTORY`; 
 
 ## Alignment boundary
 
-v0.1 compares one aligned `EXPLICIT` main proposition on each side. For a supported condition, that main proposition is the consequent; otherwise the analysis contains exactly one proposition. Argument count and entity types/roles must correspond positionally. One entity label or the predicate may change, but not both and not multiple entities. Operator scope must be exactly the aligned proposition. Otherwise `UnsupportedComparisonError` is raised; the engine does not guess an alignment or report false equivalence.
+v0.1 compares one aligned `EXPLICIT` main proposition on each side. For a supported condition, that main proposition is the consequent; otherwise the analysis contains exactly one proposition. Argument count and entity types/roles must correspond positionally. One entity label or the predicate may change, but not both and not multiple entities. Operators may form one controlled, acyclic scope chain ending at the aligned proposition. Otherwise `UnsupportedComparisonError` is raised; the engine does not guess an alignment or report false equivalence.
 
 The controlled analyzer now normalizes simple plural entity labels to singular forms so `Every employee` and `All employees` align. This is a deliberately small normalization, not general morphology or entity resolution.
 

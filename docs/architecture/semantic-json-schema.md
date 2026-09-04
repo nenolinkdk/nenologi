@@ -34,6 +34,8 @@ Confidence v0.1 is a number from `0.0` (no confidence) through `1.0` (maximum co
 
 Propositions use stable uppercase statuses: `EXPLICIT`, `ENTAILED`, `PROBABLE`, `AMBIGUOUS`, `UNSUPPORTED`, `CONTRADICTED`, or `CANNOT_BE_SAFELY_FORMALIZED`. `PROBABLE` is defeasible support and is never a synonym for `ENTAILED`. Ambiguity objects link competing readings rather than forcing one reading into the main result.
 
+`Operator.scope` contains normalized object IDs, not source fragments. Scope v0.1 permits an operator to reference another quantifier, modality, or negation operator, producing a validated acyclic single-target chain that terminates at a proposition. This reuses the existing operator schema and symmetric serialization; no parallel logical AST is authoritative.
+
 `logical_representation` stores a structured expression object plus an optional human-readable `display`. The structured object is authoritative. A formula such as `∀x (Employee(x) → Must(Register(x)))` is derived for display and must never override or substitute for the structured semantics. v0.1 requires an expression operator but intentionally leaves its deeper AST extensible while Core work establishes the smallest useful vocabulary.
 
 `numeric_constraints` contains authoritative normalized thresholds with `operator`, canonical string `value`, optional `unit`, and semantic `scope`. Operators are `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `LESS_THAN`, `LESS_THAN_OR_EQUAL`, and `EQUAL`. Values are strings to preserve exact decimal meaning across JSON implementations; display symbols are derived.

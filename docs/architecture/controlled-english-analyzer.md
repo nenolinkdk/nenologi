@@ -95,6 +95,12 @@ Plain-language output uses fixed templates, such as “The sentence states that 
 
 A runnable example is available at [`examples/controlled_english.py`](../../examples/controlled_english.py).
 
+## Scope v0.1
+
+Exactly one fronted form is supported: `Not all SUBJECT [MODAL] PREDICATE`. It normalizes as explicit `NOT > ALL > [MODAL] > proposition` references. Ordinary controlled modal negation normalizes as `[QUANTIFIER] > MODAL > NOT > proposition`. Other fronted quantifier/negation combinations are rejected rather than guessed.
+
+`MAY NOT` retains the fixed controlled reading `MAY > NOT > proposition`; this is not general natural-language disambiguation. See [Scope v0.1](scope-v0.1.md).
+
 ## Explicitly unsupported
 
 - More than one sentence

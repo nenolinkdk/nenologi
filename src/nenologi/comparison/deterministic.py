@@ -77,15 +77,27 @@ def _conjunction_value(analysis: Analysis, proposition: Proposition) -> tuple[st
     return conjunction.type, conjunction.id
 
 
-def _scoped_value(operators: Sequence[Operator], proposition_id: str, dimension: str) -> tuple[str | None, str | None]:
-    operators = tuple(operator for operator in operators if proposition_id in operator.scope)
+def _scope_reaches(analysis: Analysis, reference: str, proposition_id: str, seen: frozenset[str] = frozenset()) -> bool:
+    if reference == proposition_id:
+        return True
+    if reference in seen:
+        raise UnsupportedComparisonError("cyclic operator scope is unsupported")
+    operator_map = {item.id: item for item in (*analysis.quantifiers, *analysis.modality, *analysis.negation)}
+    operator = operator_map.get(reference)
+    return operator is not None and any(
+        _scope_reaches(analysis, target, proposition_id, seen | {reference}) for target in operator.scope
+    )
+
+
+def _scoped_value(analysis: Analysis, operators: Sequence[Operator], proposition_id: str, dimension: str) -> tuple[str | None, str | None]:
+    operators = tuple(operator for operator in operators if any(_scope_reaches(analysis, reference, proposition_id) for reference in operator.scope))
     if len(operators) > 1:
         raise UnsupportedComparisonError(f"multiple {dimension} operators are unsupported")
     if not operators:
         return None, None
     operator = operators[0]
-    if operator.scope != (proposition_id,):
-        raise UnsupportedComparisonError(f"{dimension} scope is not the aligned proposition")
+    if len(operator.scope) != 1:
+        raise UnsupportedComparisonError(f"{dimension} must have one controlled scope target")
     if operator.interpretation_status is not InterpretationStatus.EXPLICIT:
         raise UnsupportedComparisonError(f"{dimension} must have EXPLICIT interpretation status")
     return operator.operator, operator.id
@@ -98,8 +110,46 @@ def _explicit_negation(analysis: Analysis, proposition_id: str) -> tuple[bool, s
         raise UnsupportedComparisonError("unsupported negation representation")
     if not explicit:
         return False, None
-    value, identifier = _scoped_value(explicit, proposition_id, "negation")
+    value, identifier = _scoped_value(analysis, explicit, proposition_id, "negation")
     return value == "NOT", identifier
+
+
+def _scope_signature(analysis: Analysis, proposition_id: str) -> tuple[tuple[str, str], ...]:
+    operators = (*analysis.quantifiers, *analysis.modality, *analysis.negation)
+    relevant = {item.id: item for item in operators if any(_scope_reaches(analysis, ref, proposition_id) for ref in item.scope)}
+    categories = {
+        **{item.id: "QUANTIFIER" for item in analysis.quantifiers},
+        **{item.id: "MODALITY" for item in analysis.modality},
+        **{item.id: "NEGATION" for item in analysis.negation},
+    }
+    edges = []
+    for item in relevant.values():
+        target = item.scope[0]
+        edges.append((categories[item.id], categories.get(target, "PROPOSITION" if target == proposition_id else target)))
+    return tuple(sorted(edges))
+
+
+def _scope_order(analysis: Analysis, proposition_id: str) -> list[str]:
+    operators = (*analysis.quantifiers, *analysis.modality, *analysis.negation)
+    relevant = {item.id: item for item in operators if any(_scope_reaches(analysis, ref, proposition_id) for ref in item.scope)}
+    targeted = {target for item in relevant.values() for target in item.scope if target in relevant}
+    roots = sorted((item for item in relevant.values() if item.id not in targeted), key=lambda item: item.operator)
+    if len(roots) != 1:
+        return [f"{left}>{right}" for left, right in _scope_signature(analysis, proposition_id)]
+    order = []
+    current = roots[0]
+    seen = set()
+    while current.id not in seen:
+        seen.add(current.id)
+        order.append(current.operator)
+        target = current.scope[0]
+        if target == proposition_id:
+            order.append("PROPOSITION")
+            break
+        if target not in relevant:
+            break
+        current = relevant[target]
+    return order
 
 
 def _numeric_constraint(analysis: Analysis, proposition_id: str, side: str) -> NumericConstraint | None:
@@ -247,8 +297,8 @@ class DeterministicComparator:
         findings: list[Difference] = []
 
         # Stable order continues through negation, conjunction, numeric, and entity/relation.
-        source_quantifier, source_quantifier_id = _scoped_value(source.quantifiers, source_prop.id, "quantifier")
-        target_quantifier, target_quantifier_id = _scoped_value(target.quantifiers, target_prop.id, "quantifier")
+        source_quantifier, source_quantifier_id = _scoped_value(source, source.quantifiers, source_prop.id, "quantifier")
+        target_quantifier, target_quantifier_id = _scoped_value(target, target.quantifiers, target_prop.id, "quantifier")
         if source_quantifier != target_quantifier:
             rule = QUANTIFIER_RULES.get((source_quantifier, target_quantifier))
             if rule is None:
@@ -256,8 +306,8 @@ class DeterministicComparator:
             _transition(findings, DifferenceType.QUANTIFIER_CHANGE, source_quantifier, target_quantifier, rule,
                         tuple(reference for reference in (f"source.{source_quantifier_id}" if source_quantifier_id else None, f"target.{target_quantifier_id}" if target_quantifier_id else None) if reference))
 
-        source_modality, source_modality_id = _scoped_value(source.modality, source_prop.id, "modality")
-        target_modality, target_modality_id = _scoped_value(target.modality, target_prop.id, "modality")
+        source_modality, source_modality_id = _scoped_value(source, source.modality, source_prop.id, "modality")
+        target_modality, target_modality_id = _scoped_value(target, target.modality, target_prop.id, "modality")
         if source_modality != target_modality:
             rule = MODALITY_RULES.get((source_modality, target_modality))
             if rule is None:
@@ -362,6 +412,33 @@ class DeterministicComparator:
                 ) if reference),
             )
 
+        source_scope = _scope_signature(source, source_prop.id)
+        target_scope = _scope_signature(target, target_prop.id)
+        same_operator_dimensions = (
+            len(source.quantifiers), len(source.modality), len(source.negation)
+        ) == (
+            len(target.quantifiers), len(target.modality), len(target.negation)
+        )
+        if same_operator_dimensions and source_scope != target_scope:
+            source_order = _scope_order(source, source_prop.id)
+            target_order = _scope_order(target, target_prop.id)
+            source_operator_ids = [item.id for item in (*source.quantifiers, *source.modality, *source.negation)]
+            target_operator_ids = [item.id for item in (*target.quantifiers, *target.modality, *target.negation)]
+            _transition(
+                findings, DifferenceType.SCOPE_CHANGE,
+                {"order": source_order, "relations": [list(edge) for edge in source_scope]},
+                {"order": target_order, "relations": [list(edge) for edge in target_scope]},
+                TransitionRule(
+                    Severity.HIGH,
+                    "The scope of the aligned semantic operators changes. In the source, "
+                    f"{' applies over '.join(source_order)}; in the target, "
+                    f"{' applies over '.join(target_order)}. No logical consequence is inferred.",
+                ),
+                tuple(
+                    [*(f"source.{identifier}" for identifier in source_operator_ids),
+                     *(f"target.{identifier}" for identifier in target_operator_ids)]
+                ),
+            )
         if entity_changes:
             index = entity_changes[0]
             source_entity = source_entities[index]

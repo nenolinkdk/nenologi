@@ -15,7 +15,7 @@ The taxonomy is consistent across Python enums, JSON Schemas, serialization, com
 5. `NUMERIC_THRESHOLD_CHANGE`
 6. `CONDITION_CHANGE`
 7. `TEMPORAL_CHANGE`
-8. `SCOPE_CHANGE` — not implemented
+8. `SCOPE_CHANGE` — implemented for explicit Scope v0.1 operator chains
 9. `ENTITY_RELATION_CHANGE`
 10. `ADDITION` — not implemented
 11. `OMISSION` — not implemented
@@ -101,4 +101,4 @@ Normalization regressions cover `Every → ALL`, `at least 18 → >= 18`, weekda
 
 ## Recommended next milestone
 
-Implement **Scope v0.1** next. It addresses a committed difference category and can begin with one explicit normalized scope shape. Addition/omission depends on broader proposition alignment; broader alignment is therefore premature, and limited inference should wait for more stable normalization/alignment boundaries. Scope work must remain separate from `MAY NOT` disambiguation and general negation raising.
+Scope v0.1 is now implemented as documented in [Scope v0.1](scope-v0.1.md). The recommended next milestone is limited proposition alignment as preparation for explicit addition/omission semantics; it should remain narrow and must not introduce lexical similarity, inference, or NLI.

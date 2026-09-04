@@ -68,7 +68,7 @@
     },
     "operator": {
       "type": "object", "additionalProperties": false, "required": ["id", "operator", "scope", "interpretation_status", "confidence"],
-      "properties": {"id": {"$ref": "#/$defs/identifier"}, "operator": {"type": "string"}, "scope": {"type": "array", "items": {"$ref": "#/$defs/identifier"}, "minItems": 1}, "span": {"$ref": "#/$defs/span"}, "interpretation_status": {"$ref": "#/$defs/interpretationStatus"}, "confidence": {"$ref": "#/$defs/confidence"}}
+      "properties": {"id": {"$ref": "#/$defs/identifier"}, "operator": {"type": "string"}, "scope": {"type": "array", "items": {"$ref": "#/$defs/identifier"}, "minItems": 1, "maxItems": 1}, "span": {"$ref": "#/$defs/span"}, "interpretation_status": {"$ref": "#/$defs/interpretationStatus"}, "confidence": {"$ref": "#/$defs/confidence"}}
     },
     "numericConstraint": {
       "type": "object", "additionalProperties": false,

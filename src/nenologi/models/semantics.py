@@ -90,8 +90,8 @@ class Operator:
         validate_identifier(self.id)
         if not self.operator or not isinstance(self.operator, str):
             raise DomainValidationError("operator must be non-empty text")
-        if not self.scope:
-            raise DomainValidationError("operator scope must contain at least one reference")
+        if len(self.scope) != 1:
+            raise DomainValidationError("operator scope must contain exactly one reference")
         _validate_references(self.scope, "scope")
         _validate_status_and_confidence(self.interpretation_status, self.confidence)
 

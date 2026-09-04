@@ -85,6 +85,7 @@ class _Parsed:
     numeric_value: Decimal | None
     numeric_unit: _Token | None
     numeric_span: Span | None
+    fronted_negation: _Token | None = None
 
 
 def _numeric_phrase(tokens: tuple[_Token, ...]) -> tuple[NumericOperator, Decimal, _Token | None, Span] | None:
@@ -292,7 +293,8 @@ def _formula(parsed: _Parsed) -> str:
     subject = _class_name(parsed.subject.normalized)
     predicate = _predicate_display(parsed)
     if parsed.quantifier == "ALL":
-        return f"∀x ({subject}(x) → {predicate})"
+        result = f"∀x ({subject}(x) → {predicate})"
+        return f"¬{result}" if parsed.fronted_negation else result
     if parsed.quantifier == "SOME":
         return f"∃x ({subject}(x) ∧ {predicate})"
     if parsed.quantifier == "NONE":
@@ -335,6 +337,11 @@ def _third_person(action: str) -> str:
 
 def _interpretation(parsed: _Parsed) -> str:
     subject_singular = _singular(parsed.subject.normalized)
+    if parsed.fronted_negation:
+        return (
+            f"The sentence states that it is not the case that every {subject_singular} "
+            f"{parsed.modal.normalized if parsed.modal else ''} {_action_text(parsed)}."
+        ).replace("  ", " ")
     action = _action_text(parsed)
     if parsed.quantifier == "NONE":
         if parsed.copular:
@@ -377,7 +384,10 @@ class ControlledEnglishAnalyzer:
             if not re.search(r"\b(?:is|are)\s+(?:not\s+)?on\s*\.?\s*$", text, re.IGNORECASE):
                 raise UnsupportedConstructionError("unsupported or malformed temporal phrase")
         tokens = _tokens(text)
-        parsed = _parse(tokens)
+        if len(tokens) >= 2 and (tokens[0].normalized, tokens[1].normalized) == ("not", "all"):
+            parsed = replace(_parse(tokens[1:]), fronted_negation=tokens[0])
+        else:
+            parsed = _parse(tokens)
         certain = Confidence(1.0, "Deterministic Controlled English v0.1 rule")
         status = InterpretationStatus.EXPLICIT
         sentence_start = len(text) - len(text.lstrip())
@@ -390,6 +400,8 @@ class ControlledEnglishAnalyzer:
             clauses.append(StructuralNode("modal_001", parsed.modal.span, "predicate_001", "modal"))
         if parsed.negation:
             clauses.append(StructuralNode("negation_marker_001", parsed.negation.span, "predicate_001", "negation_marker"))
+        if parsed.fronted_negation:
+            clauses.append(StructuralNode("negation_marker_001", parsed.fronted_negation.span, "predicate_001", "fronted_negation_marker"))
         if parsed.objects:
             object_start = parsed.object_determiner.start if parsed.object_determiner else parsed.objects[0].start
             clauses.append(StructuralNode("object_001", Span(object_start, parsed.objects[-1].end), "predicate_001", "object_phrase"))
@@ -414,10 +426,17 @@ class ControlledEnglishAnalyzer:
             if parsed.conjunction:
                 relation_items.append(SemanticItem("conjunction_001", parsed.conjunction.normalized.upper(), tuple(arguments[1:]), status, certain, parsed.conjunction.span, ("prop_001",)))
             relations = tuple(relation_items)
-        quantifiers = () if parsed.quantifier is None else (Operator("quantifier_001", parsed.quantifier, ("prop_001",), status, certain, tokens[0].span),)
-        modality = () if parsed.modal is None else (Operator("modality_001", _MODALS[parsed.modal.normalized], ("prop_001",), status, certain, parsed.modal.span),)
+        scoped_contrast = parsed.fronted_negation is not None or parsed.negation is not None
+        quantifier_target = "modality_001" if scoped_contrast and parsed.modal else ("negation_001" if scoped_contrast and parsed.negation else "prop_001")
+        if parsed.fronted_negation:
+            quantifier_target = "modality_001" if parsed.modal else "prop_001"
+        quantifiers = () if parsed.quantifier is None else (Operator("quantifier_001", parsed.quantifier, (quantifier_target,), status, certain, tokens[1].span if parsed.fronted_negation else tokens[0].span),)
+        modality_target = "negation_001" if parsed.negation is not None else "prop_001"
+        modality = () if parsed.modal is None else (Operator("modality_001", _MODALS[parsed.modal.normalized], (modality_target,), status, certain, parsed.modal.span),)
         negation = ()
-        if parsed.negation is not None or parsed.quantifier == "NONE":
+        if parsed.fronted_negation is not None:
+            negation = (Operator("negation_001", "NOT", ("quantifier_001",), status, certain, parsed.fronted_negation.span),)
+        elif parsed.negation is not None or parsed.quantifier == "NONE":
             negation = (Operator("negation_001", "NOT" if parsed.negation else "NOT_EXISTS", ("prop_001",), status, certain, parsed.negation.span if parsed.negation else tokens[0].span),)
         numeric_constraints = ()
         if parsed.numeric_operator is not None:
