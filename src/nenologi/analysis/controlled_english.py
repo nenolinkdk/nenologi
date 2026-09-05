@@ -14,7 +14,11 @@ from ..models import (
 from ..serialization.validation import validate_analysis
 from .interface import UnsupportedConstructionError
 
-_TOKEN_RE = re.compile(r">=|<=|>|<|=|[0-9]+(?:\.[0-9]+)?|%|°[Cc]|[A-Za-z]+")
+_TOKEN_RE = re.compile(r">=|<=|>|<|=|[0-9]+(?:\.[0-9]+)?|%|°[Cc]|[A-Za-z]+(?:['’][A-Za-z]+)?")
+_CONTRACTIONS = {
+    "isn't": ("is", "not"), "isn’t": ("is", "not"),
+    "aren't": ("are", "not"), "aren’t": ("are", "not"),
+}
 _QUANTIFIERS = {"all": "ALL", "every": "ALL", "some": "SOME", "no": "NONE"}
 _MODALS = {"must": "MUST", "may": "MAY", "should": "SHOULD"}
 _DETERMINERS = {"a", "an", "the"}
@@ -165,7 +169,25 @@ def _tokens(text: str) -> tuple[_Token, ...]:
     residue = _TOKEN_RE.sub("", body)
     if residue.strip():
         raise UnsupportedConstructionError("only words, whitespace, and one final period are supported")
-    return tuple(_Token(match.group(), match.group().lower(), leading + match.start(), leading + match.end()) for match in matches)
+    apostrophe_matches = [match for match in matches if "'" in match.group() or "’" in match.group()]
+    if len(apostrophe_matches) > 1:
+        raise UnsupportedConstructionError("at most one controlled contraction is supported per clause")
+    expanded: list[_Token] = []
+    for match in matches:
+        surface = match.group()
+        normalized = surface.lower()
+        if "'" not in surface and "’" not in surface:
+            expanded.append(_Token(surface, normalized, leading + match.start(), leading + match.end()))
+            continue
+        canonical = _CONTRACTIONS.get(normalized)
+        if canonical is None:
+            raise UnsupportedConstructionError(f"unsupported contraction or possessive form: {surface}")
+        split = leading + match.start() + len(canonical[0])
+        expanded.extend((
+            _Token(canonical[0], canonical[0], leading + match.start(), split),
+            _Token(canonical[1], canonical[1], split, leading + match.end()),
+        ))
+    return tuple(expanded)
 
 
 def _parse(tokens: tuple[_Token, ...]) -> _Parsed:
