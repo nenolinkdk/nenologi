@@ -46,7 +46,6 @@ PARSER_BLOCKERS = {
     "condition_003": "UNSUPPORTED_UNLESS",
     "entity_relation_001": "UNSUPPORTED_PAST_TRANSITIVE",
     "entity_relation_002": "UNSUPPORTED_PAST_TRANSITIVE",
-    "entity_relation_003": "UNSUPPORTED_SPATIAL_RELATION",
     "omission_001": "UNSUPPORTED_SUFFIX_IF",
     "scope_001": "UNSUPPORTED_EMBEDDED_VERB",
     "scope_002": "UNSUPPORTED_EMBEDDED_VERB",

@@ -58,7 +58,7 @@ python tests/validation/audit_gold_coverage.py --json
 | numeric_004 | numeric | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
 | entity_relation_001 | entity | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
 | entity_relation_002 | entity | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
-| entity_relation_003 | entity | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_SPATIAL_RELATION |
+| entity_relation_003 | entity | YES | YES | YES | STRUCTURAL | NA | END_TO_END_EXACT | NONE |
 | addition_001 | addition | OK | AV | UN | NO | NA | COMPARATOR_UNSUPPORTED | UNSUPPORTED_COORDINATED_PREDICATE_REPRESENTATION |
 | omission_001 | omission | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_SUFFIX_IF |
 | contradiction_001 | contradiction | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
@@ -79,7 +79,7 @@ python tests/validation/audit_gold_coverage.py --json
 | entailment_006 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
 | entailment_007 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
 
-Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are **23 END_TO_END_EXACT, 0 ANALYZABLE_BUT_NOT_EXACT, 10 PARSER_UNSUPPORTED, 2 COMPARATOR_UNSUPPORTED, 7 INFERENCE_NOT_IMPLEMENTED.**
+Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are **24 END_TO_END_EXACT, 0 ANALYZABLE_BUT_NOT_EXACT, 9 PARSER_UNSUPPORTED, 2 COMPARATOR_UNSUPPORTED, 7 INFERENCE_NOT_IMPLEMENTED.**
 
 ## Comparator-unsupported investigations
 
@@ -107,7 +107,7 @@ Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are
 | Event temporal anchor | temporal_001 | Temporal type exists; event-anchor proposition does not | HIGH | 1 |
 | Nested temporal phrase | temporal_003 | Flat temporal type exists; nested relation does not | MEDIUM | 1 |
 | UNLESS | condition_003 | IF exists; exception/inversion semantics do not | HIGH | 1 |
-| Spatial copular relation | entity_relation_003 | Generic relation storage exists; controlled normalization/comparison is partial | MEDIUM | 1 |
+| Spatial copular relation | entity_relation_003 | Implemented in Controlled Spatial Copular Relations v0.1 | COMPLETE | 1 |
 | Multi-sentence | addition_002 | Domain alignment/addition exists; document sentence parsing does not | MEDIUM | 1 |
 | Coordinated predicates | omission_002 | Multi-proposition comparison exists; predicate coordination parsing does not | HIGH | 1 |
 | Contraction | equivalence_004 | Implemented in Contraction Normalization v0.3 | COMPLETE | 1 |
@@ -167,7 +167,7 @@ Gold coverage did not rise after Addition/Omission because no existing gold inpu
 
 ## Quality baseline and exit criteria
 
-The current baseline passes 120 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
+The current baseline passes 126 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
 
 | Exit criterion | Result | Evidence |
 | --- | --- | --- |
@@ -194,4 +194,4 @@ The current baseline passes 120 unit/validation tests, gold validation (30 chang
 | Additional semantic categories | Low now | New schema/taxonomy | High | None identified | Breadth without current corpus demand |
 | UI/application work | Product value | Stable core API | Medium | None | Exercises client boundary, not semantic coverage |
 
-Simple Past Transitive Clauses v0.1 unlocked `entity_relation_001` and `entity_relation_002`. Simple Passive Transitive Clauses v0.2 unlocked `equivalence_002`, and Contraction Normalization v0.3 unlocked `equivalence_004` without contraction-specific semantics. The next recommended Phase 2 milestone is narrowly controlled spatial copular relations for `entity_relation_003`.
+Simple Past Transitive Clauses v0.1 unlocked `entity_relation_001` and `entity_relation_002`; subsequent controlled parser milestones unlocked `equivalence_002`, `equivalence_004`, and now `entity_relation_003`. The next recommended Phase 2 milestone is narrowly controlled suffix-IF conditions for `condition_002`, with the separate `omission_001` taxonomy conflict left explicit.

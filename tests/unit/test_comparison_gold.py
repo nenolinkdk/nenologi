@@ -16,6 +16,7 @@ SUPPORTED_CASE_IDS = {
     "temporal_002",
     "equivalence_002",
     "equivalence_004",
+    "entity_relation_003",
 }
 
 

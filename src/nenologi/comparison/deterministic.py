@@ -536,8 +536,8 @@ class DeterministicComparator:
         elif predicate_changed:
             _transition(
                 findings, DifferenceType.ENTITY_RELATION_CHANGE,
-                f"PREDICATE:{source_prop.predicate}", f"PREDICATE:{target_prop.predicate}",
-                TransitionRule(Severity.HIGH, f"The target changes the action from {source_prop.predicate} to {target_prop.predicate}."),
+                source_prop.predicate, target_prop.predicate,
+                TransitionRule(Severity.HIGH, f"The target changes the semantic predicate from {source_prop.predicate} to {target_prop.predicate}."),
                 (f"source.{source_prop.id}", f"target.{target_prop.id}"),
             )
 

@@ -84,7 +84,7 @@ class DeterministicComparatorTests(unittest.TestCase):
         cases = (
             ("All employees must register.", "All managers must register.", "SUBJECT:EMPLOYEE", "SUBJECT:MANAGER", "affected entity"),
             ("All employees must submit the report.", "All employees must submit the form.", "OBJECT:REPORT", "OBJECT:FORM", "object"),
-            ("All employees must register.", "All employees must report.", "PREDICATE:REGISTER", "PREDICATE:REPORT", "action"),
+            ("All employees must register.", "All employees must report.", "REGISTER", "REPORT", "semantic predicate"),
         )
         for source, target, before, after, explanation in cases:
             with self.subTest(before=before, after=after):

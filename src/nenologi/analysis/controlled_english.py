@@ -23,6 +23,7 @@ _QUANTIFIERS = {"all": "ALL", "every": "ALL", "some": "SOME", "no": "NONE"}
 _MODALS = {"must": "MUST", "may": "MAY", "should": "SHOULD"}
 _DETERMINERS = {"a", "an", "the"}
 _COPULAS = {"is", "are"}
+_SPATIAL_RELATIONS = {"inside", "beside"}
 _ACTIONS = {
     "access", "acquire", "approve", "bring", "buy", "choose", "discover", "enter", "make",
     "open", "pay", "receive", "register", "report", "restart", "select", "sell", "stop",
@@ -98,6 +99,7 @@ class _Parsed:
     fronted_negation: _Token | None = None
     surface_subject_span: Span | None = None
     by_agent_span: Span | None = None
+    spatial: bool = False
 
 
 def _numeric_phrase(tokens: tuple[_Token, ...]) -> tuple[NumericOperator, Decimal, _Token | None, Span] | None:
@@ -226,6 +228,20 @@ def _parse(tokens: tuple[_Token, ...]) -> _Parsed:
         if index < len(tokens) and words[index] == "not":
             negation = tokens[index]
             index += 1
+        if index < len(tokens) and words[index] in _SPATIAL_RELATIONS:
+            if negation is not None:
+                raise UnsupportedConstructionError("negated spatial relations are unsupported")
+            predicate = tokens[index]
+            remaining = tokens[index + 1:]
+            determiner = remaining[0] if remaining and remaining[0].normalized in _DETERMINERS else None
+            objects = remaining[1:] if determiner else remaining
+            if determiner is None or not 1 <= len(objects) <= 2:
+                raise UnsupportedConstructionError("spatial relations require one determiner-led reference entity")
+            return _Parsed(
+                quantifier, subject, None, None, predicate, determiner, tuple(objects),
+                None, None, (), False, subject_start, predicate.start, None, None, None, None,
+                spatial=True,
+            )
         numeric = _numeric_phrase(tuple(tokens[index:]))
         if numeric is not None:
             if negation is not None:
@@ -504,7 +520,8 @@ class ControlledEnglishAnalyzer:
         proposition = Proposition("prop_001", canonical_predicate.upper(), tuple(arguments), status, certain, parsed.predicate.span)
         relations = ()
         if parsed.objects:
-            relation_items = [SemanticItem("relation_001", "ACTION_RELATION", tuple(arguments), status, certain, derived_from=("prop_001",))]
+            relation_type = "SPATIAL_RELATION" if parsed.spatial else "ACTION_RELATION"
+            relation_items = [SemanticItem("relation_001", relation_type, tuple(arguments), status, certain, derived_from=("prop_001",))]
             if parsed.conjunction:
                 relation_items.append(SemanticItem("conjunction_001", parsed.conjunction.normalized.upper(), tuple(arguments[1:]), status, certain, parsed.conjunction.span, ("prop_001",)))
             relations = tuple(relation_items)
