@@ -34,6 +34,7 @@ _PAST_ACTIONS = {
     "opened": "open", "registered": "register",
     "bought": "buy", "made": "make", "sold": "sell",
 }
+_PRESENT_ACTIONS = {"passes": "pass"}
 _NUMBER_WORDS = {"zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10"}
 _UNITS = {"year": "year", "years": "year", "kg": "kg", "%": "%", "°c": "°C", "degree": "degree", "degrees": "degree", "copy": "copy", "copies": "copy", "file": "file", "files": "file"}
 _NUMERIC_FORMS = {
@@ -141,7 +142,7 @@ def _class_name(word: str) -> str:
 
 
 def _canonical_action(word: str) -> str | None:
-    return word if word in _ACTIONS else _PAST_ACTIONS.get(word)
+    return word if word in _ACTIONS else (_PAST_ACTIONS.get(word) or _PRESENT_ACTIONS.get(word))
 
 
 def _object_label(tokens: tuple[_Token, ...]) -> str:
@@ -470,7 +471,7 @@ class ControlledEnglishAnalyzer:
     def analyze(self, text: str, *, language: str = "en", profile: str = "general") -> Analysis:
         if language != "en":
             raise UnsupportedConstructionError("ControlledEnglishAnalyzer supports only language='en'")
-        if isinstance(text, str) and text.lstrip().lower().startswith("if "):
+        if isinstance(text, str) and re.search(r"\bif\b", text, re.IGNORECASE):
             return self._analyze_condition(text, language=language, profile=profile)
         temporal_match = self._temporal_match(text)
         if temporal_match is not None:
@@ -519,7 +520,7 @@ class ControlledEnglishAnalyzer:
         canonical_predicate = _canonical_action(parsed.predicate.normalized) or parsed.predicate.normalized
         proposition = Proposition("prop_001", canonical_predicate.upper(), tuple(arguments), status, certain, parsed.predicate.span)
         relations = ()
-        if parsed.objects:
+        if parsed.objects or (not parsed.copular and parsed.numeric_operator is None):
             relation_type = "SPATIAL_RELATION" if parsed.spatial else "ACTION_RELATION"
             relation_items = [SemanticItem("relation_001", relation_type, tuple(arguments), status, certain, derived_from=("prop_001",))]
             if parsed.conjunction:
@@ -614,9 +615,26 @@ class ControlledEnglishAnalyzer:
         if stripped[-1:] in "?!":
             raise UnsupportedConstructionError("only declarative IF sentences are supported")
         body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
-        if body.count(",") != 1:
-            raise UnsupportedConstructionError("controlled IF requires exactly one comma and two clauses")
-        antecedent_text, consequent_text = (part.strip() for part in body[3:].split(",", 1))
+        if len(re.findall(r"\bif\b", body, re.IGNORECASE)) != 1:
+            raise UnsupportedConstructionError("controlled IF requires exactly one standalone IF marker")
+        leading = len(text) - len(text.lstrip())
+        if body.lower().startswith("if "):
+            if body.count(",") != 1:
+                raise UnsupportedConstructionError("prefix IF requires exactly one comma and two clauses")
+            antecedent_text, consequent_text = (part.strip() for part in body[3:].split(",", 1))
+            comma_index = body.index(",")
+            antecedent_offset = leading + body.index(antecedent_text, 2, comma_index)
+            consequent_offset = leading + body.index(consequent_text, comma_index + 1)
+        else:
+            if "," in body:
+                raise UnsupportedConstructionError("suffix IF does not support a comma")
+            match = re.fullmatch(r"(?P<consequent>.+?)\s+if\s+(?P<antecedent>.+)", body, re.IGNORECASE)
+            if match is None:
+                raise UnsupportedConstructionError("suffix IF requires CONSEQUENT + IF + ANTECEDENT")
+            antecedent_text = match.group("antecedent").strip()
+            consequent_text = match.group("consequent").strip()
+            antecedent_offset = leading + match.start("antecedent")
+            consequent_offset = leading + match.start("consequent")
         if not antecedent_text or not consequent_text:
             raise UnsupportedConstructionError("controlled IF requires an antecedent and consequent")
         if re.search(r"\bmay\s+not\b", f"{antecedent_text} {consequent_text}", re.IGNORECASE):
@@ -628,13 +646,9 @@ class ControlledEnglishAnalyzer:
         consequent = self.analyze(consequent_text + ".", language=language, profile=profile)
         if len(antecedent.propositions) != 1 or len(consequent.propositions) != 1:
             raise UnsupportedConstructionError("condition clauses require one proposition each")
-        if antecedent.quantifiers or antecedent.modality or antecedent.negation or antecedent.relations or antecedent.temporal_relations:
-            raise UnsupportedConstructionError("antecedents support only one simple property or numeric threshold")
-
-        leading = len(text) - len(text.lstrip())
-        comma_index = body.index(",")
-        antecedent_offset = leading + body.index(antecedent_text, 2, comma_index)
-        consequent_offset = leading + body.index(consequent_text, comma_index + 1)
+        unsupported_relations = tuple(item for item in antecedent.relations if item.type != "ACTION_RELATION")
+        if antecedent.quantifiers or antecedent.modality or antecedent.negation or unsupported_relations or antecedent.temporal_relations:
+            raise UnsupportedConstructionError("antecedents support only one simple property, action, or numeric threshold")
 
         def shifted(span: Span | None, offset: int) -> Span | None:
             return None if span is None else Span(span.start + offset, span.end + offset)

@@ -272,7 +272,23 @@ def _append_numeric_change(findings: list[Difference], source: Analysis, target:
 
 def _condition_value(analysis: Analysis, antecedent: Proposition) -> str:
     numeric = _numeric_constraint(analysis, antecedent.id, "condition")
-    return f"IF_{_numeric_display(numeric).replace(' ', '_')}" if numeric else f"IF_{antecedent.predicate}"
+    if numeric:
+        return f"IF_{_numeric_display(numeric).replace(' ', '_')}"
+    action = next((
+        item for item in analysis.relations
+        if item.type == "ACTION_RELATION" and item.derived_from == (antecedent.id,)
+    ), None)
+    if action is None or len(antecedent.arguments) != 1:
+        return f"IF_{antecedent.predicate}"
+    entity = next(item for item in analysis.entities if item.id == antecedent.arguments[0])
+    verb = antecedent.predicate
+    if verb.endswith("Y") and len(verb) > 1 and verb[-2] not in "AEIOU":
+        verb = verb[:-1] + "IES"
+    elif verb.endswith(("S", "SH", "CH", "X", "Z", "O")):
+        verb += "ES"
+    else:
+        verb += "S"
+    return f"IF_{entity.label.upper()}_{verb}"
 
 
 def _temporal_relation(analysis: Analysis, proposition_id: str, side: str) -> TemporalRelation | None:

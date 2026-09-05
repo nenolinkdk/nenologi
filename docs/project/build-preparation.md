@@ -33,11 +33,11 @@ A <-> B         -> semantic/logical findings
 
 Phase 1 is complete. The reproducible exit decision, 42-case pipeline matrix, quality baseline, and single recommended Phase 2 milestone are maintained in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
-After Controlled Spatial Copular Relations v0.1, the callable pipeline covers 24 exact end-to-end gold cases out of 42. The reproducible audit classifies the remainder as 9 parser-unsupported, 2 comparator-unsupported, and 7 inference-not-implemented, with no analyzable-but-inexact cases. See [Controlled Spatial Copular Relations v0.1](../architecture/spatial-copular-relations-v0.1.md).
+After Controlled Suffix-IF Conditions v0.1, the callable pipeline covers 25 exact end-to-end gold cases out of 42. The audit also exposes one analyzable-but-inexact condition/omission taxonomy conflict; 7 cases remain parser-unsupported, 2 comparator-unsupported, and 7 inference-not-implemented. See [Controlled Suffix-IF Conditions v0.1](../architecture/suffix-if-conditions-v0.1.md).
 
 ## Next implementation milestone
 
-The next recommended Phase 2 milestone is **Controlled Suffix-IF Conditions v0.1**, narrowly targeting `condition_002` while preserving existing condition precedence and leaving `omission_001` unresolved until its taxonomy conflict is addressed.
+The next recommended Phase 2 milestone is **Condition/Omission Taxonomy Resolution v0.1**, explicitly deciding the `omission_001` contract before any broader conditional grammar is added.
 
 ## Definition of ready
 

@@ -117,10 +117,14 @@ Immediately before controlled parsing, the tokenizer expands the closed forms `i
 
 The complete form `[THE] SUBJECT + IS/ARE + INSIDE/BESIDE + THE + REFERENCE_ENTITY` becomes a binary spatial proposition with ordered subject/reference arguments. `BE` is syntactic. Other copular complements remain unary properties, and temporal phrases retain their separate representation. See [Controlled Spatial Copular Relations v0.1](spatial-copular-relations-v0.1.md).
 
+## Controlled suffix-IF conditions v0.1
+
+One standalone `CONSEQUENT + IF + ANTECEDENT` form normalizes to the existing antecedent-first `Condition`, exactly like prefix `If A, B`. Both inner clauses reuse the current parser; the gold-required finite form `passes` maps explicitly to `PASS`. See [Controlled Suffix-IF Conditions v0.1](suffix-if-conditions-v0.1.md).
+
 ## Explicitly unsupported
 
 - More than one sentence
-- Suffix `IF`, `UNLESS`, `ELSE`, nested/chained conditions, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
+- `UNLESS`, `ELSE`, nested/chained/multiple `IF`, comma-bearing suffix `IF`, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
 - Questions and exclamations
 - Subject/predicate coordination, nested/repeated coordination, and subordination
 - Relative clauses and conditions

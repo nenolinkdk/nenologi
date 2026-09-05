@@ -100,7 +100,7 @@ Numeric differences do not by themselves establish contradiction or entailment, 
 
 A condition aligns its consequent with the other main proposition and holds explicit references to one antecedent and one consequent. Adding or removing that governing IF relation produces one `CONDITION_CHANGE`; it does not also produce `ADDITION` or `OMISSION`. If both conditions align and only a normalized numeric threshold inside the antecedent changes, the comparator emits the more specific `NUMERIC_THRESHOLD_CHANGE`, not a redundant condition finding. A distinct antecedent predicate/entity produces `CONDITION_CHANGE`; multiple independent nested changes may produce their corresponding distinct findings.
 
-Condition comparison establishes neither contradiction nor conditional entailment, so changed conditions use `UNDETERMINED`. Gold coverage increased from 16 to 17 exact cases by activating `condition_001`. Suffix-IF `condition_002` and `UNLESS` case `condition_003` remain outside the grammar; their expected results were not changed.
+Condition comparison establishes neither contradiction nor conditional entailment, so changed conditions use `UNDETERMINED`. Prefix `condition_001` and suffix `condition_002` are exact. `UNLESS` case `condition_003` remains outside the grammar. Suffix parsing also exposes the pre-existing `omission_001` taxonomy conflict: condition precedence yields `CONDITION_CHANGE`, while that gold case expects `OMISSION`.
 
 ## Temporal relations
 

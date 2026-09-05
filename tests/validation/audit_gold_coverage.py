@@ -42,11 +42,9 @@ class AuditResult:
 PARSER_BLOCKERS = {
     "temporal_001": "UNSUPPORTED_EVENT_TEMPORAL_ANCHOR",
     "temporal_003": "UNSUPPORTED_NESTED_TEMPORAL_PHRASE",
-    "condition_002": "UNSUPPORTED_SUFFIX_IF",
     "condition_003": "UNSUPPORTED_UNLESS",
     "entity_relation_001": "UNSUPPORTED_PAST_TRANSITIVE",
     "entity_relation_002": "UNSUPPORTED_PAST_TRANSITIVE",
-    "omission_001": "UNSUPPORTED_SUFFIX_IF",
     "scope_001": "UNSUPPORTED_EMBEDDED_VERB",
     "scope_002": "UNSUPPORTED_EMBEDDED_VERB",
     "addition_002": "UNSUPPORTED_MULTI_SENTENCE",
@@ -143,7 +141,8 @@ def audit_gold_coverage() -> AuditResult:
                         pipeline = {
                             "parser": "SUPPORTED", "analysis": "AVAILABLE",
                             "alignment": alignment_status, "comparator": "SUPPORTED",
-                            "inference": "NOT_APPLICABLE", "blocking_reason": "NONE",
+                            "inference": "NOT_APPLICABLE",
+                            "blocking_reason": "NONE" if exact else "EXPECTED_OUTPUT_MISMATCH",
                         }
             case_status[case["id"]] = status
             totals[status] += 1

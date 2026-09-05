@@ -50,7 +50,7 @@ python tests/validation/audit_gold_coverage.py --json
 | temporal_002 | temporal | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
 | temporal_003 | temporal | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_NESTED_TEMPORAL_PHRASE |
 | condition_001 | condition | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
-| condition_002 | condition | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_SUFFIX_IF |
+| condition_002 | condition | YES | YES | YES | STRUCTURAL | NA | END_TO_END_EXACT | NONE |
 | condition_003 | condition | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_UNLESS |
 | numeric_001 | numeric | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
 | numeric_002 | numeric | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
@@ -60,7 +60,7 @@ python tests/validation/audit_gold_coverage.py --json
 | entity_relation_002 | entity | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
 | entity_relation_003 | entity | YES | YES | YES | STRUCTURAL | NA | END_TO_END_EXACT | NONE |
 | addition_001 | addition | OK | AV | UN | NO | NA | COMPARATOR_UNSUPPORTED | UNSUPPORTED_COORDINATED_PREDICATE_REPRESENTATION |
-| omission_001 | omission | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_SUFFIX_IF |
+| omission_001 | omission | YES | YES | YES | STRUCTURAL | NA | ANALYZABLE_BUT_NOT_EXACT | EXPECTED_OMISSION_CONFLICTS_WITH_CONDITION_PRECEDENCE |
 | contradiction_001 | contradiction | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
 | scope_001 | scope | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_EMBEDDED_VERB |
 | scope_002 | scope | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_EMBEDDED_VERB |
@@ -79,7 +79,7 @@ python tests/validation/audit_gold_coverage.py --json
 | entailment_006 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
 | entailment_007 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
 
-Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are **24 END_TO_END_EXACT, 0 ANALYZABLE_BUT_NOT_EXACT, 9 PARSER_UNSUPPORTED, 2 COMPARATOR_UNSUPPORTED, 7 INFERENCE_NOT_IMPLEMENTED.**
+Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are **25 END_TO_END_EXACT, 1 ANALYZABLE_BUT_NOT_EXACT, 7 PARSER_UNSUPPORTED, 2 COMPARATOR_UNSUPPORTED, 7 INFERENCE_NOT_IMPLEMENTED.**
 
 ## Comparator-unsupported investigations
 
@@ -102,7 +102,7 @@ Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are
 | Construction | Cases | Domain/comparator readiness | Risk | Exact gold likely unlocked |
 | --- | --- | --- | --- | ---: |
 | Passive transitive | equivalence_002 | Implemented in Simple Passive Transitive v0.2 | COMPLETE | 1 |
-| Suffix IF | condition_002, omission_001 | Condition model/comparator exist; omission_001 taxonomy conflicts with condition precedence | MEDIUM | 1 |
+| Suffix IF | condition_002, omission_001 | Implemented; condition_002 exact, omission_001 exposes taxonomy conflict | COMPLETE | 1 |
 | Embedded verbs | scope_001, scope_002 | Scope chains exist; embedded propositions/alignment do not | HIGH | 2 |
 | Event temporal anchor | temporal_001 | Temporal type exists; event-anchor proposition does not | HIGH | 1 |
 | Nested temporal phrase | temporal_003 | Flat temporal type exists; nested relation does not | MEDIUM | 1 |
@@ -167,7 +167,7 @@ Gold coverage did not rise after Addition/Omission because no existing gold inpu
 
 ## Quality baseline and exit criteria
 
-The current baseline passes 126 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
+The current baseline passes 132 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
 
 | Exit criterion | Result | Evidence |
 | --- | --- | --- |
@@ -194,4 +194,4 @@ The current baseline passes 126 unit/validation tests, gold validation (30 chang
 | Additional semantic categories | Low now | New schema/taxonomy | High | None identified | Breadth without current corpus demand |
 | UI/application work | Product value | Stable core API | Medium | None | Exercises client boundary, not semantic coverage |
 
-Simple Past Transitive Clauses v0.1 unlocked `entity_relation_001` and `entity_relation_002`; subsequent controlled parser milestones unlocked `equivalence_002`, `equivalence_004`, and now `entity_relation_003`. The next recommended Phase 2 milestone is narrowly controlled suffix-IF conditions for `condition_002`, with the separate `omission_001` taxonomy conflict left explicit.
+Successive controlled parser milestones now unlock `entity_relation_001` through `_003`, `equivalence_002`, `equivalence_004`, and `condition_002`. Suffix-IF also makes `omission_001` analyzable and exposes its taxonomy conflict rather than hiding it. The next recommended milestone is an explicit Condition/Omission Taxonomy Resolution v0.1.
