@@ -33,11 +33,11 @@ A <-> B         -> semantic/logical findings
 
 Phase 1 is complete. The reproducible exit decision, 42-case pipeline matrix, quality baseline, and single recommended Phase 2 milestone are maintained in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
-After Condition/Omission Taxonomy Resolution v0.1, the callable pipeline covers 26 exact end-to-end gold cases out of 42 with no analyzable-but-inexact cases. Seven remain parser-unsupported, 2 comparator-unsupported, and 7 inference-not-implemented. See [Condition/Omission Taxonomy Resolution v0.1](../architecture/condition-omission-taxonomy-v0.1.md).
+After Exact Explicit Inference v0.1, the callable pipeline covers 27 exact end-to-end gold cases out of 42 with no analyzable-but-inexact cases. Seven remain parser-unsupported, 2 comparator-unsupported, and 6 inference-not-implemented. See [Exact Explicit Inference v0.1](../architecture/exact-explicit-inference-v0.1.md).
 
 ## Next implementation milestone
 
-The next recommended Phase 2 milestone is **Exact Explicit Inference v0.1**, narrowly targeting `entailment_001` without broader implication or world-knowledge reasoning.
+The next recommended Phase 2 milestone is **Lexical Opposition Contradiction v0.1**, narrowly targeting the already-parseable `entailment_005` with explicit, auditable lexical relation data.
 
 ## Definition of ready
 

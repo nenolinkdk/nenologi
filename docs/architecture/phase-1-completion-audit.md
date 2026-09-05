@@ -1,6 +1,6 @@
 # Phase 1 Completion Audit
 
-This document records the reproducible completion baseline for Nenologi Core Phase 1 and tracks the current 42-case pipeline. The first Phase 2 parser extension raises the suite to 109 automated tests without changing semantic, alignment, comparison, or inference behavior.
+This document records the reproducible completion baseline for Nenologi Core Phase 1 and tracks the current 42-case pipeline through the subsequent Phase 2 milestones.
 
 Run the authoritative per-case audit with:
 
@@ -29,6 +29,7 @@ python tests/validation/audit_gold_coverage.py --json
 | Proposition alignment | LIMITED | Unique one-to-one normalized signatures plus comparator-only single-position counterpart. |
 | Addition/omission | LIMITED | Safely unmatched normalized propositions; ambiguity and condition antecedents excluded. |
 | Logical relation | LIMITED | Exact structural equivalence and one narrow pure-negation contradiction; otherwise `UNDETERMINED`. |
+| Exact explicit inference | LIMITED | Complete normalized semantic identity only; no subgraph match or implication rules. |
 
 ## Full gold pipeline matrix
 
@@ -71,15 +72,15 @@ python tests/validation/audit_gold_coverage.py --json
 | equivalence_003 | equivalence | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
 | equivalence_004 | equivalence | YES | YES | YES | EXACT | NA | END_TO_END_EXACT | NONE |
 | equivalence_005 | equivalence | OK | AV | UN | NO | NA | COMPARATOR_UNSUPPORTED | UNSUPPORTED_SYMMETRIC_CONJUNCTION_ALIGNMENT |
-| entailment_001 | entailment | OK | AV | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
-| entailment_002 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
-| entailment_003 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
-| entailment_004 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
-| entailment_005 | entailment | OK | AV | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
-| entailment_006 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
-| entailment_007 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
+| entailment_001 | entailment | OK | AV | NA | NA | OK | END_TO_END_EXACT | NONE |
+| entailment_002 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | UNIVERSAL_INSTANTIATION_AND_MULTI_SENTENCE |
+| entailment_003 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | DEFEASIBLE_PREDICTION |
+| entailment_004 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | WORLD_KNOWLEDGE_NON_ENTAILMENT |
+| entailment_005 | entailment | OK | AV | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | LEXICAL_OPPOSITION_CONTRADICTION |
+| entailment_006 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | COREFERENCE_AMBIGUITY |
+| entailment_007 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | METAPHOR_NON_LITERAL_FORMALIZATION |
 
-Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are **26 END_TO_END_EXACT, 0 ANALYZABLE_BUT_NOT_EXACT, 7 PARSER_UNSUPPORTED, 2 COMPARATOR_UNSUPPORTED, 7 INFERENCE_NOT_IMPLEMENTED.**
+Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are **27 END_TO_END_EXACT, 0 ANALYZABLE_BUT_NOT_EXACT, 7 PARSER_UNSUPPORTED, 2 COMPARATOR_UNSUPPORTED, 6 INFERENCE_NOT_IMPLEMENTED.**
 
 ## Comparator-unsupported investigations
 
@@ -116,7 +117,7 @@ Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are
 
 | Case | Structures available today | Reasoning required | Parser first? | Risk |
 | --- | --- | --- | --- | --- |
-| entailment_001 | Both `OPEN(door)` analyses | Exact explicit-claim recognition | No | LOW |
+| entailment_001 | Both `OPEN(door)` analyses | Exact explicit-claim recognition implemented | No | COMPLETE |
 | entailment_002 | Neither multi-sentence rule/membership statement nor candidate parses | Universal instantiation plus membership | Yes | HIGH |
 | entailment_003 | Neither observation sequence nor future candidate parses | Defeasible prediction, not entailment | Yes | HIGH |
 | entailment_004 | Neither residence nor fluency proposition parses | Open-world non-entailment/unsupported judgment | Yes | HIGH |
@@ -124,7 +125,7 @@ Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are
 | entailment_006 | Pronoun-bearing statement/candidate do not parse | Coreference ambiguity with competing readings | Yes | HIGH |
 | entailment_007 | Metaphor and theft candidate do not parse | Non-literal safety classification | Yes | HIGH |
 
-Only entailment_001 is representationally sufficient today. Entailment_005 needs an explicit lexical-opposition resource not present in the semantic model; the other five require parser/representation work before reasoning.
+Exact Explicit Inference v0.1 now handles entailment_001. Entailment_005 needs an explicit lexical-opposition resource not present in the semantic model; the other five require parser/representation work before reasoning.
 
 ## Addition/omission and alignment audit
 
@@ -167,7 +168,7 @@ Gold coverage did not rise after Addition/Omission because no existing gold inpu
 
 ## Quality baseline and exit criteria
 
-The current baseline passes 137 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
+The current baseline passes 145 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator and inference fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
 
 | Exit criterion | Result | Evidence |
 | --- | --- | --- |
@@ -194,4 +195,4 @@ The current baseline passes 137 unit/validation tests, gold validation (30 chang
 | Additional semantic categories | Low now | New schema/taxonomy | High | None identified | Breadth without current corpus demand |
 | UI/application work | Product value | Stable core API | Medium | None | Exercises client boundary, not semantic coverage |
 
-Successive controlled parser milestones unlock `entity_relation_001` through `_003`, `equivalence_002`, `equivalence_004`, and `condition_002`. Condition/Omission Taxonomy Resolution v0.1 makes `omission_001` exact through an architecture-backed gold correction without comparator or parser changes. The next recommended milestone is Exact Explicit Inference v0.1 for `entailment_001`.
+Successive controlled parser milestones unlock `entity_relation_001` through `_003`, `equivalence_002`, `equivalence_004`, and `condition_002`. Condition/Omission Taxonomy Resolution v0.1 makes `omission_001` exact, and Exact Explicit Inference v0.1 makes `entailment_001` exact without parser or comparator changes. The next recommended milestone is Lexical Opposition Contradiction v0.1 for `entailment_005`.

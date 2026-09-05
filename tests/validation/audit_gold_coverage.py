@@ -11,7 +11,8 @@ from enum import StrEnum
 from pathlib import Path
 
 from nenologi import (
-    ControlledEnglishAnalyzer, DeterministicComparator, DeterministicPropositionAligner,
+    ControlledEnglishAnalyzer, DeterministicComparator, DeterministicInferenceEngine,
+    DeterministicPropositionAligner,
     UnsupportedComparisonError, UnsupportedConstructionError,
 )
 
@@ -56,6 +57,15 @@ COMPARATOR_BLOCKERS = {
     "equivalence_005": "UNSUPPORTED_SYMMETRIC_CONJUNCTION_ALIGNMENT",
 }
 
+INFERENCE_BLOCKERS = {
+    "entailment_002": "UNIVERSAL_INSTANTIATION_AND_MULTI_SENTENCE",
+    "entailment_003": "DEFEASIBLE_PREDICTION",
+    "entailment_004": "WORLD_KNOWLEDGE_NON_ENTAILMENT",
+    "entailment_005": "LEXICAL_OPPOSITION_CONTRADICTION",
+    "entailment_006": "COREFERENCE_AMBIGUITY",
+    "entailment_007": "METAPHOR_NON_LITERAL_FORMALIZATION",
+}
+
 
 def _actual_differences(comparison) -> list[dict[str, object]]:
     return [
@@ -72,6 +82,7 @@ def _actual_differences(comparison) -> list[dict[str, object]]:
 def audit_gold_coverage() -> AuditResult:
     analyzer = ControlledEnglishAnalyzer()
     comparator = DeterministicComparator()
+    inference_engine = DeterministicInferenceEngine()
     case_status: dict[str, ImplementationStatus] = {}
     totals: Counter[ImplementationStatus] = Counter()
     by_feature: dict[str, Counter[ImplementationStatus]] = defaultdict(Counter)
@@ -81,20 +92,29 @@ def audit_gold_coverage() -> AuditResult:
         cases = json.loads(path.read_text(encoding="utf-8"))["cases"]
         for case in cases:
             if case["case_type"] == "INFERENCE":
-                status = ImplementationStatus.INFERENCE_NOT_IMPLEMENTED
                 parsed = []
+                analyses = []
                 for field in ("statement", "candidate_inference"):
                     try:
-                        analyzer.analyze(case[field])
+                        analyses.append(analyzer.analyze(case[field]))
                     except UnsupportedConstructionError:
                         parsed.append(False)
                     else:
                         parsed.append(True)
+                exact = False
+                if all(parsed):
+                    inference = inference_engine.infer(analyses[0], analyses[1])
+                    exact = inference.interpretation_status.value == case["expected"]["interpretation_status"]
+                status = (
+                    ImplementationStatus.END_TO_END_EXACT
+                    if exact else ImplementationStatus.INFERENCE_NOT_IMPLEMENTED
+                )
                 pipeline = {
                     "parser": "SUPPORTED" if all(parsed) else "UNSUPPORTED",
                     "analysis": "AVAILABLE" if all(parsed) else "INCOMPLETE",
                     "alignment": "NOT_APPLICABLE", "comparator": "NOT_APPLICABLE",
-                    "inference": "NOT_IMPLEMENTED", "blocking_reason": "INFERENCE_REQUIRED",
+                    "inference": "EXACT_EXPLICIT" if exact else "NOT_IMPLEMENTED",
+                    "blocking_reason": "NONE" if exact else INFERENCE_BLOCKERS[case["id"]],
                 }
             else:
                 try:

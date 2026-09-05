@@ -6,6 +6,10 @@ from .comparison import (
     DeterministicComparator, DeterministicPropositionAligner, PropositionAlignment,
     UnsupportedComparisonError, proposition_signature,
 )
+from .inference import (
+    EXACT_EXPLICIT_RULE, NOT_ESTABLISHED_RULE, DeterministicInferenceEngine,
+    InferenceEngine,
+)
 from .models import (
     Ambiguity, Analysis, Comparison, ComparisonMode, Condition, Confidence, Difference,
     DifferenceType, DiscourseRelation, DiscourseRelationType, Document,
@@ -23,12 +27,12 @@ from .serialization import (
 __all__ = [
     "AlignmentResult", "AlignmentStatus", "Ambiguity", "Analysis", "Analyzer", "CANONICAL_DIFFERENCE_ORDER", "Comparator", "Comparison", "Condition",
     "ComparisonMode", "Confidence", "ControlledEnglishAnalyzer",
-    "DeterministicComparator", "DeterministicPropositionAligner",
+    "DeterministicComparator", "DeterministicInferenceEngine", "DeterministicPropositionAligner",
     "Difference", "DifferenceType", "DiscourseRelation", "DiscourseRelationType",
-    "Document", "DomainValidationError", "Entity", "Inference",
+    "Document", "DomainValidationError", "Entity", "EXACT_EXPLICIT_RULE", "Inference", "InferenceEngine",
     "InterpretationStatus", "LocalizedText", "LogicalExpression", "LogicalRelation", "NumericConstraint", "NumericOperator", "Operator",
     "Proposition", "PropositionAlignment", "ReferenceValidationError", "SchemaValidationError",
-    "SemanticItem", "Severity", "Span", "StructuralNode", "Structure", "TemporalRelation", "TemporalRelationType",
+    "NOT_ESTABLISHED_RULE", "SemanticItem", "Severity", "Span", "StructuralNode", "Structure", "TemporalRelation", "TemporalRelationType",
     "UnsupportedComparisonError", "UnsupportedConstructionError",
     "analysis_from_dict", "analysis_from_json", "analysis_to_dict",
     "analysis_to_json", "comparison_from_dict", "comparison_from_json",
