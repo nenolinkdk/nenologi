@@ -31,6 +31,9 @@ VERB OBJECT [AND | OR] OBJECT
 VERB NUMERIC_CONSTRAINT [UNIT]
 IF SIMPLE_ANTECEDENT, CONSEQUENT
 PROPOSITION [BEFORE | AFTER | ON | UNTIL] TEMPORAL_REFERENCE
+PROPER_NAME IS A|AN CLASS
+ALL [MODIFIER] CLASS_PLURAL ARE CLASS
+UNIVERSAL_RULE. MEMBERSHIP.
 ```
 
 The quantifier and article are optional. Subjects contain one noun. An object contains one or two controlled words and may have `the`, `a`, or `an`. Exactly two object phrases may be joined by one `AND` or `OR`. The imperative form exists only for this same controlled object grammar. The controlled action vocabulary is `access`, `approve`, `choose`, `enter`, `open`, `receive`, `register`, `report`, `restart`, `submit`, `vote`, and `wear`. A small copular form supports one complement.
@@ -49,6 +52,8 @@ Supported semantic features are:
 - A proposition, optional action relation, entities, operators, source spans, and structural phrase nodes
 - One prefix `IF` condition whose antecedent is one simple copular property or numeric threshold and whose consequent is one otherwise supported controlled proposition
 - One proposition-final temporal phrase using `before`, `after`, `on`, or `until` with a weekday or 24-hour `HH:MM` clock time
+- Predicate-view class membership and universal class rules over one structural bound variable
+- One controlled two-sentence `RULE. MEMBERSHIP.` document; no general sentence or discourse parsing
 
 Within this controlled grammar, `MAY NOT` is compositionally represented as `May(¬P)`. Ordinary English can also use “may not” as prohibition; inputs requiring that alternate reading need a future ambiguity-aware grammar.
 
@@ -121,9 +126,13 @@ The complete form `[THE] SUBJECT + IS/ARE + INSIDE/BESIDE + THE + REFERENCE_ENTI
 
 One standalone `CONSEQUENT + IF + ANTECEDENT` form normalizes to the existing antecedent-first `Condition`, exactly like prefix `If A, B`. Both inner clauses reuse the current parser; the gold-required finite form `passes` maps explicitly to `PASS`. See [Controlled Suffix-IF Conditions v0.1](suffix-if-conditions-v0.1.md).
 
+## Controlled rule and membership representation v0.1
+
+The parser accepts the narrow class-membership, universal-rule, and two-sentence forms documented in [Controlled Rule and Membership Representation v0.1](rule-membership-representation-v0.1.md). Membership uses class propositions; a rule uses shared `BOUND_VARIABLE` arguments, a directed `Condition`, and `ALL` scoped over that condition. No universal instantiation occurs.
+
 ## Explicitly unsupported
 
-- More than one sentence
+- More than one sentence, except one controlled `RULE. MEMBERSHIP.` pair
 - `UNLESS`, `ELSE`, nested/chained/multiple `IF`, comma-bearing suffix `IF`, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
 - Questions and exclamations
 - Subject/predicate coordination, nested/repeated coordination, and subordination

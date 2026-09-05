@@ -60,7 +60,11 @@ def _semantic_signature(analysis: Analysis, *, abstract_predicates: bool = False
         return references.get(identifier, "structural")
 
     entities = tuple(
-        (_text(item.type), _text(item.label), item.interpretation_status.value)
+        (
+            _text(item.type),
+            "bound_variable" if _text(item.type) == "bound_variable" else _text(item.label),
+            item.interpretation_status.value,
+        )
         for item in analysis.entities
     )
     propositions = tuple(

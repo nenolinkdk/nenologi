@@ -61,10 +61,10 @@ The 42-case audit moves from 27 to **28 `END_TO_END_EXACT`** and from 6 to **5 `
 
 | Case | Parser | Representation | Current inference status | Missing capability | Recommended milestone |
 | --- | --- | --- | --- | --- | --- |
-| `entailment_002` | Unsupported | Incomplete | Not implemented | Multi-sentence universal instantiation | Controlled Rule and Membership Representation |
+| `entailment_002` | Supported | Rule and membership available | Not implemented | Universal instantiation | Universal Instantiation v0.1 |
 | `entailment_003` | Unsupported | Incomplete | Not implemented | Defeasible prediction | Observation and Prediction Semantics |
 | `entailment_004` | Unsupported | Incomplete | Not implemented | Open-world unsupported judgment | Controlled Residence/Fluency Parsing and Non-entailment Policy |
 | `entailment_006` | Unsupported | Incomplete | Not implemented | Embedded propositions and coreference ambiguity | Controlled Coreference Readings |
 | `entailment_007` | Unsupported | Incomplete | Not implemented | Non-literal safety classification | Metaphor/Formalization Safety Boundary |
 
-The recommended next Phase 2 milestone is **Controlled Rule and Membership Representation v0.1** for `entailment_002`. It should establish parser and representation prerequisites before universal instantiation is considered; inference must not be added by parsing raw multi-sentence text inside the inference engine.
+Controlled Rule and Membership Representation v0.1 subsequently establishes the parser and representation prerequisites for `entailment_002`. The next milestone is Universal Instantiation v0.1 over normalized structures.

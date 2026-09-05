@@ -33,11 +33,11 @@ A <-> B         -> semantic/logical findings
 
 Phase 1 is complete. The reproducible exit decision, 42-case pipeline matrix, quality baseline, and single recommended Phase 2 milestone are maintained in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
-After Lexical Opposition Contradiction v0.1, the callable pipeline covers 28 exact end-to-end gold cases out of 42 with no analyzable-but-inexact cases. Seven remain parser-unsupported, 2 comparator-unsupported, and 5 inference-not-implemented. See [Lexical Opposition Contradiction v0.1](../architecture/lexical-opposition-contradiction-v0.1.md).
+After Controlled Rule and Membership Representation v0.1, the callable pipeline still covers 28 exact end-to-end gold cases out of 42 with no analyzable-but-inexact cases. Seven remain parser-unsupported, 2 comparator-unsupported, and 5 inference-not-implemented. `entailment_002` is now fully represented but deliberately awaits inference. See [the representation milestone](../architecture/rule-membership-representation-v0.1.md).
 
 ## Next implementation milestone
 
-The next recommended Phase 2 milestone is **Controlled Rule and Membership Representation v0.1**, preparing the parser-independent structures needed by `entailment_002` before universal instantiation is introduced.
+The next recommended Phase 2 milestone is **Universal Instantiation v0.1**, operating only on the normalized rule and membership structures now available for `entailment_002`.
 
 ## Definition of ready
 

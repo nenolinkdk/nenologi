@@ -74,7 +74,7 @@ python tests/validation/audit_gold_coverage.py --json
 | equivalence_004 | equivalence | YES | YES | YES | EXACT | NA | END_TO_END_EXACT | NONE |
 | equivalence_005 | equivalence | OK | AV | UN | NO | NA | COMPARATOR_UNSUPPORTED | UNSUPPORTED_SYMMETRIC_CONJUNCTION_ALIGNMENT |
 | entailment_001 | entailment | OK | AV | NA | NA | OK | END_TO_END_EXACT | NONE |
-| entailment_002 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | UNIVERSAL_INSTANTIATION_AND_MULTI_SENTENCE |
+| entailment_002 | entailment | OK | AV | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | UNIVERSAL_INSTANTIATION |
 | entailment_003 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | DEFEASIBLE_PREDICTION |
 | entailment_004 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | WORLD_KNOWLEDGE_NON_ENTAILMENT |
 | entailment_005 | entailment | OK | AV | NA | NA | OK | END_TO_END_EXACT | NONE |
@@ -119,14 +119,14 @@ Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are
 | Case | Structures available today | Reasoning required | Parser first? | Risk |
 | --- | --- | --- | --- | --- |
 | entailment_001 | Both `OPEN(door)` analyses | Exact explicit-claim recognition implemented | No | COMPLETE |
-| entailment_002 | Neither multi-sentence rule/membership statement nor candidate parses | Universal instantiation plus membership | Yes | HIGH |
+| entailment_002 | Rule, membership, and candidate are normalized | Universal instantiation | No | MEDIUM |
 | entailment_003 | Neither observation sequence nor future candidate parses | Defeasible prediction, not entailment | Yes | HIGH |
 | entailment_004 | Neither residence nor fluency proposition parses | Open-world non-entailment/unsupported judgment | Yes | HIGH |
 | entailment_005 | `OFF(switch)` and `ON(switch)` parse | Closed lexical opposition implemented | No | COMPLETE |
 | entailment_006 | Pronoun-bearing statement/candidate do not parse | Coreference ambiguity with competing readings | Yes | HIGH |
 | entailment_007 | Metaphor and theft candidate do not parse | Non-literal safety classification | Yes | HIGH |
 
-Exact Explicit Inference v0.1 handles entailment_001, and Lexical Opposition Contradiction v0.1 handles entailment_005. The other five require parser/representation work before reasoning.
+Exact Explicit Inference handles entailment_001, and Lexical Opposition handles entailment_005. Rule and Membership Representation makes entailment_002 representation-ready but intentionally leaves universal instantiation absent. The other four still require parser/representation work.
 
 ## Addition/omission and alignment audit
 
@@ -169,7 +169,7 @@ Gold coverage did not rise after Addition/Omission because no existing gold inpu
 
 ## Quality baseline and exit criteria
 
-The current baseline passes 155 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator and inference fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
+The current baseline passes 165 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator and inference fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
 
 | Exit criterion | Result | Evidence |
 | --- | --- | --- |
@@ -196,4 +196,4 @@ The current baseline passes 155 unit/validation tests, gold validation (30 chang
 | Additional semantic categories | Low now | New schema/taxonomy | High | None identified | Breadth without current corpus demand |
 | UI/application work | Product value | Stable core API | Medium | None | Exercises client boundary, not semantic coverage |
 
-Successive controlled parser milestones unlock `entity_relation_001` through `_003`, `equivalence_002`, `equivalence_004`, and `condition_002`. The taxonomy resolution makes `omission_001` exact; the first two inference milestones make `entailment_001` and `entailment_005` exact without parser or comparator changes. The next recommended milestone is Controlled Rule and Membership Representation v0.1 for `entailment_002`.
+Successive controlled parser milestones unlock `entity_relation_001` through `_003`, `equivalence_002`, `equivalence_004`, and `condition_002`. The first two inference milestones make `entailment_001` and `entailment_005` exact. Rule and Membership Representation makes `entailment_002` parser- and representation-ready; the next recommended milestone is Universal Instantiation v0.1.

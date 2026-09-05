@@ -64,6 +64,20 @@ _TEMPORAL_RE = re.compile(
     r"(?P<reference>Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|(?:[01][0-9]|2[0-3]):[0-5][0-9])$",
     re.IGNORECASE,
 )
+_UNIVERSAL_CLASS_RULE_RE = re.compile(
+    r"All\s+(?:(?P<modifier>[A-Za-z]+)\s+)?(?P<domain>[A-Za-z]+)\s+are\s+(?P<consequent>[A-Za-z]+)",
+    re.IGNORECASE,
+)
+_NAMED_MEMBERSHIP_RE = re.compile(
+    r"(?P<name>[A-Z][a-z]+)\s+is\s+(?:a|an)\s+(?P<class_name>[a-z]+)"
+)
+_DETERMINER_MEMBERSHIP_RE = re.compile(
+    r"The\s+(?P<name>[a-z]+)\s+is\s+(?:a|an)\s+(?P<class_name>[a-z]+)",
+    re.IGNORECASE,
+)
+_TYPED_NAMED_MEMBERSHIP_RE = re.compile(
+    r"(?P<domain>[A-Z][a-z]+)\s+(?P<name>[A-Z])\s+is\s+(?P<class_name>[a-z]+)"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -132,6 +146,8 @@ def _numeric_phrase(tokens: tuple[_Token, ...]) -> tuple[NumericOperator, Decima
 def _singular(word: str) -> str:
     if word.endswith("ies") and len(word) > 3:
         return word[:-3] + "y"
+    if word.endswith(("ses", "xes", "zes", "ches", "shes")) and len(word) > 3:
+        return word[:-2]
     if word.endswith("s") and not word.endswith("ss") and len(word) > 1:
         return word[:-1]
     return word
@@ -471,6 +487,9 @@ class ControlledEnglishAnalyzer:
     def analyze(self, text: str, *, language: str = "en", profile: str = "general") -> Analysis:
         if language != "en":
             raise UnsupportedConstructionError("ControlledEnglishAnalyzer supports only language='en'")
+        class_logic = self._analyze_class_logic(text, language=language, profile=profile)
+        if class_logic is not None:
+            return class_logic
         if isinstance(text, str) and re.search(r"\bif\b", text, re.IGNORECASE):
             return self._analyze_condition(text, language=language, profile=profile)
         temporal_match = self._temporal_match(text)
@@ -557,6 +576,153 @@ class ControlledEnglishAnalyzer:
         )
         validate_analysis(analysis)
         return analysis
+
+    def _analyze_class_logic(self, text: str, *, language: str, profile: str) -> Analysis | None:
+        """Parse one or two narrowly controlled class-rule/membership sentences."""
+        if not isinstance(text, str) or not text.strip():
+            return None
+        stripped = text.strip()
+        if stripped[-1:] in "?!" or not stripped.endswith("."):
+            return None
+        leading = len(text) - len(text.lstrip())
+        sentence_matches = list(re.finditer(r"[^.]+\.", stripped))
+        if not sentence_matches or "".join(match.group() for match in sentence_matches) != stripped:
+            return None
+        if len(sentence_matches) > 2:
+            raise UnsupportedConstructionError("class logic supports at most two simple sentences")
+
+        parsed: list[tuple[str, re.Match[str], int, int]] = []
+        for index, match in enumerate(sentence_matches, start=1):
+            segment = match.group()[:-1]
+            surface = segment.strip()
+            start = match.start() + len(segment) - len(segment.lstrip())
+            rule = _UNIVERSAL_CLASS_RULE_RE.fullmatch(surface)
+            if rule is not None and not (
+                rule.group("modifier") or rule.group("consequent").lower().endswith("s")
+            ):
+                rule = None
+            membership = (
+                _TYPED_NAMED_MEMBERSHIP_RE.fullmatch(surface)
+                or _NAMED_MEMBERSHIP_RE.fullmatch(surface)
+                or _DETERMINER_MEMBERSHIP_RE.fullmatch(surface)
+            )
+            if rule is not None:
+                parsed.append(("rule", rule, leading + start, index))
+            elif membership is not None:
+                parsed.append(("membership", membership, leading + start, index))
+            else:
+                return None
+        if len(parsed) == 2 and [item[0] for item in parsed] != ["rule", "membership"]:
+            raise UnsupportedConstructionError("two-sentence class logic requires RULE followed by MEMBERSHIP")
+
+        certain = Confidence(1.0, "Deterministic controlled class logic v0.1 rule")
+        status = InterpretationStatus.EXPLICIT
+        entities: list[Entity] = []
+        propositions: list[Proposition] = []
+        quantifiers: list[Operator] = []
+        conditions: list[Condition] = []
+        expressions: list[LogicalExpression] = []
+        sentence_nodes: list[StructuralNode] = []
+        clause_nodes: list[StructuralNode] = []
+        interpretations: list[str] = []
+
+        for kind, match, offset, index in parsed:
+            sentence_id = f"sentence_{index:03d}"
+            sentence_end = offset + len(match.group()) + 1
+            sentence_nodes.append(StructuralNode(sentence_id, Span(offset, sentence_end), kind="sentence"))
+            if kind == "rule":
+                variable_id = f"rule_variable_{index:03d}"
+                condition_id = f"rule_{index:03d}"
+                quantifier_id = f"rule_quantifier_{index:03d}"
+                variable = Entity(variable_id, "BOUND_VARIABLE", "x", status, certain)
+                entities.append(variable)
+                antecedent_words = [match.group("domain")]
+                if match.group("modifier"):
+                    antecedent_words.append(match.group("modifier"))
+                antecedent_ids: list[str] = []
+                displays: list[str] = []
+                for position, word in enumerate(antecedent_words, start=1):
+                    proposition_id = f"rule_{index:03d}_antecedent_{position:03d}"
+                    antecedent_ids.append(proposition_id)
+                    predicate = _singular(word.lower()).upper()
+                    propositions.append(Proposition(
+                        proposition_id, predicate, (variable_id,), status, certain,
+                    ))
+                    displays.append(f"{predicate}(x)")
+                consequent_id = f"rule_{index:03d}_consequent_001"
+                consequent_predicate = _singular(match.group("consequent").lower()).upper()
+                propositions.append(Proposition(
+                    consequent_id, consequent_predicate, (variable_id,), status, certain,
+                ))
+                condition = Condition(
+                    condition_id, tuple(antecedent_ids), (consequent_id,), status, certain,
+                    Span(offset, sentence_end),
+                )
+                conditions.append(condition)
+                quantifiers.append(Operator(
+                    quantifier_id, "ALL", (condition_id,), status, certain,
+                    Span(offset + match.start(), offset + match.start() + 3),
+                ))
+                antecedent_display = " ∧ ".join(displays)
+                display = f"∀x (({antecedent_display}) → {consequent_predicate}(x))"
+                expressions.append(LogicalExpression(
+                    f"logic_{index:03d}",
+                    {
+                        "operator": "UNIVERSAL_CLASS_RULE", "binder": variable_id,
+                        "antecedent": antecedent_ids, "consequent": [consequent_id],
+                    },
+                    status, certain, display,
+                    (variable_id, *antecedent_ids, consequent_id, condition_id, quantifier_id),
+                ))
+                clause_nodes.extend((
+                    StructuralNode(f"rule_antecedent_{index:03d}", Span(offset, sentence_end), sentence_id, "rule_antecedent"),
+                    StructuralNode(f"rule_consequent_{index:03d}", Span(offset, sentence_end), sentence_id, "rule_consequent"),
+                ))
+                interpretations.append(
+                    f"every {' and '.join(_singular(word.lower()) for word in antecedent_words)} is {consequent_predicate.lower()}"
+                )
+            else:
+                entity_id = f"member_entity_{index:03d}"
+                if match.re is _TYPED_NAMED_MEMBERSHIP_RE:
+                    label = f"{match.group('domain').lower()}_{match.group('name').lower()}"
+                    class_words = (match.group("domain"), match.group("class_name"))
+                else:
+                    label = match.group("name").lower()
+                    class_words = (match.group("class_name"),)
+                entities.append(Entity(entity_id, "INDIVIDUAL", label, status, certain))
+                membership_ids: list[str] = []
+                displays: list[str] = []
+                for position, word in enumerate(class_words, start=1):
+                    proposition_id = f"membership_{index:03d}_{position:03d}"
+                    predicate = _singular(word.lower()).upper()
+                    membership_ids.append(proposition_id)
+                    propositions.append(Proposition(
+                        proposition_id, predicate, (entity_id,), status, certain,
+                    ))
+                    displays.append(f"{predicate}({label.title().replace('_', '')})")
+                display = " ∧ ".join(displays)
+                expressions.append(LogicalExpression(
+                    f"logic_{index:03d}",
+                    {"operator": "CLASS_MEMBERSHIP", "member": entity_id, "classes": membership_ids},
+                    status, certain, display, (entity_id, *membership_ids),
+                ))
+                clause_nodes.append(StructuralNode(
+                    f"membership_clause_{index:03d}", Span(offset, sentence_end), sentence_id, "membership_clause",
+                ))
+                interpretations.append(f"{label} belongs to {' and '.join(_singular(word.lower()) for word in class_words)}")
+
+        result = Analysis(
+            document=Document("doc_001", language, text), profile=profile,
+            structure=Structure(tuple(sentence_nodes), tuple(clause_nodes)),
+            entities=tuple(entities), propositions=tuple(propositions),
+            quantifiers=tuple(quantifiers), conditions=tuple(conditions),
+            logical_representation=tuple(expressions), confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en", "The text explicitly represents " + "; ".join(interpretations) + ".",
+            ),
+        )
+        validate_analysis(result)
+        return result
 
     @staticmethod
     def _temporal_match(text: str):

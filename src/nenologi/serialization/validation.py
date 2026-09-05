@@ -54,6 +54,7 @@ def validate_analysis_references(analysis: Analysis) -> None:
             for reference in (*item.arguments, *item.derived_from):
                 _require(reference, all_ids, f"semantic item {item.id}")
     proposition_ids = {proposition.id for proposition in analysis.propositions}
+    condition_ids = {condition.id for condition in analysis.conditions}
     for condition in analysis.conditions:
         for reference in (*condition.antecedent, *condition.consequent):
             _require(reference, proposition_ids, f"condition {condition.id}")
@@ -66,9 +67,9 @@ def validate_analysis_references(analysis: Analysis) -> None:
         for operator in collection:
             for reference in operator.scope:
                 _require(reference, all_ids, f"operator {operator.id}")
-                if reference not in semantic_operator_ids | proposition_ids:
+                if reference not in semantic_operator_ids | proposition_ids | condition_ids:
                     raise ReferenceValidationError(
-                        f"operator {operator.id} scope must target a semantic operator or proposition: {reference}"
+                        f"operator {operator.id} scope must target a semantic operator, proposition, or condition: {reference}"
                     )
             seen = {operator.id}
             target = operator.scope[0]
