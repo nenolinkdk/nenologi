@@ -52,8 +52,9 @@ The second is a source/target comparison in which both texts are independently r
 15. [Contraction Normalization v0.3](docs/architecture/contraction-normalization-v0.3.md)
 16. [Controlled Spatial Copular Relations v0.1](docs/architecture/spatial-copular-relations-v0.1.md)
 17. [Controlled Suffix-IF Conditions v0.1](docs/architecture/suffix-if-conditions-v0.1.md)
-18. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
-19. [Build preparation](docs/project/build-preparation.md)
+18. [Condition/Omission Taxonomy Resolution v0.1](docs/architecture/condition-omission-taxonomy-v0.1.md)
+19. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
+20. [Build preparation](docs/project/build-preparation.md)
 
 For a non-technical introduction, see [Nenologi – Looking Beneath the Words](docs/public/what-is-nenologi.md). The older topic-oriented documents under `docs/01-concept` through `docs/08-integrations` remain useful background; the files linked above are the canonical Phase 0 specification.
 

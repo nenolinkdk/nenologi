@@ -60,7 +60,7 @@ python tests/validation/audit_gold_coverage.py --json
 | entity_relation_002 | entity | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
 | entity_relation_003 | entity | YES | YES | YES | STRUCTURAL | NA | END_TO_END_EXACT | NONE |
 | addition_001 | addition | OK | AV | UN | NO | NA | COMPARATOR_UNSUPPORTED | UNSUPPORTED_COORDINATED_PREDICATE_REPRESENTATION |
-| omission_001 | omission | YES | YES | YES | STRUCTURAL | NA | ANALYZABLE_BUT_NOT_EXACT | EXPECTED_OMISSION_CONFLICTS_WITH_CONDITION_PRECEDENCE |
+| omission_001 | omission | YES | YES | YES | STRUCTURAL | NA | END_TO_END_EXACT | NONE |
 | contradiction_001 | contradiction | OK | AV | AL | OK | NA | END_TO_END_EXACT | NONE |
 | scope_001 | scope | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_EMBEDDED_VERB |
 | scope_002 | scope | NO | NR | NR | NR | NA | PARSER_UNSUPPORTED | UNSUPPORTED_EMBEDDED_VERB |
@@ -79,7 +79,7 @@ python tests/validation/audit_gold_coverage.py --json
 | entailment_006 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
 | entailment_007 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | INFERENCE_REQUIRED |
 
-Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are **25 END_TO_END_EXACT, 1 ANALYZABLE_BUT_NOT_EXACT, 7 PARSER_UNSUPPORTED, 2 COMPARATOR_UNSUPPORTED, 7 INFERENCE_NOT_IMPLEMENTED.**
+Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are **26 END_TO_END_EXACT, 0 ANALYZABLE_BUT_NOT_EXACT, 7 PARSER_UNSUPPORTED, 2 COMPARATOR_UNSUPPORTED, 7 INFERENCE_NOT_IMPLEMENTED.**
 
 ## Comparator-unsupported investigations
 
@@ -128,7 +128,7 @@ Only entailment_001 is representationally sufficient today. Entailment_005 needs
 
 ## Addition/omission and alignment audit
 
-Addition/Omission v0.1 is implemented independently of gold parser coverage. Safe unmatched propositions yield symmetric `MEDIUM`, confidence-`1.0` findings with structured payloads. Duplicate candidates remain ambiguous and yield no finding. Condition-owned antecedents are suppressed when `CONDITION_CHANGE` explains wrapper addition/removal. The single-core-position counterpart rule runs before unmatched classification, and canonical ordering places `ADDITION` then `OMISSION` after specialized dimensions.
+Addition/Omission v0.1 is implemented independently of gold parser coverage. Safe unmatched propositions yield symmetric `MEDIUM`, confidence-`1.0` findings with structured payloads. Duplicate candidates remain ambiguous and yield no finding. Condition-owned antecedents are suppressed when `CONDITION_CHANGE` explains wrapper addition/removal. Condition/Omission Taxonomy Resolution v0.1 confirms this semantic precedence and corrects the older `omission_001` gold expectation. The single-core-position counterpart rule runs before unmatched classification, and canonical ordering places `ADDITION` then `OMISSION` after specialized dimensions.
 
 Alignment signatures contain structural role, predicate, and ordered typed/case-folded entity labels. Quantifier, modality, negation, numeric, temporal, condition wrapper, scope, spans, displays, and raw text are excluded. Mutual uniqueness enforces one-to-one matching; ambiguity and safe-unmatched sets are explicit. Stronger alignment is needed for commutative conjunction and future coreference/split-merge work, but not for simple past normalization, contraction expansion, or exact explicit inference.
 
@@ -167,7 +167,7 @@ Gold coverage did not rise after Addition/Omission because no existing gold inpu
 
 ## Quality baseline and exit criteria
 
-The current baseline passes 132 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
+The current baseline passes 137 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
 
 | Exit criterion | Result | Evidence |
 | --- | --- | --- |
@@ -194,4 +194,4 @@ The current baseline passes 132 unit/validation tests, gold validation (30 chang
 | Additional semantic categories | Low now | New schema/taxonomy | High | None identified | Breadth without current corpus demand |
 | UI/application work | Product value | Stable core API | Medium | None | Exercises client boundary, not semantic coverage |
 
-Successive controlled parser milestones now unlock `entity_relation_001` through `_003`, `equivalence_002`, `equivalence_004`, and `condition_002`. Suffix-IF also makes `omission_001` analyzable and exposes its taxonomy conflict rather than hiding it. The next recommended milestone is an explicit Condition/Omission Taxonomy Resolution v0.1.
+Successive controlled parser milestones unlock `entity_relation_001` through `_003`, `equivalence_002`, `equivalence_004`, and `condition_002`. Condition/Omission Taxonomy Resolution v0.1 makes `omission_001` exact through an architecture-backed gold correction without comparator or parser changes. The next recommended milestone is Exact Explicit Inference v0.1 for `entailment_001`.

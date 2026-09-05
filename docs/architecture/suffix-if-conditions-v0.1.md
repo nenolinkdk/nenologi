@@ -22,12 +22,12 @@ Surface order is consequent then antecedent, but semantic storage is always ante
 
 There are no suffix-specific aligner or comparator rules and no clause-order DifferenceType. Existing `CONDITION_CHANGE`, nested consequent comparison, operator scope, and numeric anti-duplication are reused. A numeric-only antecedent change emits `NUMERIC_THRESHOLD_CHANGE` without redundant `CONDITION_CHANGE`.
 
-The full audit also makes `omission_001` analyzable because it uses the same supported suffix grammar. Its existing expected `OMISSION` conflicts with the implemented condition-precedence policy, which reports `CONDITION_CHANGE`; it is therefore honestly classified `ANALYZABLE_BUT_NOT_EXACT`, not special-cased or counted as exact.
+The full audit also makes `omission_001` analyzable because it uses the same supported suffix grammar. The later [Condition/Omission Taxonomy Resolution v0.1](condition-omission-taxonomy-v0.1.md) confirms condition precedence as canonical and corrects that case's older `OMISSION` expectation to `CONDITION_CHANGE`.
 
 ## Explicit limitations
 
 Multiple or nested `IF`, comma-bearing suffix form, embedded complement/interrogative `IF`, conditional questions, `UNLESS`, `ELSE`, arbitrary punctuation, multiple conditions, embedded clauses, and general subordination remain unsupported. Temporal and spatial clauses compose only where the existing inner-clause and antecedent restrictions already allow them.
 
-Gold coverage moves from 24 to 25 `END_TO_END_EXACT`. The remaining classifications are 1 analyzable-but-inexact, 7 parser-unsupported, 2 comparator-unsupported, and 7 inference-not-implemented.
+This parser milestone moved gold coverage from 24 to 25 `END_TO_END_EXACT`; the subsequent taxonomy resolution moves it to 26 exact and 0 analyzable-but-inexact. Seven cases remain parser-unsupported, 2 comparator-unsupported, and 7 inference-not-implemented.
 
 A runnable demonstration is in [`examples/suffix_if_conditions.py`](../../examples/suffix_if_conditions.py).

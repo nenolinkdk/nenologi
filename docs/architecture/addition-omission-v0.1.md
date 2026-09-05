@@ -14,6 +14,8 @@ Aligned proposition pairs run through existing semantic rules first. Quantifier,
 
 Condition-owned antecedents are excluded when a condition wrapper is added or removed because `CONDITION_CHANGE` already accounts for that semantic structure. Operators, temporal references, numeric constraints, and scope edges are never independent additions or omissions in v0.1.
 
+The [Condition/Omission Taxonomy Resolution v0.1](condition-omission-taxonomy-v0.1.md) confirms this is semantic precedence, not implementation order: `P` versus `P IF A` preserves aligned `P` and changes its governing applicability. Only safely unmatched propositions qualify as `ADDITION` or `OMISSION`.
+
 The comparator-only `SINGLE_CORE_POSITION_CHANGE` alignment rule runs before unmatched classification, preserving existing `ENTITY_RELATION_CHANGE` behavior without broadening structural matching.
 
 Each safe addition or omission has `MEDIUM` severity and deterministic confidence `1.0`. The payload records side, proposition ID, normalized predicate, and typed core entity IDs/labels, with resolvable `Difference.references`. Severity does not assert domain importance. Logical relation is `UNDETERMINED`; absence is not contradiction.
