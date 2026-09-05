@@ -15,7 +15,7 @@ universal rule: ∀x ((BOX(x) ∧ MARKED(x)) → INSPECTED(x))
 membership:     BOX(box_a) ∧ MARKED(box_a)
 ```
 
-The query contains `BOX(box_a) ∧ INSPECTED(box_a)`. The engine still returns `UNSUPPORTED` with `NOT_ESTABLISHED`, because `UNIVERSAL_INSTANTIATION` is intentionally absent.
+The query contains `BOX(box_a) ∧ INSPECTED(box_a)`. At this milestone the engine still returned `UNSUPPORTED` with `NOT_ESTABLISHED`; Universal Instantiation v0.1 subsequently adds the separate inference step.
 
 ## Authoritative semantic representation
 
@@ -67,7 +67,7 @@ The binder is the entity `rule_variable_001` (or the corresponding sentence-posi
 
 ## Inference and comparison boundary
 
-`DeterministicInferenceEngine` was not given universal instantiation, forward chaining, converse reasoning, contraposition, or existential import. An explicitly repeated membership fact remains eligible for `EXACT_EXPLICIT`; a rule plus matching membership does not derive its consequent.
+This representation milestone did not add inference. Universal Instantiation v0.1 subsequently adds one bounded rule while retaining the bans on forward chaining, converse reasoning, contraposition, and existential import. An explicitly repeated membership fact remains eligible for higher-priority `EXACT_EXPLICIT`.
 
 The comparator receives the normalized model unchanged. Identical rule analyses compare identically, but no `RULE_CHANGE` or other `DifferenceType` was added. Broader rule comparison remains future work.
 
@@ -83,4 +83,4 @@ The overall audit totals remain **28 `END_TO_END_EXACT`, 0 `ANALYZABLE_BUT_NOT_E
 | `entailment_006` | Unsupported | Incomplete | Not implemented | Embedded propositions and coreference |
 | `entailment_007` | Unsupported | Incomplete | Not implemented | Non-literal safety classification |
 
-The recommended next milestone is **Universal Instantiation v0.1**, operating only on these normalized rule and membership structures—not on raw text.
+Universal Instantiation v0.1 subsequently implements `entailment_002` over these normalized structures—not raw text.

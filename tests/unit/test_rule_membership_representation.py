@@ -13,7 +13,7 @@ class RuleMembershipRepresentationTests(unittest.TestCase):
         self.analyzer = ControlledEnglishAnalyzer()
         self.engine = DeterministicInferenceEngine()
 
-    def test_entailment_002_has_rule_and_membership_but_no_derived_conclusion(self) -> None:
+    def test_entailment_002_representation_supports_universal_instantiation(self) -> None:
         text = "All marked boxes are inspected. Box A is marked."
         source = self.analyzer.analyze(text)
         query = self.analyzer.analyze("Box A is inspected.")
@@ -29,8 +29,8 @@ class RuleMembershipRepresentationTests(unittest.TestCase):
             ],
         )
         result = self.engine.infer(source, query)
-        self.assertEqual(result.interpretation_status, InterpretationStatus.UNSUPPORTED)
-        self.assertEqual(result.rule, NOT_ESTABLISHED_RULE)
+        self.assertEqual(result.interpretation_status, InterpretationStatus.ENTAILED)
+        self.assertEqual(result.rule, "UNIVERSAL_INSTANTIATION")
 
     def test_named_and_determiner_membership_use_one_predicate_view(self) -> None:
         for text, label, predicate in (

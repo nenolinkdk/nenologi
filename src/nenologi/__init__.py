@@ -8,7 +8,8 @@ from .comparison import (
 )
 from .inference import (
     EXACT_EXPLICIT_RULE, LEXICAL_OPPOSITION_PAIRS, LEXICAL_OPPOSITION_RULE,
-    NOT_ESTABLISHED_RULE, DeterministicInferenceEngine, InferenceEngine,
+    NOT_ESTABLISHED_RULE, UNIVERSAL_INSTANTIATION_RULE,
+    DeterministicInferenceEngine, InferenceEngine,
     are_lexical_opposites,
 )
 from .models import (
@@ -35,6 +36,7 @@ __all__ = [
     "InterpretationStatus", "LocalizedText", "LogicalExpression", "LogicalRelation", "NumericConstraint", "NumericOperator", "Operator",
     "Proposition", "PropositionAlignment", "ReferenceValidationError", "SchemaValidationError",
     "NOT_ESTABLISHED_RULE", "SemanticItem", "Severity", "Span", "StructuralNode", "Structure", "TemporalRelation", "TemporalRelationType",
+    "UNIVERSAL_INSTANTIATION_RULE",
     "UnsupportedComparisonError", "UnsupportedConstructionError",
     "analysis_from_dict", "analysis_from_json", "analysis_to_dict",
     "analysis_to_json", "comparison_from_dict", "comparison_from_json",

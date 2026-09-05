@@ -9,6 +9,7 @@ from ..models import Analysis, Confidence, Inference, InterpretationStatus
 EXACT_EXPLICIT_RULE = "EXACT_EXPLICIT"
 LEXICAL_OPPOSITION_RULE = "LEXICAL_OPPOSITION"
 NOT_ESTABLISHED_RULE = "NOT_ESTABLISHED"
+UNIVERSAL_INSTANTIATION_RULE = "UNIVERSAL_INSTANTIATION"
 
 # Deliberately closed and auditable. Additions require controlled-domain review.
 LEXICAL_OPPOSITION_PAIRS: tuple[tuple[str, str], ...] = (("OFF", "ON"),)
@@ -132,6 +133,148 @@ def _evidence_ids(analysis: Analysis) -> tuple[str, ...]:
     )
 
 
+def _entity_key(entity) -> tuple[str, str, str]:
+    return (_text(entity.type), _text(entity.label), entity.interpretation_status.value)
+
+
+def _bare_membership(analysis: Analysis):
+    """Return one individual and its unary facts, or None for any wrapped query."""
+    if (
+        len(analysis.entities) != 1
+        or _text(analysis.entities[0].type) != "individual"
+        or analysis.entities[0].interpretation_status != InterpretationStatus.EXPLICIT
+    ):
+        return None
+    if any((
+        analysis.relations, analysis.quantifiers, analysis.modality, analysis.negation,
+        analysis.numeric_constraints, analysis.conditions, analysis.temporal_relations,
+        analysis.sets,
+    )):
+        return None
+    entity = analysis.entities[0]
+    if not analysis.propositions or any(
+        proposition.arguments != (entity.id,)
+        or proposition.interpretation_status != InterpretationStatus.EXPLICIT
+        for proposition in analysis.propositions
+    ):
+        return None
+    return entity, analysis.propositions
+
+
+def _rule_proposition_ids(analysis: Analysis) -> set[str]:
+    return {
+        reference
+        for condition in analysis.conditions
+        for reference in (*condition.antecedent, *condition.consequent)
+    }
+
+
+def _explicit_membership_evidence(premise: Analysis, conclusion: Analysis) -> tuple[str, ...] | None:
+    """Recognize a complete bare membership query among explicit premise facts."""
+    query_membership = _bare_membership(conclusion)
+    if query_membership is None:
+        return None
+    query_entity, query_facts = query_membership
+    template_ids = _rule_proposition_ids(premise)
+    entities = {entity.id: entity for entity in premise.entities}
+    for entity in premise.entities:
+        if _text(entity.type) != "individual" or _entity_key(entity) != _entity_key(query_entity):
+            continue
+        source_facts = {
+            _text(proposition.predicate): proposition
+            for proposition in premise.propositions
+            if proposition.id not in template_ids
+            and proposition.arguments == (entity.id,)
+            and proposition.interpretation_status == InterpretationStatus.EXPLICIT
+        }
+        matched = [source_facts.get(_text(proposition.predicate)) for proposition in query_facts]
+        if all(matched):
+            return (entity.id, *(proposition.id for proposition in matched))
+    return None
+
+
+def _universal_instantiation_evidence(
+    premise: Analysis, conclusion: Analysis,
+) -> tuple[tuple[str, ...], str] | None:
+    """Match the one controlled unary universal-rule shape without chaining."""
+    query_membership = _bare_membership(conclusion)
+    if query_membership is None or any((
+        premise.relations, premise.modality, premise.negation,
+        premise.numeric_constraints, premise.temporal_relations, premise.sets,
+    )):
+        return None
+    query_entity, query_facts = query_membership
+    query_predicates = {_text(proposition.predicate) for proposition in query_facts}
+    propositions = {proposition.id: proposition for proposition in premise.propositions}
+    entities = {entity.id: entity for entity in premise.entities}
+    template_ids = _rule_proposition_ids(premise)
+
+    for quantifier in premise.quantifiers:
+        if (
+            quantifier.operator != "ALL"
+            or quantifier.interpretation_status != InterpretationStatus.EXPLICIT
+        ):
+            continue
+        condition = next(
+            (item for item in premise.conditions if quantifier.scope == (item.id,)), None,
+        )
+        if (
+            condition is None
+            or condition.interpretation_status != InterpretationStatus.EXPLICIT
+            or len(condition.consequent) != 1
+        ):
+            continue
+        templates = [propositions.get(identifier) for identifier in (*condition.antecedent, *condition.consequent)]
+        if any(item is None for item in templates):
+            continue
+        bound_ids = {
+            item.arguments[0]
+            for item in templates
+            if len(item.arguments) == 1
+        }
+        if (
+            len(bound_ids) != 1
+            or any(len(item.arguments) != 1 for item in templates)
+            or any(item.interpretation_status != InterpretationStatus.EXPLICIT for item in templates)
+        ):
+            continue
+        bound_id = next(iter(bound_ids))
+        bound = entities.get(bound_id)
+        if (
+            bound is None
+            or _text(bound.type) != "bound_variable"
+            or bound.interpretation_status != InterpretationStatus.EXPLICIT
+        ):
+            continue
+        consequent = templates[-1]
+        if _text(consequent.predicate) not in query_predicates:
+            continue
+
+        for concrete in premise.entities:
+            if _text(concrete.type) != "individual" or _entity_key(concrete) != _entity_key(query_entity):
+                continue
+            concrete_facts = {
+                _text(proposition.predicate): proposition
+                for proposition in premise.propositions
+                if proposition.id not in template_ids
+                and proposition.arguments == (concrete.id,)
+                and proposition.interpretation_status == InterpretationStatus.EXPLICIT
+            }
+            supporting = [concrete_facts.get(_text(item.predicate)) for item in templates[:-1]]
+            if not all(supporting):
+                continue
+            established = set(concrete_facts) | {_text(consequent.predicate)}
+            if not query_predicates <= established:
+                continue
+            evidence = (
+                quantifier.id, condition.id, *condition.antecedent,
+                *(item.id for item in supporting), concrete.id, consequent.id,
+            )
+            substitution = f"{bound.id} := {concrete.label}"
+            return tuple(dict.fromkeys(evidence)), substitution
+    return None
+
+
 def _unqualified_explicit_evidence(premise: Analysis, conclusion: Analysis) -> tuple[str, ...] | None:
     """Find one exact bare proposition inside a larger normalized premise."""
     if len(conclusion.propositions) != 1 or any((
@@ -191,6 +334,8 @@ class DeterministicInferenceEngine:
             explicit_evidence = _evidence_ids(premise)
         else:
             explicit_evidence = _unqualified_explicit_evidence(premise, conclusion)
+        if explicit_evidence is None:
+            explicit_evidence = _explicit_membership_evidence(premise, conclusion)
         if explicit_evidence is not None:
             return Inference(
                 id="inference_001",
@@ -218,6 +363,17 @@ class DeterministicInferenceEngine:
                 derived_from=tuple((*proposition.arguments, proposition.id)),
                 rule=LEXICAL_OPPOSITION_RULE,
             )
+        universal = _universal_instantiation_evidence(premise, conclusion)
+        if universal is not None:
+            evidence, substitution = universal
+            return Inference(
+                id="inference_001",
+                claim=conclusion.document.text,
+                interpretation_status=InterpretationStatus.ENTAILED,
+                confidence=Confidence(1.0, f"Universal instantiation ({substitution})"),
+                derived_from=evidence,
+                rule=UNIVERSAL_INSTANTIATION_RULE,
+            )
         return Inference(
             id="inference_001",
             claim=conclusion.document.text,
@@ -233,5 +389,11 @@ class DeterministicInferenceEngine:
             return (
                 "The conclusion conflicts with an explicitly represented predicate whose "
                 "opposition is declared in the controlled lexical rule set."
+            )
+        if inference.rule == UNIVERSAL_INSTANTIATION_RULE:
+            substitution = inference.confidence.rationale or "Universal instantiation"
+            return (
+                "The conclusion follows by applying an explicitly represented universal rule "
+                f"to matching membership facts. {substitution}."
             )
         return "The conclusion is not established by the supported exact inference rules."
