@@ -29,7 +29,7 @@ Identity includes the full normalized semantic graph:
 
 Analysis-local IDs are replaced by stable typed references before comparison. Source spans, structure nodes, confidence rationale, display formulas, document IDs, source spelling/casing/spacing, logical display objects, existing inferences, ambiguities, and plain-language rendering are not semantic match authority.
 
-The v0.1 rule compares complete graphs. It does not search a larger premise for a matching subgraph; that would require an explicit proposition-selection and context policy.
+The original v0.1 rule compares complete graphs. Lexical Opposition Contradiction v0.1 subsequently adds one conservative selection case for rule precedence: an unwrapped bare proposition may be found explicitly inside a larger premise, while any relation, operator, condition, constraint, temporal relation, set, or scope wrapper blocks extraction. This supports deterministic handling of simultaneously present opposing bare states without introducing general subgraph inference.
 
 ## Conservative boundary
 
@@ -48,7 +48,7 @@ No parser, comparator, aligner, schema, or gold expectation changed in this mile
 | `entailment_006` | Unsupported | Incomplete | Coreference ambiguity | No | Embedded propositions and competing pronoun readings |
 | `entailment_007` | Unsupported | Incomplete | Non-literal safety classification | No | Metaphor detection and a safe formalization boundary |
 
-The next recommended milestone is **Lexical Opposition Contradiction v0.1** for `entailment_005`. Both inputs already parse, making its missing lexical relation resource and inference rule a smaller, more isolated step than broad parser or probabilistic reasoning work.
+Lexical Opposition Contradiction v0.1 subsequently implements `entailment_005` with the single closed pair `OFF/ON`. The next recommended milestone is Controlled Rule and Membership Representation v0.1 for `entailment_002`.
 
 ## Verification
 

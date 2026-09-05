@@ -7,8 +7,9 @@ from .comparison import (
     UnsupportedComparisonError, proposition_signature,
 )
 from .inference import (
-    EXACT_EXPLICIT_RULE, NOT_ESTABLISHED_RULE, DeterministicInferenceEngine,
-    InferenceEngine,
+    EXACT_EXPLICIT_RULE, LEXICAL_OPPOSITION_PAIRS, LEXICAL_OPPOSITION_RULE,
+    NOT_ESTABLISHED_RULE, DeterministicInferenceEngine, InferenceEngine,
+    are_lexical_opposites,
 )
 from .models import (
     Ambiguity, Analysis, Comparison, ComparisonMode, Condition, Confidence, Difference,
@@ -30,6 +31,7 @@ __all__ = [
     "DeterministicComparator", "DeterministicInferenceEngine", "DeterministicPropositionAligner",
     "Difference", "DifferenceType", "DiscourseRelation", "DiscourseRelationType",
     "Document", "DomainValidationError", "Entity", "EXACT_EXPLICIT_RULE", "Inference", "InferenceEngine",
+    "LEXICAL_OPPOSITION_PAIRS", "LEXICAL_OPPOSITION_RULE",
     "InterpretationStatus", "LocalizedText", "LogicalExpression", "LogicalRelation", "NumericConstraint", "NumericOperator", "Operator",
     "Proposition", "PropositionAlignment", "ReferenceValidationError", "SchemaValidationError",
     "NOT_ESTABLISHED_RULE", "SemanticItem", "Severity", "Span", "StructuralNode", "Structure", "TemporalRelation", "TemporalRelationType",
@@ -37,5 +39,5 @@ __all__ = [
     "analysis_from_dict", "analysis_from_json", "analysis_to_dict",
     "analysis_to_json", "comparison_from_dict", "comparison_from_json",
     "comparison_to_dict", "comparison_to_json", "validate_analysis",
-    "validate_comparison", "proposition_signature",
+    "validate_comparison", "proposition_signature", "are_lexical_opposites",
 ]

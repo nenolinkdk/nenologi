@@ -113,7 +113,7 @@ def audit_gold_coverage() -> AuditResult:
                     "parser": "SUPPORTED" if all(parsed) else "UNSUPPORTED",
                     "analysis": "AVAILABLE" if all(parsed) else "INCOMPLETE",
                     "alignment": "NOT_APPLICABLE", "comparator": "NOT_APPLICABLE",
-                    "inference": "EXACT_EXPLICIT" if exact else "NOT_IMPLEMENTED",
+                    "inference": inference.rule if exact else "NOT_IMPLEMENTED",
                     "blocking_reason": "NONE" if exact else INFERENCE_BLOCKERS[case["id"]],
                 }
             else:

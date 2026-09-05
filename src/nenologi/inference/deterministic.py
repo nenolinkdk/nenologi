@@ -7,7 +7,17 @@ from decimal import Decimal
 from ..models import Analysis, Confidence, Inference, InterpretationStatus
 
 EXACT_EXPLICIT_RULE = "EXACT_EXPLICIT"
+LEXICAL_OPPOSITION_RULE = "LEXICAL_OPPOSITION"
 NOT_ESTABLISHED_RULE = "NOT_ESTABLISHED"
+
+# Deliberately closed and auditable. Additions require controlled-domain review.
+LEXICAL_OPPOSITION_PAIRS: tuple[tuple[str, str], ...] = (("OFF", "ON"),)
+
+
+def are_lexical_opposites(left: str, right: str) -> bool:
+    """Return whether normalized predicates form a declared symmetric pair."""
+    normalized = {_text(left).upper(), _text(right).upper()}
+    return any(normalized == set(pair) for pair in LEXICAL_OPPOSITION_PAIRS)
 
 
 def _text(value: str) -> str:
@@ -41,7 +51,7 @@ def _reference_map(analysis: Analysis) -> dict[str, str]:
     }
 
 
-def _semantic_signature(analysis: Analysis) -> tuple[object, ...]:
+def _semantic_signature(analysis: Analysis, *, abstract_predicates: bool = False) -> tuple[object, ...]:
     """Return the complete v0.1 semantic graph, excluding raw text and source metadata."""
     references = _reference_map(analysis)
 
@@ -54,7 +64,10 @@ def _semantic_signature(analysis: Analysis) -> tuple[object, ...]:
         for item in analysis.entities
     )
     propositions = tuple(
-        (_text(item.predicate), tuple(ref(value) for value in item.arguments), item.interpretation_status.value)
+        (
+            "predicate" if abstract_predicates else _text(item.predicate),
+            tuple(ref(value) for value in item.arguments), item.interpretation_status.value,
+        )
         for item in analysis.propositions
     )
     relations = tuple(
@@ -115,18 +128,91 @@ def _evidence_ids(analysis: Analysis) -> tuple[str, ...]:
     )
 
 
+def _unqualified_explicit_evidence(premise: Analysis, conclusion: Analysis) -> tuple[str, ...] | None:
+    """Find one exact bare proposition inside a larger normalized premise."""
+    if len(conclusion.propositions) != 1 or any((
+        conclusion.relations, conclusion.quantifiers, conclusion.modality,
+        conclusion.negation, conclusion.numeric_constraints, conclusion.conditions,
+        conclusion.temporal_relations, conclusion.sets,
+    )):
+        return None
+    query = conclusion.propositions[0]
+    query_entities = {
+        entity.id: (_text(entity.type), _text(entity.label), entity.interpretation_status.value)
+        for entity in conclusion.entities
+    }
+    governed_ids = {
+        reference
+        for item in (
+            *premise.relations, *premise.quantifiers, *premise.modality,
+            *premise.negation, *premise.numeric_constraints, *premise.sets,
+        )
+        for reference in (*getattr(item, "arguments", ()), *getattr(item, "scope", ()))
+    }
+    governed_ids.update(item.proposition for item in premise.temporal_relations)
+    governed_ids.update(
+        reference
+        for item in premise.conditions
+        for reference in (*item.antecedent, *item.consequent)
+    )
+    for proposition in premise.propositions:
+        if (
+            proposition.id in governed_ids
+            or _text(proposition.predicate) != _text(query.predicate)
+            or proposition.interpretation_status != query.interpretation_status
+            or len(proposition.arguments) != len(query.arguments)
+        ):
+            continue
+        premise_entities = {entity.id: entity for entity in premise.entities}
+        pairs = zip(proposition.arguments, query.arguments, strict=True)
+        if all(
+            source_id in premise_entities and query_id in query_entities
+            and (
+                _text(premise_entities[source_id].type),
+                _text(premise_entities[source_id].label),
+                premise_entities[source_id].interpretation_status.value,
+            ) == query_entities[query_id]
+            for source_id, query_id in pairs
+        ):
+            return tuple((*proposition.arguments, proposition.id))
+    return None
+
+
 class DeterministicInferenceEngine:
-    """Recognize only conclusions already explicit in the normalized premise."""
+    """Apply exact identity, then closed lexical opposition, then no-proof fallback."""
 
     def infer(self, premise: Analysis, conclusion: Analysis) -> Inference:
+        explicit_evidence = None
         if _semantic_signature(premise) == _semantic_signature(conclusion):
+            explicit_evidence = _evidence_ids(premise)
+        else:
+            explicit_evidence = _unqualified_explicit_evidence(premise, conclusion)
+        if explicit_evidence is not None:
             return Inference(
                 id="inference_001",
                 claim=conclusion.document.text,
                 interpretation_status=InterpretationStatus.EXPLICIT,
                 confidence=Confidence(1.0, "Exact normalized semantic identity"),
-                derived_from=_evidence_ids(premise),
+                derived_from=explicit_evidence,
                 rule=EXACT_EXPLICIT_RULE,
+            )
+        if (
+            len(premise.propositions) == 1
+            and len(conclusion.propositions) == 1
+            and are_lexical_opposites(
+                premise.propositions[0].predicate, conclusion.propositions[0].predicate,
+            )
+            and _semantic_signature(premise, abstract_predicates=True)
+            == _semantic_signature(conclusion, abstract_predicates=True)
+        ):
+            proposition = premise.propositions[0]
+            return Inference(
+                id="inference_001",
+                claim=conclusion.document.text,
+                interpretation_status=InterpretationStatus.CONTRADICTED,
+                confidence=Confidence(1.0, "Declared controlled lexical opposition"),
+                derived_from=tuple((*proposition.arguments, proposition.id)),
+                rule=LEXICAL_OPPOSITION_RULE,
             )
         return Inference(
             id="inference_001",
@@ -139,4 +225,9 @@ class DeterministicInferenceEngine:
     def explain(self, inference: Inference) -> str:
         if inference.rule == EXACT_EXPLICIT_RULE:
             return "The conclusion is explicitly represented in the normalized premise."
+        if inference.rule == LEXICAL_OPPOSITION_RULE:
+            return (
+                "The conclusion conflicts with an explicitly represented predicate whose "
+                "opposition is declared in the controlled lexical rule set."
+            )
         return "The conclusion is not established by the supported exact inference rules."

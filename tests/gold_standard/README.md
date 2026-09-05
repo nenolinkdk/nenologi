@@ -29,6 +29,6 @@ python -m unittest discover -s tests/validation -p "test_*.py"
 
 For the complete per-case pipeline matrix, including concrete blocker codes, run `python tests/validation/audit_gold_coverage.py --json`. The human-readable baseline is the [Phase 1 completion audit](../../docs/architecture/phase-1-completion-audit.md).
 
-Current coverage is 27 exact, 0 analyzable-but-inexact, 7 parser-unsupported, 2 comparator-unsupported, and 6 inference-not-implemented. `entailment_001` is recognized by exact normalized semantic identity. `omission_001` records a reviewed gold correction: removing a governing IF wrapper from an aligned proposition is `CONDITION_CHANGE`, not proposition `OMISSION`.
+Current coverage is 28 exact, 0 analyzable-but-inexact, 7 parser-unsupported, 2 comparator-unsupported, and 5 inference-not-implemented. `entailment_001` is recognized by exact normalized semantic identity; `entailment_005` uses the closed `OFF/ON` lexical-opposition rule. `omission_001` records a reviewed gold correction: removing a governing IF wrapper from an aligned proposition is `CONDITION_CHANGE`, not proposition `OMISSION`.
 
 The validator uses only the Python standard library. It verifies that all schema JSON parses, required case fields exist, IDs are globally unique, enum values and language tags are valid, required difference/status coverage exists, and equivalence cases cannot masquerade as change cases.
