@@ -176,6 +176,11 @@ def _explicit_membership_evidence(premise: Analysis, conclusion: Analysis) -> tu
         return None
     query_entity, query_facts = query_membership
     template_ids = _rule_proposition_ids(premise)
+    embedded_content_ids = {
+        item.arguments[1]
+        for item in premise.relations
+        if _text(item.type) == "content_relation" and len(item.arguments) == 2
+    }
     entities = {entity.id: entity for entity in premise.entities}
     for entity in premise.entities:
         if _text(entity.type) != "individual" or _entity_key(entity) != _entity_key(query_entity):
@@ -184,6 +189,7 @@ def _explicit_membership_evidence(premise: Analysis, conclusion: Analysis) -> tu
             _text(proposition.predicate): proposition
             for proposition in premise.propositions
             if proposition.id not in template_ids
+            and proposition.id not in embedded_content_ids
             and proposition.arguments == (entity.id,)
             and proposition.interpretation_status == InterpretationStatus.EXPLICIT
         }

@@ -78,7 +78,7 @@ python tests/validation/audit_gold_coverage.py --json
 | entailment_003 | entailment | OK | AV | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | DEFEASIBLE_PREDICTION |
 | entailment_004 | entailment | OK | AV | NA | NA | OK | END_TO_END_EXACT | NONE |
 | entailment_005 | entailment | OK | AV | NA | NA | OK | END_TO_END_EXACT | NONE |
-| entailment_006 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | COREFERENCE_AMBIGUITY |
+| entailment_006 | entailment | OK | AV | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | COREFERENCE_AMBIGUITY |
 | entailment_007 | entailment | NO | INC | NA | NA | NO | INFERENCE_NOT_IMPLEMENTED | METAPHOR_NON_LITERAL_FORMALIZATION |
 
 Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are **30 END_TO_END_EXACT, 0 ANALYZABLE_BUT_NOT_EXACT, 7 PARSER_UNSUPPORTED, 2 COMPARATOR_UNSUPPORTED, 3 INFERENCE_NOT_IMPLEMENTED.**
@@ -123,10 +123,10 @@ Phase 1 exit baseline was 19 exact and 14 parser-unsupported. Current totals are
 | entailment_003 | Complete: `FLICKER(light)` has distinct repeated-past and future-evening temporal references | Defeasible prediction, not entailment | No | HIGH |
 | entailment_004 | Complete: residence and fluency are distinct normalized predicates | Conservative `NOT_ESTABLISHED` | No | COMPLETE |
 | entailment_005 | `OFF(switch)` and `ON(switch)` parse | Closed lexical opposition implemented | No | COMPLETE |
-| entailment_006 | Pronoun-bearing statement/candidate do not parse | Coreference ambiguity with competing readings | Yes | HIGH |
+| entailment_006 | Complete: unresolved `they` has ordered Alex/Sam alternatives and an embedded `WON` proposition | Alternative-reading query evaluation | No | HIGH |
 | entailment_007 | Metaphor and theft candidate do not parse | Non-literal safety classification | Yes | HIGH |
 
-Exact Explicit Inference handles entailment_001, Universal Instantiation handles entailment_002, Lexical Opposition handles entailment_005, and controlled residence/fluency representation makes entailment_004 exactly unsupported. `entailment_003` is representation-ready but still lacks a prediction policy; the other two inference cases still require parser/representation work.
+Exact Explicit Inference handles entailment_001, Universal Instantiation handles entailment_002, Lexical Opposition handles entailment_005, and controlled residence/fluency representation makes entailment_004 exactly unsupported. `entailment_003` and `entailment_006` are representation-ready but still lack prediction and alternative-reading evaluation; `entailment_007` still requires parser/representation work.
 
 ## Addition/omission and alignment audit
 
@@ -169,7 +169,7 @@ Gold coverage did not rise after Addition/Omission because no existing gold inpu
 
 ## Quality baseline and exit criteria
 
-The current baseline passes 196 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator and inference fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
+The current baseline passes 206 unit/validation tests, gold validation (30 change, 5 equivalence, 7 inference), all schema/reference tests, analysis/comparison JSON round-trips, Unicode formulas, Markdown links, forbidden-dependency scan, parser-independent comparator and inference fixtures, deterministic alignment, and complete canonical `DifferenceType` ordering.
 
 | Exit criterion | Result | Evidence |
 | --- | --- | --- |
@@ -196,4 +196,4 @@ The current baseline passes 196 unit/validation tests, gold validation (30 chang
 | Additional semantic categories | Low now | New schema/taxonomy | High | None identified | Breadth without current corpus demand |
 | UI/application work | Product value | Stable core API | Medium | None | Exercises client boundary, not semantic coverage |
 
-Successive controlled parser milestones unlock `entity_relation_001` through `_003`, `equivalence_002`, `equivalence_004`, and `condition_002`. The inference milestones make `entailment_001`, `_002`, `_004`, and `_005` exact; `entailment_003` is now representation-ready. The next recommended deterministic milestone is Controlled Coreference Alternatives v0.1 for `entailment_006`.
+Successive controlled parser milestones unlock `entity_relation_001` through `_003`, `equivalence_002`, `equivalence_004`, and `condition_002`. The inference milestones make `entailment_001`, `_002`, `_004`, and `_005` exact; `entailment_003` and `_006` are now representation-ready. The next recommended deterministic safety milestone is Controlled Non-literal Representation v0.1 for `entailment_007`.

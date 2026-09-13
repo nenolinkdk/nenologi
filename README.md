@@ -59,8 +59,9 @@ The second is a source/target comparison in which both texts are independently r
 22. [Universal Instantiation v0.1](docs/architecture/universal-instantiation-v0.1.md)
 23. [Controlled Residence/Fluency Non-entailment v0.1](docs/architecture/residence-fluency-non-entailment-v0.1.md)
 24. [Controlled Observation and Future Representation v0.1](docs/architecture/observation-future-representation-v0.1.md)
-25. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
-26. [Build preparation](docs/project/build-preparation.md)
+25. [Controlled Coreference Alternatives v0.1](docs/architecture/coreference-alternatives-v0.1.md)
+26. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
+27. [Build preparation](docs/project/build-preparation.md)
 
 For a non-technical introduction, see [Nenologi – Looking Beneath the Words](docs/public/what-is-nenologi.md). The older topic-oriented documents under `docs/01-concept` through `docs/08-integrations` remain useful background; the files linked above are the canonical Phase 0 specification.
 

@@ -33,11 +33,11 @@ A <-> B         -> semantic/logical findings
 
 Phase 1 is complete. The reproducible exit decision, 42-case pipeline matrix, quality baseline, and single recommended Phase 2 milestone are maintained in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
-After Controlled Observation and Future Representation v0.1, the callable pipeline covers 30 exact end-to-end gold cases out of 42 with no analyzable-but-inexact comparison cases. Seven remain parser-unsupported, 2 comparator-unsupported, and 3 inference-not-implemented. `entailment_003` is now fully represented but remains prediction-blocked. See [Controlled Observation and Future Representation v0.1](../architecture/observation-future-representation-v0.1.md).
+After Controlled Coreference Alternatives v0.1, the callable pipeline covers 30 exact end-to-end gold cases out of 42 with no analyzable-but-inexact comparison cases. Seven remain parser-unsupported, 2 comparator-unsupported, and 3 inference-not-implemented. `entailment_003` and `entailment_006` are fully represented but retain prediction and coreference-evaluation blockers. See [Controlled Coreference Alternatives v0.1](../architecture/coreference-alternatives-v0.1.md).
 
 ## Next implementation milestone
 
-The next recommended deterministic Phase 2 milestone is **Controlled Coreference Alternatives v0.1** for `entailment_006`, representing competing referents without selecting one. Defeasible prediction for `entailment_003` requires a separate policy milestone.
+The next recommended deterministic safety milestone is **Controlled Non-literal Representation v0.1** for `entailment_007`, preserving inability to safely formalize metaphor without asserting literal theft.
 
 ## Definition of ready
 

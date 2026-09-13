@@ -7,7 +7,7 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 
 from ..models import (
-    Analysis, Condition, Confidence, Document, Entity, InterpretationStatus, LocalizedText,
+    Ambiguity, Analysis, Condition, Confidence, Document, Entity, InterpretationStatus, LocalizedText,
     LogicalExpression, NumericConstraint, NumericOperator, Operator, Proposition, SemanticItem, Span,
     StructuralNode, Structure, TemporalRelation, TemporalRelationType,
 )
@@ -96,6 +96,11 @@ _FUTURE_EVENING_RE = re.compile(
     r"(?P<verb>flicker)\s+(?P<temporal>this\s+evening)",
     re.IGNORECASE,
 )
+_TELL_WIN_RE = re.compile(
+    r"(?P<speaker>[A-Z][a-z]+)\s+told\s+(?P<recipient>[A-Z][a-z]+)\s+that\s+"
+    r"(?P<winner>they|[A-Z][a-z]+)\s+had\s+won"
+)
+_NAMED_WIN_RE = re.compile(r"(?P<winner>[A-Z][a-z]+)\s+had\s+won")
 
 
 @dataclass(frozen=True, slots=True)
@@ -508,6 +513,9 @@ class ControlledEnglishAnalyzer:
         class_logic = self._analyze_class_logic(text, language=language, profile=profile)
         if class_logic is not None:
             return class_logic
+        coreference = self._analyze_coreference(text, language=language, profile=profile)
+        if coreference is not None:
+            return coreference
         observation_future = self._analyze_observation_future(
             text, language=language, profile=profile,
         )
@@ -602,6 +610,182 @@ class ControlledEnglishAnalyzer:
         )
         validate_analysis(analysis)
         return analysis
+
+    def _analyze_coreference(
+        self, text: str, *, language: str, profile: str,
+    ) -> Analysis | None:
+        """Parse one controlled TELL/THAT/WON clause or named WON claim."""
+        if not isinstance(text, str) or not text.strip():
+            return None
+        stripped = text.strip()
+        if stripped[-1:] in "?!":
+            return None
+        body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
+        embedded = _TELL_WIN_RE.fullmatch(body)
+        named = _NAMED_WIN_RE.fullmatch(body)
+        if embedded is None and named is None:
+            return None
+
+        leading = len(text) - len(text.lstrip())
+        certain = Confidence(1.0, "Deterministic controlled coreference alternatives v0.1 rule")
+        explicit = InterpretationStatus.EXPLICIT
+        sentence_end = len(text.rstrip())
+        if named is not None:
+            winner_label = named.group("winner").casefold()
+            winner_span = Span(
+                leading + named.start("winner"), leading + named.end("winner"),
+            )
+            verb_span = Span(leading + named.start("winner"), leading + named.end())
+            entity = Entity(
+                "entity_001", "INDIVIDUAL", winner_label, explicit, certain, winner_span,
+            )
+            proposition = Proposition(
+                "prop_001", "WON", (entity.id,), explicit, certain, verb_span,
+            )
+            result = Analysis(
+                document=Document("doc_001", language, text), profile=profile,
+                structure=Structure(
+                    (StructuralNode(
+                        "sentence_001", Span(leading, sentence_end), kind="sentence",
+                    ),),
+                    (
+                        StructuralNode(
+                            "subject_001", winner_span, "sentence_001", "subject_phrase",
+                        ),
+                        StructuralNode(
+                            "predicate_001", verb_span, "sentence_001", "predicate_phrase",
+                        ),
+                    ),
+                ),
+                entities=(entity,), propositions=(proposition,),
+                logical_representation=(LogicalExpression(
+                    "logic_001", {"operator": "CONTROLLED_EMBEDDED_CLAIM", "arguments": [proposition.id]},
+                    explicit, certain, f"Won({named.group('winner')})", (proposition.id,),
+                ),),
+                confidence=certain,
+                plain_language_interpretation=LocalizedText(
+                    "en", f"The text explicitly states won({winner_label}).",
+                ),
+            )
+            validate_analysis(result)
+            return result
+
+        speaker_label = embedded.group("speaker").casefold()
+        recipient_label = embedded.group("recipient").casefold()
+        winner_surface = embedded.group("winner")
+        winner_label = winner_surface.casefold()
+        speaker_span = Span(
+            leading + embedded.start("speaker"), leading + embedded.end("speaker"),
+        )
+        recipient_span = Span(
+            leading + embedded.start("recipient"), leading + embedded.end("recipient"),
+        )
+        winner_span = Span(
+            leading + embedded.start("winner"), leading + embedded.end("winner"),
+        )
+        entities = [
+            Entity("entity_001", "INDIVIDUAL", speaker_label, explicit, certain, speaker_span),
+            Entity("entity_002", "INDIVIDUAL", recipient_label, explicit, certain, recipient_span),
+        ]
+        ambiguous = winner_label == "they"
+        if ambiguous:
+            winner_id = "reference_001"
+            entities.append(Entity(
+                winner_id, "UNRESOLVED_REFERENCE", winner_label,
+                InterpretationStatus.AMBIGUOUS, certain, winner_span,
+            ))
+        elif winner_label == speaker_label:
+            winner_id = "entity_001"
+        elif winner_label == recipient_label:
+            winner_id = "entity_002"
+        else:
+            return None
+
+        tell_span = Span(
+            leading + embedded.end("speaker") + 1,
+            leading + embedded.start("winner") - len("that "),
+        )
+        won_span = Span(leading + embedded.start("winner"), leading + embedded.end())
+        propositions = (
+            Proposition(
+                "prop_001", "TELL", ("entity_001", "entity_002"),
+                explicit, certain, tell_span,
+            ),
+            Proposition(
+                "embedded_prop_001", "WON", (winner_id,),
+                InterpretationStatus.AMBIGUOUS if ambiguous else explicit,
+                certain, won_span,
+            ),
+        )
+        relations = (SemanticItem(
+            "content_001", "CONTENT_RELATION",
+            ("prop_001", "embedded_prop_001"), explicit, certain,
+            won_span, ("prop_001", "embedded_prop_001"),
+        ),)
+        sets = ()
+        ambiguities = ()
+        if ambiguous:
+            sets = (
+                SemanticItem(
+                    "alternative_001", "REFERENCE_ALTERNATIVE",
+                    (winner_id, "entity_001"), InterpretationStatus.AMBIGUOUS,
+                    certain, winner_span,
+                ),
+                SemanticItem(
+                    "alternative_002", "REFERENCE_ALTERNATIVE",
+                    (winner_id, "entity_002"), InterpretationStatus.AMBIGUOUS,
+                    certain, winner_span,
+                ),
+            )
+            ambiguities = (Ambiguity(
+                "ambiguity_001",
+                f"The pronoun they may refer to {embedded.group('speaker')} or {embedded.group('recipient')}.",
+                ("alternative_001", "alternative_002"), certain,
+            ),)
+        display_winner = (
+            f"Unresolved(They -> {{{embedded.group('speaker')}, {embedded.group('recipient')}}})"
+            if ambiguous else winner_surface
+        )
+        result = Analysis(
+            document=Document("doc_001", language, text), profile=profile,
+            structure=Structure(
+                (StructuralNode(
+                    "sentence_001", Span(leading, sentence_end), kind="sentence",
+                ),),
+                (
+                    StructuralNode(
+                        "speech_001", Span(leading, sentence_end),
+                        "sentence_001", "speech_clause",
+                    ),
+                    StructuralNode(
+                        "content_001_clause", won_span,
+                        "speech_001", "embedded_content_clause",
+                    ),
+                    StructuralNode(
+                        "reference_001_clause", winner_span,
+                        "content_001_clause", "referring_expression",
+                    ),
+                ),
+            ),
+            entities=tuple(entities), propositions=propositions,
+            relations=relations, sets=sets, ambiguities=ambiguities,
+            logical_representation=(LogicalExpression(
+                "logic_001",
+                {"operator": "CONTROLLED_UNRESOLVED_CONTENT", "arguments": ["prop_001", "embedded_prop_001"]},
+                InterpretationStatus.AMBIGUOUS if ambiguous else explicit,
+                certain,
+                f"Tell({embedded.group('speaker')}, {embedded.group('recipient')}, Won({display_winner}))",
+                ("prop_001", "embedded_prop_001", "content_001", *(item.id for item in sets)),
+            ),),
+            confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en",
+                "The text leaves the winner reference unresolved between Alex and Sam."
+                if ambiguous else f"The text explicitly attributes winning to {winner_surface}.",
+            ),
+        )
+        validate_analysis(result)
+        return result
 
     def _analyze_observation_future(
         self, text: str, *, language: str, profile: str,

@@ -38,6 +38,8 @@ PROPER_NAME (LIVES | LIVED) IN PROPER_NAME [FOR NUMBER YEAR(S)]
 PROPER_NAME SPEAKS [FLUENT] PROPER_NAME
 THE SUBJECT FLICKERED ON EACH OF THE LAST NUMBER EVENINGS
 THE SUBJECT WILL FLICKER THIS EVENING
+PROPER_NAME TOLD PROPER_NAME THAT (THEY | REPEATED_PROPER_NAME) HAD WON
+PROPER_NAME HAD WON
 ```
 
 The quantifier and article are optional. Subjects contain one noun. An object contains one or two controlled words and may have `the`, `a`, or `an`. Exactly two object phrases may be joined by one `AND` or `OR`. The imperative form exists only for this same controlled object grammar. The controlled action vocabulary is `access`, `approve`, `choose`, `enter`, `open`, `receive`, `register`, `report`, `restart`, `submit`, `vote`, and `wear`. A small copular form supports one complement.
@@ -60,6 +62,7 @@ Supported semantic features are:
 - One controlled two-sentence `RULE. MEMBERSHIP.` document; no general sentence or discourse parsing
 - One controlled residence proposition with an optional year duration, or one controlled language-speaking proposition
 - One repeated flicker observation or one future-evening flicker proposition with a canonical relative temporal reference
+- One controlled `TELL` clause with ambiguous `they` or an exact repeated participant name, plus one named `WON` claim
 
 Within this controlled grammar, `MAY NOT` is compositionally represented as `May(¬P)`. Ordinary English can also use “may not” as prohibition; inputs requiring that alternate reading need a future ambiguity-aware grammar.
 
@@ -144,13 +147,17 @@ The parser accepts the narrow `ProperName lives/lived in ProperName [for N years
 
 The exact repeated-evening observation and future-evening forms documented in [Controlled Observation and Future Representation v0.1](observation-future-representation-v0.1.md) normalize to `FLICKER(subject)` plus an `ON` temporal relation. Canonical references `LAST_N_EVENINGS` and `THIS_EVENING` preserve semantic identity without date resolution. `will` is treated as temporal syntax in this fragment, not as a general modality operator, and no prediction rule is added.
 
+## Controlled coreference alternatives v0.1
+
+The narrow speech/content forms documented in [Controlled Coreference Alternatives v0.1](coreference-alternatives-v0.1.md) represent `they` as one unresolved reference with two ordered participant alternatives. The embedded `WON(reference)` proposition is connected to `TELL(speaker, recipient)` by a content relation. Alternatives are not materialized as simultaneous facts, and no heuristic resolution or general complement-clause grammar is added.
+
 ## Explicitly unsupported
 
 - More than one sentence, except one controlled `RULE. MEMBERSHIP.` pair
 - `UNLESS`, `ELSE`, nested/chained/multiple `IF`, comma-bearing suffix `IF`, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
 - Questions and exclamations
 - Subject/predicate coordination, nested/repeated coordination, and subordination
-- Relative clauses and conditions
+- Relative clauses and complement clauses outside the single controlled `TELL ... THAT ... HAD WON` form
 - Passive constructions outside the single explicit v0.2 form, including `WERE`, agentless, perfect, progressive, modal, future, infinitival, and embedded passives
 - Contractions other than the four explicit v0.3 spellings, multiple contractions, possessive apostrophes, and ambiguous apostrophe forms
 - Spatial predicates other than `INSIDE` and `BESIDE`, compound/nested locations, distances, and spatial negation or modality
@@ -172,4 +179,4 @@ Both sides of these existing comparison cases are analyzable and compared exactl
 
 The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), all three entity/relation cases, active/passive equivalence case `equivalence_002`, numeric equivalence case `equivalence_003`, contraction equivalence case `equivalence_004`, prefix-IF removal case `condition_001`, and weekday case `temporal_002`.
 
-Inference cases `entailment_003` and `entailment_004` are now fully analyzable. The former remains prediction-blocked because deterministic inference returns `UNSUPPORTED` while gold expects `PROBABLE`; the latter is exactly and conservatively `UNSUPPORTED`. Other cases remain intentionally outside this grammar. Gold expected results are unchanged; use the [machine-readable audit](phase-1-completion-audit.md) for current status.
+Inference cases `entailment_003`, `entailment_004`, and `entailment_006` are now fully analyzable. Prediction and coreference evaluation remain explicit inference blockers; residence/fluency is exactly and conservatively `UNSUPPORTED`. Other cases remain intentionally outside this grammar. Gold expected results are unchanged; use the [machine-readable audit](phase-1-completion-audit.md) for current status.

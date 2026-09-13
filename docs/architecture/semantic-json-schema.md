@@ -34,6 +34,8 @@ Confidence v0.1 is a number from `0.0` (no confidence) through `1.0` (maximum co
 
 Propositions use stable uppercase statuses: `EXPLICIT`, `ENTAILED`, `PROBABLE`, `AMBIGUOUS`, `UNSUPPORTED`, `CONTRADICTED`, or `CANNOT_BE_SAFELY_FORMALIZED`. `PROBABLE` is defeasible support and is never a synonym for `ENTAILED`. Ambiguity objects link competing readings rather than forcing one reading into the main result.
 
+Controlled coreference reuses this shape without a schema extension. One `UNRESOLVED_REFERENCE` entity is linked through ordered `REFERENCE_ALTERNATIVE` semantic items to candidate entities; an `Ambiguity` references those alternative-item IDs. A proposition uses the unresolved reference itself as its argument, so alternatives are not duplicated as simultaneous assertions. Embedded content is connected to its governing proposition by a `CONTENT_RELATION`.
+
 `Operator.scope` contains normalized object IDs, not source fragments. Scope v0.1 permits an operator to reference another quantifier, modality, or negation operator, producing a validated acyclic single-target chain that terminates at a proposition. This reuses the existing operator schema and symmetric serialization; no parallel logical AST is authoritative.
 
 `logical_representation` stores a structured expression object plus an optional human-readable `display`. The structured object is authoritative. A formula such as `∀x (Employee(x) → Must(Register(x)))` is derived for display and must never override or substitute for the structured semantics. v0.1 requires an expression operator but intentionally leaves its deeper AST extensible while Core work establishes the smallest useful vocabulary.
