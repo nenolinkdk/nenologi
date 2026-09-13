@@ -34,6 +34,8 @@ PROPOSITION [BEFORE | AFTER | ON | UNTIL] TEMPORAL_REFERENCE
 PROPER_NAME IS A|AN CLASS
 ALL [MODIFIER] CLASS_PLURAL ARE CLASS
 UNIVERSAL_RULE. MEMBERSHIP.
+PROPER_NAME (LIVES | LIVED) IN PROPER_NAME [FOR NUMBER YEAR(S)]
+PROPER_NAME SPEAKS [FLUENT] PROPER_NAME
 ```
 
 The quantifier and article are optional. Subjects contain one noun. An object contains one or two controlled words and may have `the`, `a`, or `an`. Exactly two object phrases may be joined by one `AND` or `OR`. The imperative form exists only for this same controlled object grammar. The controlled action vocabulary is `access`, `approve`, `choose`, `enter`, `open`, `receive`, `register`, `report`, `restart`, `submit`, `vote`, and `wear`. A small copular form supports one complement.
@@ -54,6 +56,7 @@ Supported semantic features are:
 - One proposition-final temporal phrase using `before`, `after`, `on`, or `until` with a weekday or 24-hour `HH:MM` clock time
 - Predicate-view class membership and universal class rules over one structural bound variable
 - One controlled two-sentence `RULE. MEMBERSHIP.` document; no general sentence or discourse parsing
+- One controlled residence proposition with an optional year duration, or one controlled language-speaking proposition
 
 Within this controlled grammar, `MAY NOT` is compositionally represented as `May(¬P)`. Ordinary English can also use “may not” as prohibition; inputs requiring that alternate reading need a future ambiguity-aware grammar.
 
@@ -130,6 +133,10 @@ One standalone `CONSEQUENT + IF + ANTECEDENT` form normalizes to the existing an
 
 The parser accepts the narrow class-membership, universal-rule, and two-sentence forms documented in [Controlled Rule and Membership Representation v0.1](rule-membership-representation-v0.1.md). Membership uses class propositions; a rule uses shared `BOUND_VARIABLE` arguments, a directed `Condition`, and `ALL` scoped over that condition. No universal instantiation occurs.
 
+## Controlled residence and language propositions v0.1
+
+The parser accepts the narrow `ProperName lives/lived in ProperName [for N years]` and `ProperName speaks [fluent] ProperName` forms documented in [Controlled Residence/Fluency Non-entailment v0.1](residence-fluency-non-entailment-v0.1.md). They normalize to distinct ordered binary predicates. Residence duration is preserved structurally, but no tense, geography, nationality, or country-language inference is added.
+
 ## Explicitly unsupported
 
 - More than one sentence, except one controlled `RULE. MEMBERSHIP.` pair
@@ -142,7 +149,7 @@ The parser accepts the narrow class-membership, universal-rule, and two-sentence
 - Spatial predicates other than `INSIDE` and `BESIDE`, compound/nested locations, distances, and spatial negation or modality
 - Multiword noun phrases beyond a determiner plus one noun
 - Ranges, fractions, scientific notation, signed values, arithmetic, approximation, locale decimals, and unit conversion
-- Multiple temporal phrases, event-clause references, durations, relative dates, `before or on`, `after or on`, `since`, `during`, `when`, `by`, and `within`
+- Multiple temporal phrases, event-clause references, durations outside the single controlled residence form, relative dates, `before or on`, `after or on`, `since`, `during`, `when`, `by`, and `within`
 - Idioms, metaphor, broad synonymy, and unknown action verbs
 - Languages other than English
 
@@ -158,4 +165,4 @@ Both sides of these existing comparison cases are analyzable and compared exactl
 
 The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), all three entity/relation cases, active/passive equivalence case `equivalence_002`, numeric equivalence case `equivalence_003`, contraction equivalence case `equivalence_004`, prefix-IF removal case `condition_001`, and weekday case `temporal_002`.
 
-Other cases remain intentionally outside this grammar. Gold expected results are unchanged; use the [machine-readable audit](phase-1-completion-audit.md) for current status.
+Inference case `entailment_004` is also fully analyzable and conservatively returns `UNSUPPORTED`. Other cases remain intentionally outside this grammar. Gold expected results are unchanged; use the [machine-readable audit](phase-1-completion-audit.md) for current status.

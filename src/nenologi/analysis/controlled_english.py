@@ -78,6 +78,13 @@ _DETERMINER_MEMBERSHIP_RE = re.compile(
 _TYPED_NAMED_MEMBERSHIP_RE = re.compile(
     r"(?P<domain>[A-Z][a-z]+)\s+(?P<name>[A-Z])\s+is\s+(?P<class_name>[a-z]+)"
 )
+_RESIDENCE_RE = re.compile(
+    r"(?P<person>[A-Z][a-z]+)\s+(?P<verb>lives|lived)\s+in\s+"
+    r"(?P<place>[A-Z][a-z]+)(?:\s+for\s+(?P<duration>[0-9]+|zero|one|two|three|four|five|six|seven|eight|nine|ten)\s+years?)?"
+)
+_LANGUAGE_SPEAKING_RE = re.compile(
+    r"(?P<person>[A-Z][a-z]+)\s+speaks\s+(?:(?P<fluent>fluent)\s+)?(?P<language>[A-Z][a-z]+)"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -490,6 +497,9 @@ class ControlledEnglishAnalyzer:
         class_logic = self._analyze_class_logic(text, language=language, profile=profile)
         if class_logic is not None:
             return class_logic
+        residence_language = self._analyze_residence_language(text, language=language, profile=profile)
+        if residence_language is not None:
+            return residence_language
         if isinstance(text, str) and re.search(r"\bif\b", text, re.IGNORECASE):
             return self._analyze_condition(text, language=language, profile=profile)
         temporal_match = self._temporal_match(text)
@@ -576,6 +586,98 @@ class ControlledEnglishAnalyzer:
         )
         validate_analysis(analysis)
         return analysis
+
+    def _analyze_residence_language(
+        self, text: str, *, language: str, profile: str,
+    ) -> Analysis | None:
+        """Parse one controlled residence or language-speaking proposition."""
+        if not isinstance(text, str) or not text.strip():
+            return None
+        stripped = text.strip()
+        if stripped[-1:] in "?!":
+            return None
+        body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
+        residence = _RESIDENCE_RE.fullmatch(body)
+        speaking = _LANGUAGE_SPEAKING_RE.fullmatch(body)
+        if residence is None and speaking is None:
+            return None
+
+        match = residence or speaking
+        leading = len(text) - len(text.lstrip())
+        certain = Confidence(1.0, "Deterministic controlled binary proposition v0.1 rule")
+        status = InterpretationStatus.EXPLICIT
+        person_label = match.group("person").casefold()
+        object_group = "place" if residence is not None else "language"
+        object_label = match.group(object_group).casefold()
+        object_type = "LOCATION" if residence is not None else "LANGUAGE"
+        predicate = (
+            "LIVES_IN" if residence is not None
+            else "SPEAKS_FLUENTLY" if speaking.group("fluent") else "SPEAKS"
+        )
+        person_span = Span(leading + match.start("person"), leading + match.end("person"))
+        object_span = Span(leading + match.start(object_group), leading + match.end(object_group))
+        entities = [
+            Entity("entity_001", "INDIVIDUAL", person_label, status, certain, person_span),
+            Entity("entity_002", object_type, object_label, status, certain, object_span),
+        ]
+        proposition = Proposition(
+            "prop_001", predicate, ("entity_001", "entity_002"), status, certain,
+            Span(leading + match.start("verb"), leading + match.end()) if residence is not None
+            else Span(leading + match.start(), leading + match.end()),
+        )
+        relations = [SemanticItem(
+            "relation_001", "ACTION_RELATION", proposition.arguments, status, certain,
+            derived_from=(proposition.id,),
+        )]
+        display = (
+            f"LivesIn({match.group('person')}, {match.group('place')})"
+            if residence is not None
+            else f"{'SpeaksFluently' if speaking.group('fluent') else 'Speaks'}({match.group('person')}, {match.group('language')})"
+        )
+        derived = ["prop_001", "relation_001"]
+        if residence is not None and residence.group("duration"):
+            duration_value = _NUMBER_WORDS.get(
+                residence.group("duration").casefold(), residence.group("duration"),
+            )
+            duration_label = f"{duration_value}_year"
+            duration_span = Span(
+                leading + residence.start("duration"), leading + residence.end(),
+            )
+            entities.append(Entity(
+                "entity_003", "DURATION", duration_label, status, certain, duration_span,
+            ))
+            relations.append(SemanticItem(
+                "duration_001", "DURATION", (proposition.id, "entity_003"),
+                status, certain, duration_span, (proposition.id,),
+            ))
+            display = f"During({display}, {duration_value} year)"
+            derived.extend(("entity_003", "duration_001"))
+
+        sentence_end = leading + len(body) + (1 if stripped.endswith(".") else 0)
+        result = Analysis(
+            document=Document("doc_001", language, text), profile=profile,
+            structure=Structure(
+                (StructuralNode("sentence_001", Span(leading, sentence_end), kind="sentence"),),
+                (
+                    StructuralNode("subject_001", person_span, "sentence_001", "subject_phrase"),
+                    StructuralNode("predicate_001", proposition.span, "sentence_001", "predicate_phrase"),
+                    StructuralNode("object_001", object_span, "predicate_001", f"{object_type.casefold()}_phrase"),
+                ),
+            ),
+            entities=tuple(entities), propositions=(proposition,), relations=tuple(relations),
+            logical_representation=(LogicalExpression(
+                "logic_001",
+                {"operator": "CONTROLLED_BINARY_PROPOSITION", "arguments": [proposition.id]},
+                status, certain, display, tuple(derived),
+            ),),
+            confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en",
+                f"The sentence explicitly states {predicate.casefold()}({person_label}, {object_label}).",
+            ),
+        )
+        validate_analysis(result)
+        return result
 
     def _analyze_class_logic(self, text: str, *, language: str, profile: str) -> Analysis | None:
         """Parse one or two narrowly controlled class-rule/membership sentences."""

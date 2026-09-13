@@ -57,8 +57,9 @@ The second is a source/target comparison in which both texts are independently r
 20. [Lexical Opposition Contradiction v0.1](docs/architecture/lexical-opposition-contradiction-v0.1.md)
 21. [Controlled Rule and Membership Representation v0.1](docs/architecture/rule-membership-representation-v0.1.md)
 22. [Universal Instantiation v0.1](docs/architecture/universal-instantiation-v0.1.md)
-23. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
-24. [Build preparation](docs/project/build-preparation.md)
+23. [Controlled Residence/Fluency Non-entailment v0.1](docs/architecture/residence-fluency-non-entailment-v0.1.md)
+24. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
+25. [Build preparation](docs/project/build-preparation.md)
 
 For a non-technical introduction, see [Nenologi – Looking Beneath the Words](docs/public/what-is-nenologi.md). The older topic-oriented documents under `docs/01-concept` through `docs/08-integrations` remain useful background; the files linked above are the canonical Phase 0 specification.
 
