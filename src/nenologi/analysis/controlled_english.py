@@ -85,6 +85,17 @@ _RESIDENCE_RE = re.compile(
 _LANGUAGE_SPEAKING_RE = re.compile(
     r"(?P<person>[A-Z][a-z]+)\s+speaks\s+(?:(?P<fluent>fluent)\s+)?(?P<language>[A-Z][a-z]+)"
 )
+_REPEATED_OBSERVATION_RE = re.compile(
+    r"The\s+(?P<subject>[a-z]+)\s+(?P<verb>flickered)\s+"
+    r"(?P<temporal>on\s+each\s+of\s+the\s+last\s+"
+    r"(?P<count>[0-9]+|zero|one|two|three|four|five|six|seven|eight|nine|ten)\s+evenings)",
+    re.IGNORECASE,
+)
+_FUTURE_EVENING_RE = re.compile(
+    r"The\s+(?P<subject>[a-z]+)\s+(?P<future>will)\s+"
+    r"(?P<verb>flicker)\s+(?P<temporal>this\s+evening)",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -497,6 +508,11 @@ class ControlledEnglishAnalyzer:
         class_logic = self._analyze_class_logic(text, language=language, profile=profile)
         if class_logic is not None:
             return class_logic
+        observation_future = self._analyze_observation_future(
+            text, language=language, profile=profile,
+        )
+        if observation_future is not None:
+            return observation_future
         residence_language = self._analyze_residence_language(text, language=language, profile=profile)
         if residence_language is not None:
             return residence_language
@@ -586,6 +602,90 @@ class ControlledEnglishAnalyzer:
         )
         validate_analysis(analysis)
         return analysis
+
+    def _analyze_observation_future(
+        self, text: str, *, language: str, profile: str,
+    ) -> Analysis | None:
+        """Parse the controlled repeated observation or future-evening claim."""
+        if not isinstance(text, str) or not text.strip():
+            return None
+        stripped = text.strip()
+        if stripped[-1:] in "?!":
+            return None
+        body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
+        observation = _REPEATED_OBSERVATION_RE.fullmatch(body)
+        future = _FUTURE_EVENING_RE.fullmatch(body)
+        if observation is None and future is None:
+            return None
+
+        match = observation or future
+        leading = len(text) - len(text.lstrip())
+        certain = Confidence(1.0, "Deterministic controlled observation/future v0.1 rule")
+        status = InterpretationStatus.EXPLICIT
+        subject_label = _singular(match.group("subject").casefold())
+        subject_span = Span(
+            leading + match.start("subject"), leading + match.end("subject"),
+        )
+        verb_span = Span(leading + match.start("verb"), leading + match.end("verb"))
+        temporal_span = Span(
+            leading + match.start("temporal"), leading + match.end(),
+        )
+        if observation is not None:
+            count = _NUMBER_WORDS.get(
+                observation.group("count").casefold(), observation.group("count"),
+            )
+            temporal_reference = f"LAST_{count}_EVENINGS"
+            temporal_display = f"Last{count}Evenings"
+        else:
+            temporal_reference = "THIS_EVENING"
+            temporal_display = "ThisEvening"
+
+        entity = Entity(
+            "entity_001", "ENTITY_CLASS", subject_label, status, certain, subject_span,
+        )
+        proposition = Proposition(
+            "prop_001", "FLICKER", (entity.id,), status, certain, verb_span,
+        )
+        temporal = TemporalRelation(
+            "temporal_001", proposition.id, TemporalRelationType.ON,
+            temporal_reference, status, certain, temporal_span,
+        )
+        display = f"On(Flicker({subject_label.title()}), {temporal_display})"
+        sentence_end = len(text.rstrip())
+        result = Analysis(
+            document=Document("doc_001", language, text), profile=profile,
+            structure=Structure(
+                (StructuralNode(
+                    "sentence_001", Span(leading, sentence_end), kind="sentence",
+                ),),
+                (
+                    StructuralNode(
+                        "subject_001", subject_span, "sentence_001", "subject_phrase",
+                    ),
+                    StructuralNode(
+                        "predicate_001", verb_span, "sentence_001", "predicate_phrase",
+                    ),
+                    StructuralNode(
+                        "temporal_001_clause", temporal_span,
+                        "predicate_001", "temporal_phrase",
+                    ),
+                ),
+            ),
+            entities=(entity,), propositions=(proposition,),
+            temporal_relations=(temporal,),
+            logical_representation=(LogicalExpression(
+                "logic_001",
+                {"operator": "CONTROLLED_TEMPORAL_PROPOSITION", "arguments": [proposition.id]},
+                status, certain, display, (proposition.id, temporal.id),
+            ),),
+            confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en",
+                f"The text explicitly places flicker({subject_label}) on {temporal_reference}.",
+            ),
+        )
+        validate_analysis(result)
+        return result
 
     def _analyze_residence_language(
         self, text: str, *, language: str, profile: str,

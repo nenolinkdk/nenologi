@@ -29,6 +29,6 @@ python -m unittest discover -s tests/validation -p "test_*.py"
 
 For the complete per-case pipeline matrix, including concrete blocker codes, run `python tests/validation/audit_gold_coverage.py --json`. The human-readable baseline is the [Phase 1 completion audit](../../docs/architecture/phase-1-completion-audit.md).
 
-Current coverage is 30 exact, 0 analyzable-but-inexact, 7 parser-unsupported, 2 comparator-unsupported, and 3 inference-not-implemented. `entailment_004` represents residence and fluency independently and returns conservative `NOT_ESTABLISHED`; `entailment_002` uses bounded universal instantiation, `entailment_001` is exact identity, and `entailment_005` uses closed `OFF/ON` opposition.
+Current coverage is 30 exact, 0 analyzable-but-inexact, 7 parser-unsupported, 2 comparator-unsupported, and 3 inference-not-implemented. Both sides of `entailment_003` are represented with distinct temporal references, but no probable prediction rule exists. `entailment_004` returns conservative `NOT_ESTABLISHED`; `entailment_002` uses bounded universal instantiation, `entailment_001` is exact identity, and `entailment_005` uses closed `OFF/ON` opposition.
 
 The validator uses only the Python standard library. It verifies that all schema JSON parses, required case fields exist, IDs are globally unique, enum values and language tags are valid, required difference/status coverage exists, and equivalence cases cannot masquerade as change cases.
