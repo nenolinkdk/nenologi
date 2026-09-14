@@ -40,6 +40,8 @@ THE SUBJECT FLICKERED ON EACH OF THE LAST NUMBER EVENINGS
 THE SUBJECT WILL FLICKER THIS EVENING
 PROPER_NAME TOLD PROPER_NAME THAT (THEY | REPEATED_PROPER_NAME) HAD WON
 PROPER_NAME HAD WON
+TIME IS A THIEF
+TIME COMMITS THEFT
 ```
 
 The quantifier and article are optional. Subjects contain one noun. An object contains one or two controlled words and may have `the`, `a`, or `an`. Exactly two object phrases may be joined by one `AND` or `OR`. The imperative form exists only for this same controlled object grammar. The controlled action vocabulary is `access`, `approve`, `choose`, `enter`, `open`, `receive`, `register`, `report`, `restart`, `submit`, `vote`, and `wear`. A small copular form supports one complement.
@@ -63,6 +65,7 @@ Supported semantic features are:
 - One controlled residence proposition with an optional year duration, or one controlled language-speaking proposition
 - One repeated flicker observation or one future-evening flicker proposition with a canonical relative temporal reference
 - One controlled `TELL` clause with ambiguous `they` or an exact repeated participant name, plus one named `WON` claim
+- One registered non-literal `Time is a thief` form and its independently literal theft query
 
 Within this controlled grammar, `MAY NOT` is compositionally represented as `May(¬P)`. Ordinary English can also use “may not” as prohibition; inputs requiring that alternate reading need a future ambiguity-aware grammar.
 
@@ -151,6 +154,10 @@ The exact repeated-evening observation and future-evening forms documented in [C
 
 The narrow speech/content forms documented in [Controlled Coreference Alternatives v0.1](coreference-alternatives-v0.1.md) represent `they` as one unresolved reference with two ordered participant alternatives. The embedded `WON(reference)` proposition is connected to `TELL(speaker, recipient)` by a content relation. Alternatives are not materialized as simultaneous facts, and no heuristic resolution or general complement-clause grammar is added.
 
+## Controlled non-literal representation v0.1
+
+The exact registered form `Time is a thief` is intercepted before ordinary class-membership parsing and represented as a `NON_LITERAL_EXPRESSION` with `CANNOT_BE_SAFELY_FORMALIZED` status and no proposition. `Time commits theft` remains an independent literal `COMMIT_THEFT(time)` proposition. See [Controlled Non-literal Representation v0.1](non-literal-representation-v0.1.md). No general metaphor detection or interpretation is added.
+
 ## Explicitly unsupported
 
 - More than one sentence, except one controlled `RULE. MEMBERSHIP.` pair
@@ -164,7 +171,7 @@ The narrow speech/content forms documented in [Controlled Coreference Alternativ
 - Multiword noun phrases beyond a determiner plus one noun
 - Ranges, fractions, scientific notation, signed values, arithmetic, approximation, locale decimals, and unit conversion
 - Multiple temporal phrases, event-clause references, durations outside the single controlled residence form, relative dates outside the two controlled evening references, `before or on`, `after or on`, `since`, `during`, `when`, `by`, and `within`
-- Idioms, metaphor, broad synonymy, and unknown action verbs
+- Idioms, metaphors outside the one registered non-literal form, broad synonymy, and unknown action verbs
 - Languages other than English
 
 ## Gold-standard compatibility
@@ -179,4 +186,4 @@ Both sides of these existing comparison cases are analyzable and compared exactl
 
 The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), all three entity/relation cases, active/passive equivalence case `equivalence_002`, numeric equivalence case `equivalence_003`, contraction equivalence case `equivalence_004`, prefix-IF removal case `condition_001`, and weekday case `temporal_002`.
 
-Inference cases `entailment_003`, `entailment_004`, and `entailment_006` are now fully analyzable. Prediction and coreference evaluation remain explicit inference blockers; residence/fluency is exactly and conservatively `UNSUPPORTED`. Other cases remain intentionally outside this grammar. Gold expected results are unchanged; use the [machine-readable audit](phase-1-completion-audit.md) for current status.
+All inference cases are now analyzable. Prediction, coreference-alternative evaluation, and non-literal policy remain explicit inference blockers; residence/fluency is exactly and conservatively `UNSUPPORTED`. Other comparison cases remain intentionally outside this grammar. Gold expected results are unchanged; use the [machine-readable audit](phase-1-completion-audit.md) for current status.

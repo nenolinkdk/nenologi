@@ -101,6 +101,12 @@ _TELL_WIN_RE = re.compile(
     r"(?P<winner>they|[A-Z][a-z]+)\s+had\s+won"
 )
 _NAMED_WIN_RE = re.compile(r"(?P<winner>[A-Z][a-z]+)\s+had\s+won")
+_NON_LITERAL_THIEF_RE = re.compile(
+    r"(?P<subject>Time)\s+(?P<surface>is\s+a\s+thief)", re.IGNORECASE,
+)
+_LITERAL_THEFT_RE = re.compile(
+    r"(?P<subject>Time)\s+(?P<verb>commits)\s+(?P<object>theft)", re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -510,6 +516,9 @@ class ControlledEnglishAnalyzer:
     def analyze(self, text: str, *, language: str = "en", profile: str = "general") -> Analysis:
         if language != "en":
             raise UnsupportedConstructionError("ControlledEnglishAnalyzer supports only language='en'")
+        non_literal = self._analyze_non_literal(text, language=language, profile=profile)
+        if non_literal is not None:
+            return non_literal
         class_logic = self._analyze_class_logic(text, language=language, profile=profile)
         if class_logic is not None:
             return class_logic
@@ -610,6 +619,114 @@ class ControlledEnglishAnalyzer:
         )
         validate_analysis(analysis)
         return analysis
+
+    def _analyze_non_literal(
+        self, text: str, *, language: str, profile: str,
+    ) -> Analysis | None:
+        """Parse the one controlled non-literal form and its literal query form."""
+        if not isinstance(text, str) or not text.strip():
+            return None
+        stripped = text.strip()
+        if stripped[-1:] in "?!":
+            return None
+        body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
+        non_literal = _NON_LITERAL_THIEF_RE.fullmatch(body)
+        literal = _LITERAL_THEFT_RE.fullmatch(body)
+        if non_literal is None and literal is None:
+            return None
+
+        match = non_literal or literal
+        leading = len(text) - len(text.lstrip())
+        certain = Confidence(
+            1.0,
+            "Deterministic classification of one registered non-literal construction"
+            if non_literal is not None
+            else "Deterministic controlled literal theft proposition v0.1 rule",
+        )
+        status = (
+            InterpretationStatus.CANNOT_BE_SAFELY_FORMALIZED
+            if non_literal is not None else InterpretationStatus.EXPLICIT
+        )
+        subject_span = Span(
+            leading + match.start("subject"), leading + match.end("subject"),
+        )
+        sentence_end = len(text.rstrip())
+        entity = Entity(
+            "entity_001", "ENTITY_CLASS", "time", status, certain, subject_span,
+        )
+        sentence = StructuralNode(
+            "sentence_001", Span(leading, sentence_end), kind="sentence",
+        )
+        if non_literal is not None:
+            expression_span = Span(
+                leading + non_literal.start("surface"),
+                leading + non_literal.end("surface"),
+            )
+            marker = SemanticItem(
+                "non_literal_001", "NON_LITERAL_EXPRESSION", (entity.id,),
+                status, certain, expression_span,
+            )
+            result = Analysis(
+                document=Document("doc_001", language, text), profile=profile,
+                structure=Structure(
+                    (sentence,),
+                    (
+                        StructuralNode(
+                            "subject_001", subject_span, "sentence_001", "subject_phrase",
+                        ),
+                        StructuralNode(
+                            "surface_001", expression_span,
+                            "sentence_001", "non_literal_surface_expression",
+                        ),
+                    ),
+                ),
+                entities=(entity,), relations=(marker,), propositions=(),
+                logical_representation=(LogicalExpression(
+                    "logic_001",
+                    {"operator": "UNRESOLVED_NON_LITERAL", "arguments": [marker.id]},
+                    status, certain, "NonLiteral(Time, surface_expression)",
+                    (entity.id, marker.id),
+                ),),
+                confidence=certain,
+                plain_language_interpretation=LocalizedText(
+                    "en",
+                    "The registered expression is non-literal; no literal meaning is asserted.",
+                ),
+            )
+            validate_analysis(result)
+            return result
+
+        verb_span = Span(
+            leading + literal.start("verb"), leading + literal.end("object"),
+        )
+        proposition = Proposition(
+            "prop_001", "COMMIT_THEFT", (entity.id,), status, certain, verb_span,
+        )
+        result = Analysis(
+            document=Document("doc_001", language, text), profile=profile,
+            structure=Structure(
+                (sentence,),
+                (
+                    StructuralNode(
+                        "subject_001", subject_span, "sentence_001", "subject_phrase",
+                    ),
+                    StructuralNode(
+                        "predicate_001", verb_span, "sentence_001", "predicate_phrase",
+                    ),
+                ),
+            ),
+            entities=(entity,), propositions=(proposition,),
+            logical_representation=(LogicalExpression(
+                "logic_001", {"operator": "CONTROLLED_LITERAL_PROPOSITION", "arguments": [proposition.id]},
+                status, certain, "CommitTheft(Time)", (proposition.id,),
+            ),),
+            confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en", "The sentence literally states commit_theft(time).",
+            ),
+        )
+        validate_analysis(result)
+        return result
 
     def _analyze_coreference(
         self, text: str, *, language: str, profile: str,

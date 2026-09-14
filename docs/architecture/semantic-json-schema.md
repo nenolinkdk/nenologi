@@ -36,6 +36,8 @@ Propositions use stable uppercase statuses: `EXPLICIT`, `ENTAILED`, `PROBABLE`, 
 
 Controlled coreference reuses this shape without a schema extension. One `UNRESOLVED_REFERENCE` entity is linked through ordered `REFERENCE_ALTERNATIVE` semantic items to candidate entities; an `Ambiguity` references those alternative-item IDs. A proposition uses the unresolved reference itself as its argument, so alternatives are not duplicated as simultaneous assertions. Embedded content is connected to its governing proposition by a `CONTENT_RELATION`.
 
+Controlled non-literal safety also reuses the existing schema. A `NON_LITERAL_EXPRESSION` semantic item and related safe entities carry `CANNOT_BE_SAFELY_FORMALIZED`; no proposition is emitted when a literal semantic assertion would overclaim. A neutral `UNRESOLVED_NON_LITERAL` logical expression may reference that marker without turning its display or source text into authoritative semantics.
+
 `Operator.scope` contains normalized object IDs, not source fragments. Scope v0.1 permits an operator to reference another quantifier, modality, or negation operator, producing a validated acyclic single-target chain that terminates at a proposition. This reuses the existing operator schema and symmetric serialization; no parallel logical AST is authoritative.
 
 `logical_representation` stores a structured expression object plus an optional human-readable `display`. The structured object is authoritative. A formula such as `∀x (Employee(x) → Must(Register(x)))` is derived for display and must never override or substitute for the structured semantics. v0.1 requires an expression operator but intentionally leaves its deeper AST extensible while Core work establishes the smallest useful vocabulary.
