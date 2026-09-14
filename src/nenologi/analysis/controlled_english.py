@@ -540,6 +540,11 @@ class ControlledEnglishAnalyzer:
         class_logic = self._analyze_class_logic(text, language=language, profile=profile)
         if class_logic is not None:
             return class_logic
+        independent_sentences = self._analyze_independent_sentences(
+            text, language=language, profile=profile,
+        )
+        if independent_sentences is not None:
+            return independent_sentences
         coreference = self._analyze_coreference(text, language=language, profile=profile)
         if coreference is not None:
             return coreference
@@ -646,6 +651,136 @@ class ControlledEnglishAnalyzer:
         )
         validate_analysis(analysis)
         return analysis
+
+    def _analyze_independent_sentences(
+        self, text: str, *, language: str, profile: str,
+    ) -> Analysis | None:
+        """Combine exactly two independently supported, unqualified propositions."""
+        if not isinstance(text, str) or not text.strip():
+            return None
+        match = re.fullmatch(
+            r"\s*(?P<first>[^.?!]+\.)(?P<gap>\s+)(?P<second>[^.?!]+\.)\s*",
+            text,
+        )
+        if match is None:
+            return None
+
+        parts: list[tuple[Analysis, int]] = []
+        for group in ("first", "second"):
+            surface = match.group(group)
+            try:
+                analysis = self.analyze(surface, language=language, profile=profile)
+            except UnsupportedConstructionError as exc:
+                raise UnsupportedConstructionError(
+                    f"unsupported sentence in controlled two-sentence document: {exc}"
+                ) from exc
+            if (
+                len(analysis.structure.sentences) != 1
+                or len(analysis.propositions) != 1
+                or analysis.propositions[0].interpretation_status is not InterpretationStatus.EXPLICIT
+                or analysis.quantifiers or analysis.modality or analysis.negation
+                or analysis.numeric_constraints or analysis.conditions
+                or analysis.temporal_relations or analysis.sets
+                or analysis.inferences or analysis.ambiguities
+                or any(item.type != "ACTION_RELATION" for item in analysis.relations)
+            ):
+                raise UnsupportedConstructionError(
+                    "controlled two-sentence documents require two ordinary independent propositions"
+                )
+            parts.append((analysis, match.start(group)))
+
+        entities: list[Entity] = []
+        propositions: list[Proposition] = []
+        relations: list[SemanticItem] = []
+        expressions: list[LogicalExpression] = []
+        sentences: list[StructuralNode] = []
+        clauses: list[StructuralNode] = []
+
+        def shifted(span: Span | None, offset: int) -> Span | None:
+            return None if span is None else Span(span.start + offset, span.end + offset)
+
+        def remap_expression(value, identifiers: dict[str, str]):
+            if isinstance(value, str):
+                return identifiers.get(value, value)
+            if isinstance(value, list):
+                return [remap_expression(item, identifiers) for item in value]
+            if isinstance(value, dict):
+                return {key: remap_expression(item, identifiers) for key, item in value.items()}
+            return value
+
+        for index, (analysis, offset) in enumerate(parts, start=1):
+            identifiers: dict[str, str] = {
+                analysis.structure.sentences[0].id: f"sentence_{index:03d}",
+                analysis.propositions[0].id: f"prop_{index:03d}",
+            }
+            for position, entity in enumerate(analysis.entities, start=len(entities) + 1):
+                identifiers[entity.id] = f"entity_{position:03d}"
+            for position, relation in enumerate(analysis.relations, start=len(relations) + 1):
+                identifiers[relation.id] = f"relation_{position:03d}"
+            for position, expression in enumerate(analysis.logical_representation, start=len(expressions) + 1):
+                identifiers[expression.id] = f"logic_{position:03d}"
+            for clause in analysis.structure.clauses:
+                stem = clause.id.rsplit("_", 1)[0]
+                identifiers[clause.id] = f"{stem}_{index:03d}"
+
+            sentence = analysis.structure.sentences[0]
+            sentences.append(replace(
+                sentence, id=identifiers[sentence.id], span=shifted(sentence.span, offset),
+            ))
+            clauses.extend(
+                replace(
+                    clause,
+                    id=identifiers[clause.id],
+                    parent_id=identifiers.get(clause.parent_id, clause.parent_id),
+                    span=shifted(clause.span, offset),
+                )
+                for clause in analysis.structure.clauses
+            )
+            entities.extend(
+                replace(entity, id=identifiers[entity.id], span=shifted(entity.span, offset))
+                for entity in analysis.entities
+            )
+            proposition = analysis.propositions[0]
+            propositions.append(replace(
+                proposition,
+                id=identifiers[proposition.id],
+                arguments=tuple(identifiers[item] for item in proposition.arguments),
+                span=shifted(proposition.span, offset),
+                derived_from=tuple(identifiers.get(item, item) for item in proposition.derived_from),
+            ))
+            relations.extend(
+                replace(
+                    relation,
+                    id=identifiers[relation.id],
+                    arguments=tuple(identifiers[item] for item in relation.arguments),
+                    span=shifted(relation.span, offset),
+                    derived_from=tuple(identifiers[item] for item in relation.derived_from),
+                )
+                for relation in analysis.relations
+            )
+            expressions.extend(
+                replace(
+                    expression,
+                    id=identifiers[expression.id],
+                    expression=remap_expression(expression.expression, identifiers),
+                    derived_from=tuple(identifiers[item] for item in expression.derived_from),
+                )
+                for expression in analysis.logical_representation
+            )
+
+        certain = Confidence(1.0, "Deterministic controlled two-sentence document v0.1 rule")
+        result = Analysis(
+            document=Document("doc_001", language, text), profile=profile,
+            structure=Structure(tuple(sentences), tuple(clauses)),
+            entities=tuple(entities), propositions=tuple(propositions),
+            relations=tuple(relations), logical_representation=tuple(expressions),
+            confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en", "The document explicitly states two independent propositions.",
+            ),
+        )
+        validate_analysis(result)
+        return result
 
     def _analyze_coordinated_predicates(
         self, text: str, *, language: str, profile: str,

@@ -598,9 +598,14 @@ class DeterministicComparator:
                 if item.type == "PREDICATE_AND"
                 for reference in item.arguments
             }
-            if proposition.id not in coordinated_ids:
-                return _proposition_payload(analysis, proposition.id, side), Severity.MEDIUM
             entities = {item.id: item for item in analysis.entities}
+            if proposition.id not in coordinated_ids:
+                if len(analysis.structure.sentences) <= 1:
+                    return _proposition_payload(analysis, proposition.id, side), Severity.MEDIUM
+                argument_labels = [
+                    entities[identifier].label.upper() for identifier in proposition.arguments
+                ]
+                return "_".join((*argument_labels, proposition.predicate)), Severity.MEDIUM
             object_labels = [
                 entities[identifier].label.upper()
                 for identifier in proposition.arguments[1:]

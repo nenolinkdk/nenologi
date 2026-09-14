@@ -24,6 +24,8 @@ Start with General text and Translation comparison.
 ## Phase 2 — Standalone Windows prototype
 Build a small Windows client around the engine.
 
+Before client work, the bounded core-readiness sequence continues from the [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md). Controlled predicate coordination and independent two-sentence propositions are complete; embedded negation scope is the next deterministic milestone.
+
 Functions:
 - select analysis profile
 - select Single or Compare

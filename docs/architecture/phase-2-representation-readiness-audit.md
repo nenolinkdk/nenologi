@@ -2,19 +2,19 @@
 
 ## Decision
 
-**Decision B — Phase 2 continues through five specific small milestones.** The current deterministic core is stable and all seven inference cases are parseable. Six deterministic parser cases remain; there are no comparator blockers. The three non-exact inference cases require policy rather than broader deterministic entailment.
+**Decision B — Phase 2 continues through four specific small milestones.** The current deterministic core is stable and all seven inference cases are parseable. Five deterministic parser cases remain; there are no comparator blockers. The three non-exact inference cases require policy rather than broader deterministic entailment.
 
-**Coordinated Predicate Graphs v0.1 is complete.** It represents coordinated predicates as distinct propositions with shared arguments and canonicalizes commutative object conjunction by semantic identity. The audit is now 33 exact, 0 analyzable-but-inexact, 6 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented.
+**Controlled Independent Two-sentence Propositions v0.1 is complete.** It preserves two ordinary sentence structures and authoritative propositions without inventing discourse semantics. The audit is now 34 exact, 0 analyzable-but-inexact, 5 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented.
 
-The next recommended milestone is **Controlled Independent Two-sentence Propositions v0.1** for `addition_002`.
+The next recommended milestone is **Controlled Embedded Negation Scope v0.1** for `scope_001` and `scope_002`.
 
 ## Verified baseline
 
 Post-milestone verification was performed against the complete Coordinated Predicate Graphs v0.1 working tree.
 
-- Tests: 226 passed.
+- Tests: 239 passed.
 - Gold corpus: 42 cases.
-- Audit: 33 `END_TO_END_EXACT`, 0 `ANALYZABLE_BUT_NOT_EXACT`, 6 `PARSER_UNSUPPORTED`, 0 `COMPARATOR_UNSUPPORTED`, 3 `INFERENCE_NOT_IMPLEMENTED`.
+- Audit: 34 `END_TO_END_EXACT`, 0 `ANALYZABLE_BUT_NOT_EXACT`, 5 `PARSER_UNSUPPORTED`, 0 `COMPARATOR_UNSUPPORTED`, 3 `INFERENCE_NOT_IMPLEMENTED`.
 - Gold validation: 30 change, 5 equivalence, and 7 inference cases passed schema validation.
 
 The existing audit command remains the machine-readable status source:
@@ -67,7 +67,7 @@ A static JSON copy is intentionally not committed because it would duplicate exe
 | contradiction_001 | contradiction | switch on → not on | ready | exact | END_TO_END_EXACT | none | A | Negation finding plus contradictory relation. |
 | scope_001 | scope | not promise leave → promise not leave | blocked | not reached | PARSER_UNSUPPORTED | embedded verb/scope | B | Needs embedded proposition and two operator topologies. |
 | scope_002 | scope | not require leave → require not leave | blocked | not reached | PARSER_UNSUPPORTED | embedded verb/scope | B | Needs object-control embedded proposition and scope. |
-| addition_002 | addition | closed window → plus locked door | blocked | not reached | PARSER_UNSUPPORTED | independent second sentence | B | Existing model can hold two propositions; bounded document grammar is missing. |
+| addition_002 | addition | closed window → plus locked door | ready | exact | END_TO_END_EXACT | none | A | Two independent propositions; unmatched `LOCKED(door)` is one addition. |
 | omission_002 | omission | sign and date form → sign form | ready | exact | END_TO_END_EXACT | none | A | Shared-argument `SIGN`/`DATE` propositions yield one omission. |
 | equivalence_001 | equivalence | every → all | ready | exact | END_TO_END_EXACT | none | A | Quantifier normalization is exact. |
 | equivalence_002 | equivalence | active → passive approval | ready | exact | END_TO_END_EXACT | none | A | Voice normalizes to semantic roles. |
@@ -91,9 +91,8 @@ A static JSON copy is intentionally not committed because it would duplicate exe
 | condition_003 | `You may enter unless the door is locked.` | `You may enter if the door is locked.` | `UNLESS` condition | Existing `Condition`, proposition, modality, and negation structures can express the contrast. Grammar and exact scope construction are needed. | Unlocks condition comparison. | Low–medium: `unless` equivalences are context-sensitive outside the controlled form. | PHASE_2_DETERMINISTIC; one controlled pattern only. |
 | scope_001 | `Maria did not promise to leave.` | `Maria promised not to leave.` | Embedded infinitive and negation scope | `PROMISE(Maria, proposition)` plus `LEAVE(Maria)` and two different `NOT` scopes. Existing propositions/operators can represent it; a content relation may be reused. | Unlocks scope comparison. | Medium: do not generalize attitude/control semantics. | PHASE_2_DETERMINISTIC; controlled embedded-scope milestone. |
 | scope_002 | `The rule does not require employees to leave.` | `The rule requires employees not to leave.` | Object-control infinitive and negation scope | `REQUIRE(rule, proposition)` plus `LEAVE(employees)` with outer versus inner negation. Existing graph types suffice with strict role rules. | Unlocks scope comparison. | Medium–high: subject propagation and control must stay explicit. | PHASE_2_DETERMINISTIC; pair with `scope_001`. |
-| addition_002 | `The window is closed.` | `The window is closed. The door is locked.` | General second sentence | Two independent unary propositions. `Analysis` already supports multiple sentences/propositions; only bounded two-sentence assembly and ID rebasing are needed. | Unlocks addition comparison. | Low–medium: avoid a general tokenizer. | PHASE_2_DETERMINISTIC; controlled two-sentence milestone. |
 
-None of the six requires uncertainty, AI, embeddings, world knowledge, or fuzzy matching. Grammar alone is sufficient for `addition_002`; the others require bounded graph construction in addition to grammar.
+None of the five requires uncertainty, AI, embeddings, world knowledge, or fuzzy matching. They require bounded graph construction in addition to grammar.
 
 ## Resolved comparator blockers
 
@@ -152,7 +151,7 @@ All three are representation-ready. None should be converted into deterministic 
 | Voice normalization | Y | Y | exact only | Y | Y | 1 | One singular passive family | A |
 | Tense handling | P | normalized where declared | exact only | Y | Y | several | No generic tense semantics | A for intended boundary |
 | Proposition alignment | Y | Y | — | Y | Y | broad | Exact structural alignment; no fuzzy matching | A |
-| Addition/omission | P | P | — | Y | Y | 4 exact | Independent second sentence remains | B |
+| Addition/omission | Y | Y | — | Y | Y | 5 exact | Controlled predicate and two-sentence forms only | A |
 | Universal rules | Y | — | Y | Y | Y | 1 | Unary, single-step, closed form | A |
 | Membership | Y | — | Y | Y | Y | 1 | Controlled class facts only | A |
 | Universal instantiation | represented | — | Y | Y | Y | entailment_002 | No binary rules, chaining, converse, or contraposition | A |
@@ -173,7 +172,7 @@ Probabilistic prediction, confidence propagation from evidence, evaluation or re
 
 Phase 2 exits when all of the following are measurable and true:
 
-1. The six cases listed as deterministic parser blockers are either exact or explicitly removed from the intended Phase 2 corpus by a reviewed scope decision.
+1. The five cases listed as deterministic parser blockers are either exact or explicitly removed from the intended Phase 2 corpus by a reviewed scope decision.
 2. `addition_001` and `equivalence_005` compare exactly, with coordinated predicates represented separately and flat conjunction members canonicalized without fuzzy matching.
 3. Audit totals contain 0 `ANALYZABLE_BUT_NOT_EXACT`, 0 intended `PARSER_UNSUPPORTED`, and 0 intended `COMPARATOR_UNSUPPORTED` cases.
 4. `entailment_003`, `_006`, and `_007` remain fully parseable and represented, with their Phase 3 blockers named and no hidden policy inference.
@@ -186,11 +185,10 @@ Phase 2 exits when all of the following are measurable and true:
 
 In priority order:
 
-1. **Controlled Independent Two-sentence Propositions v0.1** — `addition_002`; expected +1 exact.
-2. **Controlled Embedded Negation Scope v0.1** — `scope_001`, `scope_002`; expected +2 exact.
-3. **Controlled UNLESS Conditions v0.1** — `condition_003`; expected +1 exact.
-4. **Controlled Event-anchored Temporal Relations v0.1** — `temporal_001`; expected +1 exact.
-5. **Controlled Nested Temporal References v0.1** — `temporal_003`; expected +1 exact.
+1. **Controlled Embedded Negation Scope v0.1** — `scope_001`, `scope_002`; expected +2 exact.
+2. **Controlled UNLESS Conditions v0.1** — `condition_003`; expected +1 exact.
+3. **Controlled Event-anchored Temporal Relations v0.1** — `temporal_001`; expected +1 exact.
+4. **Controlled Nested Temporal References v0.1** — `temporal_003`; expected +1 exact.
 
 If all land without corpus changes, the expected deterministic audit becomes 39 exact, 0 analyzable-but-inexact, 0 parser-unsupported, 0 comparator-unsupported, and 3 policy-layer inference cases. This forecast is a planning target, not a forced test result.
 
@@ -200,4 +198,4 @@ If all land without corpus changes, the expected deterministic audit becomes 39 
 - Later optional AI assistance: open-ended candidate extraction, metaphor interpretation proposals, and fuzzy language mapping, always outside authoritative deterministic semantics.
 - Out of scope/optional: commonsense and world-knowledge entailment, general English parsing, ontology reasoning, statistical resolution, GUI, PDF, and Trawedit integration for this core milestone.
 
-The audit was updated after Coordinated Predicate Graphs v0.1; no gold expectation changed.
+The audit was updated after Controlled Independent Two-sentence Propositions v0.1; no gold expectation changed.

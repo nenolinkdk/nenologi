@@ -18,7 +18,7 @@ SUPPORTED_CASE_IDS = {
     "equivalence_004",
     "entity_relation_003",
     "condition_002",
-    "addition_001", "omission_002", "equivalence_005",
+    "addition_001", "addition_002", "omission_002", "equivalence_005",
 }
 
 

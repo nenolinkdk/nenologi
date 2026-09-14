@@ -162,9 +162,13 @@ The exact registered form `Time is a thief` is intercepted before ordinary class
 
 The exact `Register ... and show ...` and `Sign and date ...` forms produce two authoritative propositions linked by `PREDICATE_AND`, with shared entity references where the surface construction shares participants. Flat two-object `AND`/`OR` remains one proposition and uses canonical semantic member ordering. See [Coordinated Predicate Graphs v0.1](coordinated-predicate-graphs-v0.1.md).
 
+## Controlled independent two-sentence propositions v0.1
+
+Exactly two period-terminated declarative sentences may be combined when each independently yields one ordinary, unqualified, explicit proposition. IDs are rebased deterministically and spans remain document-relative. No conjunction, discourse relation, temporality, coreference, or subject carryover is inferred. Unsupported members reject the whole document. See [Controlled Independent Two-sentence Propositions v0.1](independent-two-sentence-propositions-v0.1.md).
+
 ## Explicitly unsupported
 
-- More than one sentence, except one controlled `RULE. MEMBERSHIP.` pair
+- More than two sentences; two-sentence documents outside the controlled independent-proposition or `RULE. MEMBERSHIP.` forms
 - `UNLESS`, `ELSE`, nested/chained/multiple `IF`, comma-bearing suffix `IF`, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
 - Questions and exclamations
 - Predicate coordination outside the two registered forms, nested/repeated coordination, and subordination
