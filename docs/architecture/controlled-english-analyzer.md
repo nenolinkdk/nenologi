@@ -166,13 +166,17 @@ The exact `Register ... and show ...` and `Sign and date ...` forms produce two 
 
 Exactly two period-terminated declarative sentences may be combined when each independently yields one ordinary, unqualified, explicit proposition. IDs are rebased deterministically and spans remain document-relative. No conjunction, discourse relation, temporality, coreference, or subject carryover is inferred. Unsupported members reject the whole document. See [Controlled Independent Two-sentence Propositions v0.1](independent-two-sentence-propositions-v0.1.md).
 
+## Controlled embedded negation scope v0.1
+
+The four exact `Maria ... promise ... leave` and `The rule ... require employees ... leave` forms documented in [Controlled Embedded Negation Scope v0.1](embedded-negation-scope-v0.1.md) normalize to one `LEAVE` proposition plus `PROMISE`/`REQUIRE` and `NOT` operator chains. Scope references, rather than surface text, distinguish outer from embedded negation. No general embedded-clause or scope resolution is added.
+
 ## Explicitly unsupported
 
 - More than two sentences; two-sentence documents outside the controlled independent-proposition or `RULE. MEMBERSHIP.` forms
 - `UNLESS`, `ELSE`, nested/chained/multiple `IF`, comma-bearing suffix `IF`, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
 - Questions and exclamations
 - Predicate coordination outside the two registered forms, nested/repeated coordination, and subordination
-- Relative clauses and complement clauses outside the single controlled `TELL ... THAT ... HAD WON` form
+- Relative clauses and complement clauses outside the controlled scope forms and single `TELL ... THAT ... HAD WON` form
 - Passive constructions outside the single explicit v0.2 form, including `WERE`, agentless, perfect, progressive, modal, future, infinitival, and embedded passives
 - Contractions other than the four explicit v0.3 spellings, multiple contractions, possessive apostrophes, and ambiguous apostrophe forms
 - Spatial predicates other than `INSIDE` and `BESIDE`, compound/nested locations, distances, and spatial negation or modality

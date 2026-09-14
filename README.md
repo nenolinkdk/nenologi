@@ -64,8 +64,9 @@ The second is a source/target comparison in which both texts are independently r
 27. [Phase 2 Representation-readiness Audit](docs/architecture/phase-2-representation-readiness-audit.md)
 28. [Coordinated Predicate Graphs v0.1](docs/architecture/coordinated-predicate-graphs-v0.1.md)
 29. [Controlled Independent Two-sentence Propositions v0.1](docs/architecture/independent-two-sentence-propositions-v0.1.md)
-30. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
-31. [Build preparation](docs/project/build-preparation.md)
+30. [Controlled Embedded Negation Scope v0.1](docs/architecture/embedded-negation-scope-v0.1.md)
+31. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
+32. [Build preparation](docs/project/build-preparation.md)
 
 For a non-technical introduction, see [Nenologi – Looking Beneath the Words](docs/public/what-is-nenologi.md). The older topic-oriented documents under `docs/01-concept` through `docs/08-integrations` remain useful background; the files linked above are the canonical Phase 0 specification.
 

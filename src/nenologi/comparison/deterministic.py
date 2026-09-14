@@ -194,6 +194,19 @@ def _scope_order(analysis: Analysis, proposition_id: str) -> list[str]:
     return order
 
 
+def _embedded_scope_value(analysis: Analysis, proposition: Proposition) -> str | None:
+    wrappers = [item for item in analysis.modality if item.operator in {"PROMISE", "REQUIRE"}]
+    if len(wrappers) != 1:
+        return None
+    order = _scope_order(analysis, proposition.id)
+    if not order or order[-1] != "PROPOSITION":
+        return None
+    value = proposition.predicate
+    for operator in reversed(order[:-1]):
+        value = f"{operator}({value})"
+    return value
+
+
 def _numeric_constraint(analysis: Analysis, proposition_id: str, side: str) -> NumericConstraint | None:
     constraints = tuple(item for item in analysis.numeric_constraints if proposition_id in item.scope)
     if len(constraints) > 1:
@@ -518,10 +531,15 @@ class DeterministicComparator:
             target_order = _scope_order(target, target_prop.id)
             source_operator_ids = [item.id for item in (*source.quantifiers, *source.modality, *source.negation)]
             target_operator_ids = [item.id for item in (*target.quantifiers, *target.modality, *target.negation)]
+            source_value = _embedded_scope_value(source, source_prop) or {
+                "order": source_order, "relations": [list(edge) for edge in source_scope]
+            }
+            target_value = _embedded_scope_value(target, target_prop) or {
+                "order": target_order, "relations": [list(edge) for edge in target_scope]
+            }
             _transition(
                 findings, DifferenceType.SCOPE_CHANGE,
-                {"order": source_order, "relations": [list(edge) for edge in source_scope]},
-                {"order": target_order, "relations": [list(edge) for edge in target_scope]},
+                source_value, target_value,
                 TransitionRule(
                     Severity.HIGH,
                     "The scope of the aligned semantic operators changes. In the source, "

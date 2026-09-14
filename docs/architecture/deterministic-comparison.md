@@ -125,4 +125,6 @@ Temporal v0.1 activated weekday case `temporal_002`. The Phase 1 consolidation a
 - Multiple/nested temporal phrases, event anchors, durations, relative dates, time zones, calendar arithmetic, recurrence, tense/aspect, or temporal entailment
 - `MAY NOT` scope resolution
 
+The two controlled embedded-negation families are an explicit exception to general scope parsing. When identical `PROMISE`/`REQUIRE`, `NOT`, and `LEAVE` ingredients have different operator edges, the comparator emits one high-severity `SCOPE_CHANGE` using canonical nested values. See [Controlled Embedded Negation Scope v0.1](embedded-negation-scope-v0.1.md).
+
 A runnable end-to-end example is available at [`examples/semantic_comparison.py`](../../examples/semantic_comparison.py).

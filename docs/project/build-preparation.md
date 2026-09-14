@@ -33,11 +33,11 @@ A <-> B         -> semantic/logical findings
 
 Phase 1 is complete. The reproducible exit decision, 42-case pipeline matrix, quality baseline, and single recommended Phase 2 milestone are maintained in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
-The [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md) verifies 34 exact end-to-end gold cases out of 42, with 0 analyzable-but-inexact, 5 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented. All inference inputs are represented; four bounded deterministic milestones remain before Phase 2 exit.
+The [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md) verifies 36 exact end-to-end gold cases out of 42, with 0 analyzable-but-inexact, 3 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented. All inference inputs are represented; three bounded deterministic milestones remain before Phase 2 exit.
 
 ## Next implementation milestone
 
-The completed [Controlled Independent Two-sentence Propositions v0.1](../architecture/independent-two-sentence-propositions-v0.1.md) milestone resolves `addition_002`. The next recommended implementation milestone is **Controlled Embedded Negation Scope v0.1** for `scope_001` and `scope_002`; Phase 3 policy work remains deferred.
+The completed [Controlled Embedded Negation Scope v0.1](../architecture/embedded-negation-scope-v0.1.md) milestone resolves `scope_001` and `scope_002`. The next recommended implementation milestone is **Controlled UNLESS Conditions v0.1** for `condition_003`; Phase 3 policy work remains deferred.
 
 ## Definition of ready
 

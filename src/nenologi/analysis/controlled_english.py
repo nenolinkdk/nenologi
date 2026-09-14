@@ -117,6 +117,14 @@ _SIGN_AND_DATE_RE = re.compile(
     r"(?P<object>the\s+form)",
     re.IGNORECASE,
 )
+_PROMISE_SCOPE_RE = re.compile(
+    r"(?P<subject>Maria)\s+(?:(?P<outer>did\s+not\s+promise)|"
+    r"(?P<inner>promised\s+not))\s+to\s+(?P<action>leave)", re.IGNORECASE,
+)
+_REQUIRE_SCOPE_RE = re.compile(
+    r"(?P<subject>The\s+rule)\s+(?:(?P<outer>does\s+not\s+require\s+employees)|"
+    r"(?P<inner>requires\s+employees\s+not))\s+to\s+(?P<action>leave)", re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -540,6 +548,11 @@ class ControlledEnglishAnalyzer:
         class_logic = self._analyze_class_logic(text, language=language, profile=profile)
         if class_logic is not None:
             return class_logic
+        embedded_scope = self._analyze_embedded_negation_scope(
+            text, language=language, profile=profile,
+        )
+        if embedded_scope is not None:
+            return embedded_scope
         independent_sentences = self._analyze_independent_sentences(
             text, language=language, profile=profile,
         )
@@ -648,6 +661,106 @@ class ControlledEnglishAnalyzer:
             logical_representation=(LogicalExpression("logic_001", {"operator": "CONTROLLED_ENGLISH", "arguments": derived}, status, certain, _formula(parsed), tuple(derived)),),
             confidence=certain,
             plain_language_interpretation=LocalizedText("en", _interpretation(parsed)),
+        )
+        validate_analysis(analysis)
+        return analysis
+
+    def _analyze_embedded_negation_scope(
+        self, text: str, *, language: str, profile: str,
+    ) -> Analysis | None:
+        """Parse the two controlled outer/inner embedded-negation contrasts."""
+        if not isinstance(text, str) or not text.strip():
+            return None
+        stripped = text.strip()
+        if stripped[-1:] in "?!":
+            return None
+        body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
+        promise = _PROMISE_SCOPE_RE.fullmatch(body)
+        require = _REQUIRE_SCOPE_RE.fullmatch(body)
+        if promise is None and require is None:
+            return None
+
+        match = promise or require
+        leading = len(text) - len(text.lstrip())
+        outer = match.group("outer") is not None
+        wrapper = "PROMISE" if promise is not None else "REQUIRE"
+        subject_label = "maria" if promise is not None else "rule"
+        subject_type = "INDIVIDUAL" if promise is not None else "ENTITY_CLASS"
+        action_subject_label = subject_label if promise is not None else "employee"
+        action_subject_type = "INDIVIDUAL" if promise is not None else "ENTITY_CLASS"
+        certain = Confidence(1.0, "Deterministic controlled embedded negation scope v0.1 rule")
+        status = InterpretationStatus.EXPLICIT
+        subject_span = Span(
+            leading + match.start("subject"), leading + match.end("subject"),
+        )
+        action_span = Span(
+            leading + match.start("action"), leading + match.end("action"),
+        )
+        wrapper_group = "outer" if outer else "inner"
+        wrapper_surface = match.group(wrapper_group)
+        wrapper_word = "promise" if promise is not None else "require"
+        wrapper_start = leading + match.start(wrapper_group) + wrapper_surface.lower().index(wrapper_word)
+        wrapper_span = Span(wrapper_start, wrapper_start + len(wrapper_word) + (1 if not outer else 0))
+        not_start = leading + match.start(wrapper_group) + wrapper_surface.lower().index("not")
+        not_span = Span(not_start, not_start + 3)
+
+        entities = [Entity(
+            "entity_001", subject_type, subject_label, status, certain, subject_span,
+        )]
+        if promise is None:
+            employee_start = leading + body.lower().index("employees")
+            entities.append(Entity(
+                "entity_002", action_subject_type, action_subject_label, status, certain,
+                Span(employee_start, employee_start + len("employees")),
+            ))
+        action_entity_id = "entity_001" if promise is not None else "entity_002"
+        proposition = Proposition(
+            "prop_001", "LEAVE", (action_entity_id,), status, certain, action_span,
+        )
+        wrapper_scope = "prop_001" if outer else "negation_001"
+        negation_scope = "embedded_001" if outer else "prop_001"
+        embedded = Operator(
+            "embedded_001", wrapper, (wrapper_scope,), status, certain, wrapper_span,
+        )
+        negation = Operator(
+            "negation_001", "NOT", (negation_scope,), status, certain, not_span,
+        )
+        source_relation = SemanticItem(
+            "relation_001", "OPERATOR_SOURCE", ("entity_001", "embedded_001"),
+            status, certain, subject_span, ("prop_001",),
+        )
+        formula = (
+            f"¬{wrapper.title()}(Leave({action_subject_label.title()}))"
+            if outer else
+            f"{wrapper.title()}(¬Leave({action_subject_label.title()}))"
+        )
+        sentence_end = len(text.rstrip())
+        analysis = Analysis(
+            document=Document("doc_001", language, text), profile=profile,
+            structure=Structure(
+                (StructuralNode("sentence_001", Span(leading, sentence_end), kind="sentence"),),
+                (
+                    StructuralNode("subject_001", subject_span, "sentence_001", "subject_phrase"),
+                    StructuralNode("predicate_001", Span(wrapper_span.start, action_span.end), "sentence_001", "embedded_predicate_phrase"),
+                    StructuralNode("negation_marker_001", not_span, "predicate_001", "negation_marker"),
+                    StructuralNode("embedded_action_001", action_span, "predicate_001", "embedded_action"),
+                ),
+            ),
+            entities=tuple(entities), propositions=(proposition,),
+            relations=(source_relation,), modality=(embedded,), negation=(negation,),
+            logical_representation=(LogicalExpression(
+                "logic_001",
+                {"operator": wrapper, "scope": ["embedded_001", "negation_001", "prop_001"]},
+                status, certain, formula,
+                tuple(dict.fromkeys((
+                    "entity_001", action_entity_id, "prop_001", "embedded_001",
+                    "negation_001", "relation_001",
+                ))),
+            ),),
+            confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en", f"The sentence explicitly represents {'outer' if outer else 'embedded'} negation over {wrapper.lower()} and leave.",
+            ),
         )
         validate_analysis(analysis)
         return analysis

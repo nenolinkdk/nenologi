@@ -178,9 +178,9 @@ class SemanticConsolidationTests(unittest.TestCase):
     def test_reproducible_gold_audit_breakdown(self) -> None:
         audit = audit_gold_coverage()
         self.assertEqual(sum(audit.totals.values()), 42)
-        self.assertEqual(audit.totals[ImplementationStatus.END_TO_END_EXACT], 34)
+        self.assertEqual(audit.totals[ImplementationStatus.END_TO_END_EXACT], 36)
         self.assertEqual(audit.totals[ImplementationStatus.ANALYZABLE_BUT_NOT_EXACT], 0)
-        self.assertEqual(audit.totals[ImplementationStatus.PARSER_UNSUPPORTED], 5)
+        self.assertEqual(audit.totals[ImplementationStatus.PARSER_UNSUPPORTED], 3)
         self.assertEqual(audit.totals[ImplementationStatus.COMPARATOR_UNSUPPORTED], 0)
         self.assertEqual(audit.totals[ImplementationStatus.INFERENCE_NOT_IMPLEMENTED], 3)
         self.assertEqual(len(audit.cases), 42)
