@@ -158,12 +158,16 @@ The narrow speech/content forms documented in [Controlled Coreference Alternativ
 
 The exact registered form `Time is a thief` is intercepted before ordinary class-membership parsing and represented as a `NON_LITERAL_EXPRESSION` with `CANNOT_BE_SAFELY_FORMALIZED` status and no proposition. `Time commits theft` remains an independent literal `COMMIT_THEFT(time)` proposition. See [Controlled Non-literal Representation v0.1](non-literal-representation-v0.1.md). No general metaphor detection or interpretation is added.
 
+## Coordinated predicate graphs v0.1
+
+The exact `Register ... and show ...` and `Sign and date ...` forms produce two authoritative propositions linked by `PREDICATE_AND`, with shared entity references where the surface construction shares participants. Flat two-object `AND`/`OR` remains one proposition and uses canonical semantic member ordering. See [Coordinated Predicate Graphs v0.1](coordinated-predicate-graphs-v0.1.md).
+
 ## Explicitly unsupported
 
 - More than one sentence, except one controlled `RULE. MEMBERSHIP.` pair
 - `UNLESS`, `ELSE`, nested/chained/multiple `IF`, comma-bearing suffix `IF`, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
 - Questions and exclamations
-- Subject/predicate coordination, nested/repeated coordination, and subordination
+- Predicate coordination outside the two registered forms, nested/repeated coordination, and subordination
 - Relative clauses and complement clauses outside the single controlled `TELL ... THAT ... HAD WON` form
 - Passive constructions outside the single explicit v0.2 form, including `WERE`, agentless, perfect, progressive, modal, future, infinitival, and embedded passives
 - Contractions other than the four explicit v0.3 spellings, multiple contractions, possessive apostrophes, and ambiguous apostrophe forms
@@ -184,6 +188,6 @@ Both sides of these existing comparison cases are analyzable and compared exactl
 - `contradiction_001`
 - `entity_relation_001` and `entity_relation_002`
 
-The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), all four numeric change cases (`numeric_001` through `numeric_004`), all three entity/relation cases, active/passive equivalence case `equivalence_002`, numeric equivalence case `equivalence_003`, contraction equivalence case `equivalence_004`, prefix-IF removal case `condition_001`, and weekday case `temporal_002`.
+The deterministic comparator additionally supports both conjunction cases (`conjunction_001` and `conjunction_002`), coordinated addition/omission cases `addition_001` and `omission_002`, all four numeric change cases (`numeric_001` through `numeric_004`), all three entity/relation cases, and equivalence cases `equivalence_002` through `equivalence_005`, plus prefix-IF removal case `condition_001` and weekday case `temporal_002`.
 
 All inference cases are now analyzable. Prediction, coreference-alternative evaluation, and non-literal policy remain explicit inference blockers; residence/fluency is exactly and conservatively `UNSUPPORTED`. Other comparison cases remain intentionally outside this grammar. Gold expected results are unchanged; use the [machine-readable audit](phase-1-completion-audit.md) for current status.

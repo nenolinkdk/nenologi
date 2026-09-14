@@ -27,7 +27,7 @@ _SPATIAL_RELATIONS = {"inside", "beside"}
 _ACTIONS = {
     "access", "acquire", "approve", "bring", "buy", "choose", "discover", "enter", "make",
     "open", "pay", "receive", "register", "report", "restart", "select", "sell", "stop",
-    "submit", "vote", "wear",
+    "sign", "submit", "vote", "wear",
 }
 _PAST_ACTIONS = {
     "acquired": "acquire", "approved": "approve", "discovered": "discover",
@@ -106,6 +106,16 @@ _NON_LITERAL_THIEF_RE = re.compile(
 )
 _LITERAL_THEFT_RE = re.compile(
     r"(?P<subject>Time)\s+(?P<verb>commits)\s+(?P<object>theft)", re.IGNORECASE,
+)
+_REGISTER_AND_SHOW_RE = re.compile(
+    r"(?P<first>Register)\s+(?P<first_object>your\s+name)\s+"
+    r"(?P<connector>and)\s+(?P<second>show)\s+(?P<second_object>identification)",
+    re.IGNORECASE,
+)
+_SIGN_AND_DATE_RE = re.compile(
+    r"(?P<first>Sign)\s+(?P<connector>and)\s+(?P<second>date)\s+"
+    r"(?P<object>the\s+form)",
+    re.IGNORECASE,
 )
 
 
@@ -422,7 +432,10 @@ def _predicate_display(parsed: _Parsed) -> str:
         result = atom(parsed.objects)
         if parsed.conjunction is not None:
             symbol = "∧" if parsed.conjunction.normalized == "and" else "∨"
-            result = f"({result} {symbol} {atom(parsed.second_objects)})"
+            atoms = (result, atom(parsed.second_objects))
+            if parsed.conjunction.normalized == "and":
+                atoms = tuple(sorted(atoms, key=str.casefold))
+            result = f"({f' {symbol} '.join(atoms)})"
     if parsed.negation is not None:
         result = f"¬{result}"
     if parsed.modal is not None:
@@ -516,6 +529,11 @@ class ControlledEnglishAnalyzer:
     def analyze(self, text: str, *, language: str = "en", profile: str = "general") -> Analysis:
         if language != "en":
             raise UnsupportedConstructionError("ControlledEnglishAnalyzer supports only language='en'")
+        coordinated_predicates = self._analyze_coordinated_predicates(
+            text, language=language, profile=profile,
+        )
+        if coordinated_predicates is not None:
+            return coordinated_predicates
         non_literal = self._analyze_non_literal(text, language=language, profile=profile)
         if non_literal is not None:
             return non_literal
@@ -579,6 +597,15 @@ class ControlledEnglishAnalyzer:
         if parsed.second_objects:
             entities.append(Entity("entity_003", "OBJECT", _object_label(parsed.second_objects), status, certain, Span(parsed.second_objects[0].start, parsed.second_objects[-1].end)))
             arguments.append("entity_003")
+        if parsed.conjunction:
+            entity_by_id = {entity.id: entity for entity in entities}
+            arguments[1:] = sorted(
+                arguments[1:],
+                key=lambda identifier: (
+                    entity_by_id[identifier].type.casefold(),
+                    entity_by_id[identifier].label.casefold(),
+                ),
+            )
         canonical_predicate = _canonical_action(parsed.predicate.normalized) or parsed.predicate.normalized
         proposition = Proposition("prop_001", canonical_predicate.upper(), tuple(arguments), status, certain, parsed.predicate.span)
         relations = ()
@@ -619,6 +646,148 @@ class ControlledEnglishAnalyzer:
         )
         validate_analysis(analysis)
         return analysis
+
+    def _analyze_coordinated_predicates(
+        self, text: str, *, language: str, profile: str,
+    ) -> Analysis | None:
+        """Parse the two controlled predicate-coordination gold forms."""
+        if not isinstance(text, str) or not text.strip():
+            return None
+        stripped = text.strip()
+        if stripped[-1:] in "?!":
+            return None
+        body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
+        register_show = _REGISTER_AND_SHOW_RE.fullmatch(body)
+        sign_date = _SIGN_AND_DATE_RE.fullmatch(body)
+        if register_show is None and sign_date is None:
+            return None
+
+        match = register_show or sign_date
+        leading = len(text) - len(text.lstrip())
+        status = InterpretationStatus.EXPLICIT
+        certain = Confidence(1.0, "Deterministic controlled predicate coordination v0.1 rule")
+        addressee = Entity(
+            "entity_001", "ENTITY_CLASS", "addressee", status, certain,
+            Span(leading + match.start("first"), leading + match.start("first")),
+        )
+        connector_span = Span(
+            leading + match.start("connector"), leading + match.end("connector"),
+        )
+
+        if register_show is not None:
+            first_object_span = Span(
+                leading + match.start("first_object"), leading + match.end("first_object"),
+            )
+            second_object_span = Span(
+                leading + match.start("second_object"), leading + match.end("second_object"),
+            )
+            entities = (
+                addressee,
+                Entity("entity_002", "OBJECT", "your_name", status, certain, first_object_span),
+                Entity("entity_003", "OBJECT", "identification", status, certain, second_object_span),
+            )
+            propositions = (
+                Proposition(
+                    "prop_001", "REGISTER", ("entity_001", "entity_002"), status, certain,
+                    Span(leading + match.start("first"), leading + match.end("first_object")),
+                ),
+                Proposition(
+                    "prop_002", "SHOW", ("entity_001", "entity_003"), status, certain,
+                    Span(leading + match.start("second"), leading + match.end("second_object")),
+                ),
+            )
+            object_nodes = (
+                StructuralNode("object_001", first_object_span, "predicate_001", "object_phrase"),
+                StructuralNode("object_002", second_object_span, "predicate_002", "object_phrase"),
+            )
+        else:
+            object_span = Span(
+                leading + match.start("object"), leading + match.end("object"),
+            )
+            entities = (
+                addressee,
+                Entity("entity_002", "OBJECT", "form", status, certain, object_span),
+            )
+            propositions = (
+                Proposition(
+                    "prop_001", "SIGN", ("entity_001", "entity_002"), status, certain,
+                    Span(leading + match.start("first"), leading + match.end("first")),
+                ),
+                Proposition(
+                    "prop_002", "DATE", ("entity_001", "entity_002"), status, certain,
+                    Span(leading + match.start("second"), leading + match.end("object")),
+                ),
+            )
+            object_nodes = (
+                StructuralNode("object_001", object_span, "sentence_001", "shared_object_phrase"),
+            )
+
+        entity_by_id = {entity.id: entity for entity in entities}
+
+        def semantic_key(proposition: Proposition) -> tuple[object, ...]:
+            return (
+                proposition.predicate.casefold(),
+                tuple(
+                    (entity_by_id[identifier].type.casefold(), entity_by_id[identifier].label.casefold())
+                    for identifier in proposition.arguments
+                ),
+            )
+
+        canonical_members = tuple(
+            proposition.id for proposition in sorted(propositions, key=semantic_key)
+        )
+        coordination = SemanticItem(
+            "coordination_001", "PREDICATE_AND", canonical_members,
+            status, certain, connector_span,
+        )
+        relations = (
+            SemanticItem(
+                "relation_001", "ACTION_RELATION", propositions[0].arguments,
+                status, certain, derived_from=(propositions[0].id,),
+            ),
+            SemanticItem(
+                "relation_002", "ACTION_RELATION", propositions[1].arguments,
+                status, certain, derived_from=(propositions[1].id,),
+            ),
+            coordination,
+        )
+        proposition_by_id = {proposition.id: proposition for proposition in propositions}
+
+        def display(proposition_id: str) -> str:
+            proposition = proposition_by_id[proposition_id]
+            labels = [entity_by_id[identifier].label.title().replace("_", "") for identifier in proposition.arguments]
+            return f"{proposition.predicate.title()}({', '.join(labels)})"
+
+        formula = " ∧ ".join(display(identifier) for identifier in canonical_members)
+        sentence_end = len(text.rstrip())
+        clauses = (
+            StructuralNode("predicate_001", propositions[0].span, "sentence_001", "predicate_phrase"),
+            StructuralNode("predicate_002", propositions[1].span, "sentence_001", "predicate_phrase"),
+            StructuralNode("conjunction_marker_001", connector_span, "sentence_001", "conjunction_marker"),
+            *object_nodes,
+        )
+        result = Analysis(
+            document=Document("doc_001", language, text), profile=profile,
+            structure=Structure(
+                (StructuralNode(
+                    "sentence_001", Span(leading, sentence_end), kind="sentence",
+                ),),
+                clauses,
+            ),
+            entities=entities, propositions=propositions, relations=relations,
+            logical_representation=(LogicalExpression(
+                "logic_001",
+                {"operator": "PREDICATE_AND", "arguments": list(canonical_members)},
+                status, certain, formula,
+                (*canonical_members, coordination.id, "relation_001", "relation_002"),
+            ),),
+            confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en", "The sentence explicitly coordinates two action propositions with AND.",
+            ),
+        )
+        validate_analysis(result)
+        return result
 
     def _analyze_non_literal(
         self, text: str, *, language: str, profile: str,

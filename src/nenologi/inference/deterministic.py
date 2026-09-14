@@ -283,8 +283,11 @@ def _universal_instantiation_evidence(
 
 def _unqualified_explicit_evidence(premise: Analysis, conclusion: Analysis) -> tuple[str, ...] | None:
     """Find one exact bare proposition inside a larger normalized premise."""
+    conclusion_governing_relations = tuple(
+        item for item in conclusion.relations if item.type != "ACTION_RELATION"
+    )
     if len(conclusion.propositions) != 1 or any((
-        conclusion.relations, conclusion.quantifiers, conclusion.modality,
+        conclusion_governing_relations, conclusion.quantifiers, conclusion.modality,
         conclusion.negation, conclusion.numeric_constraints, conclusion.conditions,
         conclusion.temporal_relations, conclusion.sets,
     )):
@@ -297,7 +300,8 @@ def _unqualified_explicit_evidence(premise: Analysis, conclusion: Analysis) -> t
     governed_ids = {
         reference
         for item in (
-            *premise.relations, *premise.quantifiers, *premise.modality,
+            *(item for item in premise.relations if item.type != "PREDICATE_AND"),
+            *premise.quantifiers, *premise.modality,
             *premise.negation, *premise.numeric_constraints, *premise.sets,
         )
         for reference in (*getattr(item, "arguments", ()), *getattr(item, "scope", ()))

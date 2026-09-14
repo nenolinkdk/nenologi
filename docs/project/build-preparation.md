@@ -33,11 +33,11 @@ A <-> B         -> semantic/logical findings
 
 Phase 1 is complete. The reproducible exit decision, 42-case pipeline matrix, quality baseline, and single recommended Phase 2 milestone are maintained in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
-The [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md) verifies 30 exact end-to-end gold cases out of 42, with 0 analyzable-but-inexact, 7 parser-unsupported, 2 comparator-unsupported, and 3 inference-not-implemented. All inference inputs are represented; six bounded deterministic milestones remain before Phase 2 exit.
+The [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md) verifies 33 exact end-to-end gold cases out of 42, with 0 analyzable-but-inexact, 6 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented. All inference inputs are represented; five bounded deterministic milestones remain before Phase 2 exit.
 
 ## Next implementation milestone
 
-The next recommended implementation milestone is **Coordinated Predicate Graphs v0.1** for `addition_001`, `omission_002`, and `equivalence_005`. Defeasible prediction, coreference-alternative evaluation, and non-literal interpretation remain Phase 3 policy work.
+The completed [Coordinated Predicate Graphs v0.1](../architecture/coordinated-predicate-graphs-v0.1.md) milestone resolves the final comparator blockers. The next recommended implementation milestone is **Controlled Independent Two-sentence Propositions v0.1** for `addition_002`; Phase 3 policy work remains deferred.
 
 ## Definition of ready
 

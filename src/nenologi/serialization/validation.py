@@ -54,6 +54,17 @@ def validate_analysis_references(analysis: Analysis) -> None:
             for reference in (*item.arguments, *item.derived_from):
                 _require(reference, all_ids, f"semantic item {item.id}")
     proposition_ids = {proposition.id for proposition in analysis.propositions}
+    for item in analysis.relations:
+        if item.type == "PREDICATE_AND":
+            if len(item.arguments) < 2 or len(item.arguments) != len(set(item.arguments)):
+                raise ReferenceValidationError(
+                    f"predicate coordination {item.id} requires distinct proposition members"
+                )
+            for reference in item.arguments:
+                if reference not in proposition_ids:
+                    raise ReferenceValidationError(
+                        f"predicate coordination {item.id} member must be a proposition: {reference}"
+                    )
     condition_ids = {condition.id for condition in analysis.conditions}
     for condition in analysis.conditions:
         for reference in (*condition.antecedent, *condition.consequent):

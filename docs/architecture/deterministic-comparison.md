@@ -86,6 +86,8 @@ Gold case `contradiction_001` now expects `NEGATION_CHANGE` (`AFFIRMED → NEGAT
 
 Conjunction is read from one normalized `AND` or `OR` semantic relation joining exactly two proposition objects. Adding/removing conjunction, repeated coordination, and nested coordination are unsupported. `AND ↔ OR` uses explicit transition rules.
 
+Predicate-level `PREDICATE_AND` instead references distinct authoritative propositions. Exact alignment may therefore retain one member and classify one safely unmatched member as addition or omission. Flat object conjunction members are ordered by normalized semantic identity, making reversed `AND` surfaces equivalent while preserving source spans. See [Coordinated Predicate Graphs v0.1](coordinated-predicate-graphs-v0.1.md).
+
 Entity comparison uses positional roles in one proposition. Index zero is reported as `SUBJECT:<LABEL>`; later positions as `OBJECT:<LABEL>`. Predicate changes report the canonical source and target predicate values directly. This is controlled structural correspondence, not entity resolution, synonymy, or lexical similarity.
 
 Gold-standard comparator coverage increased from 8 to 11 cases: the previous modality, quantifier, and negation cases; both conjunction cases; and the corrected contradiction-relation case. The three existing entity/relation gold cases remain unsupported because they require past-tense normalization or spatial-relation grammar beyond this controlled extension.

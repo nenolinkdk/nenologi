@@ -590,23 +590,43 @@ class DeterministicComparator:
         excluded_target = excluded_target or set()
         source_props = {item.id: item for item in source.propositions}
         target_props = {item.id: item for item in target.propositions}
+
+        def coordinated_payload(analysis: Analysis, proposition: Proposition, side: str):
+            coordinated_ids = {
+                reference
+                for item in analysis.relations
+                if item.type == "PREDICATE_AND"
+                for reference in item.arguments
+            }
+            if proposition.id not in coordinated_ids:
+                return _proposition_payload(analysis, proposition.id, side), Severity.MEDIUM
+            entities = {item.id: item for item in analysis.entities}
+            object_labels = [
+                entities[identifier].label.upper()
+                for identifier in proposition.arguments[1:]
+            ]
+            value = "_".join((proposition.predicate, *object_labels))
+            return value, Severity.HIGH
+
         for proposition_id in alignment.safely_unmatched_target_ids:
             if proposition_id in excluded_target:
                 continue
             proposition = target_props[proposition_id]
+            payload, severity = coordinated_payload(target, proposition, "target")
             _transition(
                 findings, DifferenceType.ADDITION, None,
-                _proposition_payload(target, proposition_id, "target"),
-                TransitionRule(Severity.MEDIUM, "The target adds a safely unmatched normalized proposition; no importance or logical consequence is inferred."),
+                payload,
+                TransitionRule(severity, "The target adds a safely unmatched normalized proposition; no importance or logical consequence is inferred."),
                 tuple([f"target.{proposition.id}", *(f"target.{ref}" for ref in proposition.arguments)]),
             )
         for proposition_id in alignment.safely_unmatched_source_ids:
             if proposition_id in excluded_source:
                 continue
             proposition = source_props[proposition_id]
+            payload, severity = coordinated_payload(source, proposition, "source")
             _transition(
                 findings, DifferenceType.OMISSION,
-                _proposition_payload(source, proposition_id, "source"), None,
-                TransitionRule(Severity.MEDIUM, "The target omits a safely unmatched normalized proposition; no importance or logical consequence is inferred."),
+                payload, None,
+                TransitionRule(severity, "The target omits a safely unmatched normalized proposition; no importance or logical consequence is inferred."),
                 tuple([f"source.{proposition.id}", *(f"source.{ref}" for ref in proposition.arguments)]),
             )
