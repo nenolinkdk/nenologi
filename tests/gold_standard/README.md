@@ -31,4 +31,6 @@ For the complete per-case pipeline matrix, including concrete blocker codes, run
 
 Current coverage is 30 exact, 0 analyzable-but-inexact, 7 parser-unsupported, 2 comparator-unsupported, and 3 inference-not-implemented. Every inference case is now parseable and represented. Probable prediction, alternative-reading evaluation, and non-literal interpretation policy remain unimplemented. `entailment_004` returns conservative `NOT_ESTABLISHED`; `entailment_002` uses bounded universal instantiation, `entailment_001` is exact identity, and `entailment_005` uses closed `OFF/ON` opposition.
 
+The complete 42-case phase assignment, blocker analysis, and exit criteria are documented in the [Phase 2 Representation-readiness Audit](../../docs/architecture/phase-2-representation-readiness-audit.md).
+
 The validator uses only the Python standard library. It verifies that all schema JSON parses, required case fields exist, IDs are globally unique, enum values and language tags are valid, required difference/status coverage exists, and equivalence cases cannot masquerade as change cases.

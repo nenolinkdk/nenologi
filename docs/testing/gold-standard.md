@@ -35,3 +35,5 @@ Conditions v0.1 raises exact coverage from 16 to 17 by activating prefix-IF remo
 Temporal Relations v0.1 raises exact coverage from 17 to 18 through `temporal_002`. `temporal_001` requires an event-clause reference and `temporal_003` requires a nested `until after` relation, so both remain inactive; expected data was unchanged.
 
 The machine-readable audit supersedes hand-maintained supported-ID counts. Successive milestones raised the result from the 19-case Phase 1 exit baseline to 30 exact cases. [Controlled Non-literal Representation v0.1](../architecture/non-literal-representation-v0.1.md) does not change that total: it makes both sides of `entailment_007` analyzable without literalizing the metaphor, while retaining the non-literal policy blocker. No inference gold expectation was changed.
+
+The [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md) inventories every case and assigns all remaining work to deterministic Phase 2, Phase 3 policy, later optional AI assistance, or out of scope. The executable audit remains authoritative for current pipeline totals.

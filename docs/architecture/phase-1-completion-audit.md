@@ -197,3 +197,5 @@ The current baseline passes 216 unit/validation tests, gold validation (30 chang
 | UI/application work | Product value | Stable core API | Medium | None | Exercises client boundary, not semantic coverage |
 
 Successive controlled parser milestones unlock `entity_relation_001` through `_003`, `equivalence_002`, `equivalence_004`, and `condition_002`. The inference milestones make `entailment_001`, `_002`, `_004`, and `_005` exact; all other inference cases are now representation-ready. The next recommended step is a Phase 2 Representation-readiness Audit before selecting a policy-layer milestone.
+
+The subsequent [Phase 2 Representation-readiness Audit](phase-2-representation-readiness-audit.md) supersedes this document for current planning, while this file remains the Phase 1 exit record.

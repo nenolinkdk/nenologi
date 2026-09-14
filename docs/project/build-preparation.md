@@ -33,11 +33,11 @@ A <-> B         -> semantic/logical findings
 
 Phase 1 is complete. The reproducible exit decision, 42-case pipeline matrix, quality baseline, and single recommended Phase 2 milestone are maintained in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
-After Controlled Non-literal Representation v0.1, the callable pipeline covers 30 exact end-to-end gold cases out of 42 with no analyzable-but-inexact comparison cases. Seven remain parser-unsupported, 2 comparator-unsupported, and 3 inference-not-implemented. All inference inputs are now represented; prediction, coreference-alternative evaluation, and non-literal policy remain. See [Controlled Non-literal Representation v0.1](../architecture/non-literal-representation-v0.1.md).
+The [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md) verifies 30 exact end-to-end gold cases out of 42, with 0 analyzable-but-inexact, 7 parser-unsupported, 2 comparator-unsupported, and 3 inference-not-implemented. All inference inputs are represented; six bounded deterministic milestones remain before Phase 2 exit.
 
 ## Next implementation milestone
 
-The next recommended step is a **Phase 2 Representation-readiness Audit**, followed by an explicit choice among defeasible prediction, coreference-alternative evaluation, and non-literal interpretation policy. None should be folded into deterministic entailment implicitly.
+The next recommended implementation milestone is **Coordinated Predicate Graphs v0.1** for `addition_001`, `omission_002`, and `equivalence_005`. Defeasible prediction, coreference-alternative evaluation, and non-literal interpretation remain Phase 3 policy work.
 
 ## Definition of ready
 
