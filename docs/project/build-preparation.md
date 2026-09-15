@@ -33,11 +33,11 @@ A <-> B         -> semantic/logical findings
 
 Phase 1 is complete. The reproducible exit decision, 42-case pipeline matrix, quality baseline, and single recommended Phase 2 milestone are maintained in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
-The [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md) verifies 37 exact end-to-end gold cases out of 42, with 0 analyzable-but-inexact, 2 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented. All inference inputs are represented; two bounded deterministic milestones remain before Phase 2 exit.
+The [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md) verifies 38 exact end-to-end gold cases out of 42, with 0 analyzable-but-inexact, 1 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented. All inference inputs are represented; one bounded deterministic milestone remains before Phase 2 exit.
 
 ## Next implementation milestone
 
-The completed [Controlled UNLESS Conditions v0.1](../architecture/unless-conditions-v0.1.md) milestone resolves `condition_003`. The next recommended implementation milestone is **Controlled Event-anchored Temporal Relations v0.1** for `temporal_001`; Phase 3 policy work remains deferred.
+The completed [Controlled Event-anchored Temporal Relations v0.1](../architecture/event-anchored-temporal-relations-v0.1.md) milestone resolves `temporal_001`. The next recommended implementation milestone is **Controlled Nested Temporal References v0.1** for `temporal_003`; Phase 3 policy work remains deferred.
 
 ## Definition of ready
 

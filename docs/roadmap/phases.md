@@ -24,7 +24,7 @@ Start with General text and Translation comparison.
 ## Phase 2 — Standalone Windows prototype
 Build a small Windows client around the engine.
 
-Before client work, the bounded core-readiness sequence continues from the [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md). Controlled `UNLESS` is complete; event-anchored temporal relations are the next deterministic milestone.
+Before client work, the bounded core-readiness sequence continues from the [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md). Controlled event-anchored temporal relations are complete; nested temporal references are the final deterministic milestone.
 
 Functions:
 - select analysis profile

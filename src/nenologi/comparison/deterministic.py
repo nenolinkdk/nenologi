@@ -372,12 +372,52 @@ class DeterministicComparator:
                 raise UnsupportedComparisonError("analyses have no uniquely aligned proposition")
             findings: list[Difference] = []
             for item in alignment.alignments:
+                source_slice = _proposition_slice(source, item.source_proposition_id)
+                target_slice = _proposition_slice(target, item.target_proposition_id)
                 pair = self.compare(
-                    _proposition_slice(source, item.source_proposition_id),
-                    _proposition_slice(target, item.target_proposition_id),
+                    replace(source_slice, temporal_relations=()),
+                    replace(target_slice, temporal_relations=()),
                     mode=mode,
                 )
                 findings.extend(pair.differences)
+            source_to_target = {
+                item.source_proposition_id: item.target_proposition_id for item in alignment.alignments
+            }
+            source_temporals = {item.proposition: item for item in source.temporal_relations}
+            target_temporals = {item.proposition: item for item in target.temporal_relations}
+            for item in alignment.alignments:
+                source_temporal = source_temporals.get(item.source_proposition_id)
+                target_temporal = target_temporals.get(item.target_proposition_id)
+                if source_temporal is None and target_temporal is None:
+                    continue
+                anchors_align = (
+                    source_temporal is not None and target_temporal is not None
+                    and source_to_target.get(source_temporal.temporal_reference) == target_temporal.temporal_reference
+                )
+                relations_match = (
+                    source_temporal is not None and target_temporal is not None
+                    and source_temporal.relation == target_temporal.relation
+                )
+                if anchors_align and relations_match:
+                    continue
+                source_value = "NONE" if source_temporal is None else source_temporal.relation.value
+                target_value = "NONE" if target_temporal is None else target_temporal.relation.value
+                reversed_order = (
+                    source_temporal is not None and target_temporal is not None
+                    and {source_temporal.relation.value, target_temporal.relation.value} == {"BEFORE", "AFTER"}
+                    and anchors_align
+                )
+                _transition(
+                    findings, DifferenceType.TEMPORAL_CHANGE, source_value, target_value,
+                    TransitionRule(
+                        Severity.HIGH if reversed_order else Severity.MEDIUM,
+                        "The explicit temporal relation between aligned propositions changes; no temporal consequence is inferred.",
+                    ),
+                    tuple(reference for reference in (
+                        f"source.{source_temporal.id}" if source_temporal else f"source.{item.source_proposition_id}",
+                        f"target.{target_temporal.id}" if target_temporal else f"target.{item.target_proposition_id}",
+                    ) if reference),
+                )
             self._append_unmatched_findings(findings, source, target, alignment)
             comparison = Comparison(
                 mode=mode, source_analysis=source, target_analysis=target,

@@ -29,7 +29,7 @@ python -m unittest discover -s tests/validation -p "test_*.py"
 
 For the complete per-case pipeline matrix, including concrete blocker codes, run `python tests/validation/audit_gold_coverage.py --json`. The human-readable baseline is the [Phase 1 completion audit](../../docs/architecture/phase-1-completion-audit.md).
 
-Current coverage is 37 exact, 0 analyzable-but-inexact, 2 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented. Controlled UNLESS normalization resolves `condition_003`; every inference case remains parseable and represented. Probable prediction, alternative-reading evaluation, and non-literal interpretation policy remain unimplemented.
+Current coverage is 38 exact, 0 analyzable-but-inexact, 1 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented. Controlled event-anchored temporal representation resolves `temporal_001`; every inference case remains parseable and represented. Probable prediction, alternative-reading evaluation, and non-literal interpretation policy remain unimplemented.
 
 The complete 42-case phase assignment, blocker analysis, and exit criteria are documented in the [Phase 2 Representation-readiness Audit](../../docs/architecture/phase-2-representation-readiness-audit.md).
 

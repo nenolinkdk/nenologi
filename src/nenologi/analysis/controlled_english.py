@@ -129,6 +129,11 @@ _UNLESS_ENTER_RE = re.compile(
     r"(?P<consequent>You\s+may\s+enter)\s+(?P<unless>unless)\s+"
     r"(?P<antecedent>the\s+door\s+is\s+locked)", re.IGNORECASE,
 )
+_EVENT_TEMPORAL_RE = re.compile(
+    r"(?P<inspect>Inspect)\s+the\s+(?P<cable>cable)\s+"
+    r"(?P<relation>before|after)\s+(?P<start>starting)\s+the\s+(?P<machine>machine)",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -578,6 +583,11 @@ class ControlledEnglishAnalyzer:
         )
         if unless_condition is not None:
             return unless_condition
+        event_temporal = self._analyze_event_temporal(
+            text, language=language, profile=profile,
+        )
+        if event_temporal is not None:
+            return event_temporal
         if isinstance(text, str) and re.search(r"\bif\b", text, re.IGNORECASE):
             return self._analyze_condition(text, language=language, profile=profile)
         temporal_match = self._temporal_match(text)
@@ -736,6 +746,73 @@ class ControlledEnglishAnalyzer:
         )
         validate_analysis(result)
         return result
+
+    def _analyze_event_temporal(
+        self, text: str, *, language: str, profile: str,
+    ) -> Analysis | None:
+        """Parse the one controlled proposition-anchored temporal family."""
+        if not isinstance(text, str) or not text.strip():
+            return None
+        stripped = text.strip()
+        if stripped[-1:] in "?!":
+            return None
+        body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
+        match = _EVENT_TEMPORAL_RE.fullmatch(body)
+        if match is None:
+            return None
+
+        leading = len(text) - len(text.lstrip())
+        span = lambda group: Span(leading + match.start(group), leading + match.end(group))
+        certain = Confidence(1.0, "Deterministic controlled event-anchored temporal v0.1 rule")
+        status = InterpretationStatus.EXPLICIT
+        relation = TemporalRelationType(match.group("relation").upper())
+        relation_span = span("relation")
+        entities = (
+            Entity("entity_001", "ENTITY_CLASS", "addressee", status, certain, Span(span("inspect").start, span("inspect").start)),
+            Entity("entity_002", "OBJECT", "cable", status, certain, span("cable")),
+            Entity("entity_003", "OBJECT", "machine", status, certain, span("machine")),
+        )
+        propositions = (
+            Proposition("prop_001", "INSPECT", ("entity_001", "entity_002"), status, certain, span("inspect")),
+            Proposition("prop_002", "START", ("entity_001", "entity_003"), status, certain, span("start")),
+        )
+        relations = (
+            SemanticItem("relation_001", "ACTION_RELATION", ("entity_001", "entity_002"), status, certain, derived_from=("prop_001",)),
+            SemanticItem("relation_002", "ACTION_RELATION", ("entity_001", "entity_003"), status, certain, derived_from=("prop_002",)),
+        )
+        temporal = TemporalRelation(
+            "temporal_001", "prop_001", relation, "prop_002", status, certain, relation_span,
+        )
+        display = (
+            f"{relation.value.title()}(Inspect(Addressee, Cable), "
+            "Start(Addressee, Machine))"
+        )
+        sentence_end = len(text.rstrip())
+        analysis = Analysis(
+            document=Document("doc_001", language, text), profile=profile,
+            structure=Structure(
+                (StructuralNode("sentence_001", Span(leading, sentence_end), kind="sentence"),),
+                (
+                    StructuralNode("predicate_001", Span(span("inspect").start, span("cable").end), "sentence_001", "predicate_phrase"),
+                    StructuralNode("temporal_marker_001", relation_span, "sentence_001", "temporal_marker"),
+                    StructuralNode("anchor_predicate_001", Span(span("start").start, span("machine").end), "sentence_001", "temporal_anchor_clause"),
+                ),
+            ),
+            entities=entities, propositions=propositions, relations=relations,
+            temporal_relations=(temporal,),
+            logical_representation=(LogicalExpression(
+                "logic_001",
+                {"operator": relation.value, "event": "prop_001", "anchor": "prop_002"},
+                status, certain, display,
+                ("prop_001", "prop_002", "temporal_001", "relation_001", "relation_002"),
+            ),),
+            confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en", f"The text explicitly places inspecting the cable {relation.value.lower()} starting the machine.",
+            ),
+        )
+        validate_analysis(analysis)
+        return analysis
 
     def _analyze_embedded_negation_scope(
         self, text: str, *, language: str, profile: str,

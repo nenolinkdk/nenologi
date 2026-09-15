@@ -71,6 +71,12 @@ def validate_analysis_references(analysis: Analysis) -> None:
             _require(reference, proposition_ids, f"condition {condition.id}")
     for temporal in analysis.temporal_relations:
         _require(temporal.proposition, proposition_ids, f"temporal relation {temporal.id}")
+        if temporal.temporal_reference.startswith("prop_"):
+            _require(temporal.temporal_reference, proposition_ids, f"temporal relation {temporal.id} anchor")
+            if temporal.temporal_reference == temporal.proposition:
+                raise ReferenceValidationError(
+                    f"temporal relation {temporal.id} cannot reference its governed proposition as its anchor"
+                )
     semantic_operator_ids = {
         item.id for item in (*analysis.quantifiers, *analysis.modality, *analysis.negation)
     }

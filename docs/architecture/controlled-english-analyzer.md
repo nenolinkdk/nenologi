@@ -174,10 +174,15 @@ The four exact `Maria ... promise ... leave` and `The rule ... require employees
 
 The exact `You may enter unless the door is locked` form normalizes to the existing `Condition` graph with `NOT` scoped to the `LOCKED` antecedent and `MAY` scoped to the `ENTER` consequent. The negation span retains the lexical `unless` trigger. See [Controlled UNLESS Conditions v0.1](unless-conditions-v0.1.md). No general UNLESS or conditional logic is added.
 
+## Controlled event-anchored temporal relations v0.1
+
+The exact `Inspect the cable (before|after) starting the machine` family produces ordinary `INSPECT` and `START` propositions plus one existing `TemporalRelation` whose endpoints are proposition IDs. The explicit marker carries relation provenance. See [Controlled Event-anchored Temporal Relations v0.1](event-anchored-temporal-relations-v0.1.md). No general event or temporal parser is added.
+
 ## Explicitly unsupported
 
 - More than two sentences; two-sentence documents outside the controlled independent-proposition or `RULE. MEMBERSHIP.` forms
 - `UNLESS` outside the single registered form, `ELSE`, nested/chained/multiple conditions, comma-bearing suffix `IF`, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
+- Event-anchored temporal clauses outside the single registered inspect/start family; inverse, nested, coordinated, or implicit event chronology
 - Questions and exclamations
 - Predicate coordination outside the two registered forms, nested/repeated coordination, and subordination
 - Relative clauses and complement clauses outside the controlled scope forms and single `TELL ... THAT ... HAD WON` form
