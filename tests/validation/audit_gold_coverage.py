@@ -41,7 +41,6 @@ class AuditResult:
 
 
 PARSER_BLOCKERS = {
-    "temporal_003": "UNSUPPORTED_NESTED_TEMPORAL_PHRASE",
     "entity_relation_001": "UNSUPPORTED_PAST_TRANSITIVE",
     "entity_relation_002": "UNSUPPORTED_PAST_TRANSITIVE",
 }

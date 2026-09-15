@@ -178,11 +178,16 @@ The exact `You may enter unless the door is locked` form normalizes to the exist
 
 The exact `Inspect the cable (before|after) starting the machine` family produces ordinary `INSPECT` and `START` propositions plus one existing `TemporalRelation` whose endpoints are proposition IDs. The explicit marker carries relation provenance. See [Controlled Event-anchored Temporal Relations v0.1](event-anchored-temporal-relations-v0.1.md). No general event or temporal parser is added.
 
+## Controlled nested temporal references v0.1
+
+The exact `Wait until [after] noon` family represents `WAIT` plus an outer `UNTIL` relation whose reference is a structured `TEMPORAL_POINT(NOON)` or `TEMPORAL_AFTER(NOON)` semantic node. See [Controlled Nested Temporal References v0.1](nested-temporal-references-v0.1.md). No recursive or general temporal grammar is added.
+
 ## Explicitly unsupported
 
 - More than two sentences; two-sentence documents outside the controlled independent-proposition or `RULE. MEMBERSHIP.` forms
 - `UNLESS` outside the single registered form, `ELSE`, nested/chained/multiple conditions, comma-bearing suffix `IF`, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
 - Event-anchored temporal clauses outside the single registered inspect/start family; inverse, nested, coordinated, or implicit event chronology
+- Nested temporal references outside the single registered `UNTIL [AFTER] NOON` family
 - Questions and exclamations
 - Predicate coordination outside the two registered forms, nested/repeated coordination, and subordination
 - Relative clauses and complement clauses outside the controlled scope forms and single `TELL ... THAT ... HAD WON` form

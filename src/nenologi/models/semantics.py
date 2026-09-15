@@ -155,7 +155,7 @@ class Condition:
 
 @dataclass(frozen=True, slots=True)
 class TemporalRelation:
-    """A normalized temporal relation from one proposition to a literal or proposition anchor."""
+    """A normalized temporal relation from one proposition to a literal or structured anchor."""
 
     id: str
     proposition: str

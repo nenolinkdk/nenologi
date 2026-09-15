@@ -106,11 +106,11 @@ Condition comparison establishes neither contradiction nor conditional entailmen
 
 ## Temporal relations
 
-Exactly one structured temporal relation may govern an aligned proposition. It contains a typed `BEFORE`, `AFTER`, `ON`, or `UNTIL` relation and either a canonical literal reference or, for the registered event-anchor family, an aligned proposition reference. Comparator values retain the relation and include a literal reference whenever it changed or the temporal constraint was added/removed. Those cases produce the existing v0.1 taxonomy value `TEMPORAL_CHANGE`; they do not additionally produce `ADDITION` or `OMISSION`.
+Exactly one structured temporal relation may govern an aligned proposition. It contains a typed `BEFORE`, `AFTER`, `ON`, or `UNTIL` relation and either a canonical literal reference, an aligned proposition reference, or the registered structured noon-reference graph. Comparator values retain the relation and resolve structured references before comparison. Those cases produce the existing v0.1 taxonomy value `TEMPORAL_CHANGE`; they do not additionally produce `ADDITION` or `OMISSION`.
 
 Temporal relations can govern a condition consequent because the `Condition` continues to reference that proposition rather than duplicating temporal content. Clock references such as `18:00` never enter `NumericConstraint`. Changed temporal relations use logical relation `UNDETERMINED`; no calendar, interval, or entailment reasoning is performed.
 
-Temporal v0.1 activated weekday case `temporal_002`; [Controlled Event-anchored Temporal Relations v0.1](event-anchored-temporal-relations-v0.1.md) activates `temporal_001` through exact proposition anchors and alignment. Nested `until after` case `temporal_003` remains unsupported without changing its expectation. The public task terminology “temporal relation change” maps to the committed machine identifier `TEMPORAL_CHANGE`.
+Temporal v0.1 activated weekday case `temporal_002`; [Controlled Event-anchored Temporal Relations v0.1](event-anchored-temporal-relations-v0.1.md) activates `temporal_001`; and [Controlled Nested Temporal References v0.1](nested-temporal-references-v0.1.md) activates `temporal_003` through a resolved reference graph. The public task terminology “temporal relation change” maps to the committed machine identifier `TEMPORAL_CHANGE`.
 
 ## Unsupported comparisons
 

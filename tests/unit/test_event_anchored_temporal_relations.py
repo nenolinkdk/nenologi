@@ -114,10 +114,10 @@ class EventAnchoredTemporalRelationTests(unittest.TestCase):
         query = self.analyzer.analyze("Box A is inspected.")
         self.assertIs(engine.infer(universal, query).interpretation_status, InterpretationStatus.ENTAILED)
 
-    def test_temporal_003_remains_unsupported(self) -> None:
-        for text in ("Wait until noon.", "Wait until after noon."):
-            with self.assertRaises(UnsupportedConstructionError):
-                self.analyzer.analyze(text)
+    def test_nested_temporal_milestone_does_not_change_event_anchor(self) -> None:
+        nested = self.analyzer.analyze("Wait until after noon.")
+        self.assertEqual(nested.propositions[0].predicate, "WAIT")
+        self.assertEqual(nested.temporal_relations[0].temporal_reference, "temporal_reference_001")
 
 
 if __name__ == "__main__":

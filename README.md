@@ -67,8 +67,9 @@ The second is a source/target comparison in which both texts are independently r
 30. [Controlled Embedded Negation Scope v0.1](docs/architecture/embedded-negation-scope-v0.1.md)
 31. [Controlled UNLESS Conditions v0.1](docs/architecture/unless-conditions-v0.1.md)
 32. [Controlled Event-anchored Temporal Relations v0.1](docs/architecture/event-anchored-temporal-relations-v0.1.md)
-33. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
-34. [Build preparation](docs/project/build-preparation.md)
+33. [Controlled Nested Temporal References v0.1](docs/architecture/nested-temporal-references-v0.1.md)
+34. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
+35. [Build preparation](docs/project/build-preparation.md)
 
 For a non-technical introduction, see [Nenologi – Looking Beneath the Words](docs/public/what-is-nenologi.md). The older topic-oriented documents under `docs/01-concept` through `docs/08-integrations` remain useful background; the files linked above are the canonical Phase 0 specification.
 

@@ -134,6 +134,10 @@ _EVENT_TEMPORAL_RE = re.compile(
     r"(?P<relation>before|after)\s+(?P<start>starting)\s+the\s+(?P<machine>machine)",
     re.IGNORECASE,
 )
+_NESTED_TEMPORAL_RE = re.compile(
+    r"(?P<wait>Wait)\s+(?P<until>until)\s+(?:(?P<after>after)\s+)?(?P<noon>noon)",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -588,6 +592,11 @@ class ControlledEnglishAnalyzer:
         )
         if event_temporal is not None:
             return event_temporal
+        nested_temporal = self._analyze_nested_temporal(
+            text, language=language, profile=profile,
+        )
+        if nested_temporal is not None:
+            return nested_temporal
         if isinstance(text, str) and re.search(r"\bif\b", text, re.IGNORECASE):
             return self._analyze_condition(text, language=language, profile=profile)
         temporal_match = self._temporal_match(text)
@@ -680,6 +689,74 @@ class ControlledEnglishAnalyzer:
             logical_representation=(LogicalExpression("logic_001", {"operator": "CONTROLLED_ENGLISH", "arguments": derived}, status, certain, _formula(parsed), tuple(derived)),),
             confidence=certain,
             plain_language_interpretation=LocalizedText("en", _interpretation(parsed)),
+        )
+        validate_analysis(analysis)
+        return analysis
+
+    def _analyze_nested_temporal(
+        self, text: str, *, language: str, profile: str,
+    ) -> Analysis | None:
+        """Parse the one controlled UNTIL [AFTER] NOON family."""
+        if not isinstance(text, str) or not text.strip():
+            return None
+        stripped = text.strip()
+        if stripped[-1:] in "?!":
+            return None
+        body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
+        match = _NESTED_TEMPORAL_RE.fullmatch(body)
+        if match is None:
+            return None
+
+        leading = len(text) - len(text.lstrip())
+        span = lambda group: Span(leading + match.start(group), leading + match.end(group))
+        certain = Confidence(1.0, "Deterministic controlled nested temporal reference v0.1 rule")
+        status = InterpretationStatus.EXPLICIT
+        reference_type = "TEMPORAL_AFTER" if match.group("after") else "TEMPORAL_POINT"
+        reference_span = Span(
+            span("after").start if match.group("after") else span("noon").start,
+            span("noon").end,
+        )
+        entities = (
+            Entity("entity_001", "ENTITY_CLASS", "addressee", status, certain, Span(span("wait").start, span("wait").start)),
+            Entity("entity_002", "TEMPORAL_POINT", "NOON", status, certain, span("noon")),
+        )
+        proposition = Proposition(
+            "prop_001", "WAIT", ("entity_001",), status, certain, span("wait"),
+        )
+        relations = (
+            SemanticItem("relation_001", "ACTION_RELATION", ("entity_001",), status, certain, derived_from=("prop_001",)),
+            SemanticItem("temporal_reference_001", reference_type, ("entity_002",), status, certain, reference_span),
+        )
+        temporal = TemporalRelation(
+            "temporal_001", "prop_001", TemporalRelationType.UNTIL,
+            "temporal_reference_001", status, certain, span("until"),
+        )
+        nested_display = "After(Noon)" if match.group("after") else "Noon"
+        interpretation_reference = "after noon" if match.group("after") else "noon"
+        display = f"Until(Wait(Addressee), {nested_display})"
+        sentence_end = len(text.rstrip())
+        analysis = Analysis(
+            document=Document("doc_001", language, text), profile=profile,
+            structure=Structure(
+                (StructuralNode("sentence_001", Span(leading, sentence_end), kind="sentence"),),
+                (
+                    StructuralNode("predicate_001", span("wait"), "sentence_001", "predicate_phrase"),
+                    StructuralNode("temporal_marker_001", span("until"), "sentence_001", "temporal_marker"),
+                    StructuralNode("temporal_reference_001_clause", reference_span, "sentence_001", "temporal_reference"),
+                ),
+            ),
+            entities=entities, propositions=(proposition,), relations=relations,
+            temporal_relations=(temporal,),
+            logical_representation=(LogicalExpression(
+                "logic_001",
+                {"operator": "UNTIL", "event": "prop_001", "reference": "temporal_reference_001"},
+                status, certain, display,
+                ("prop_001", "temporal_001", "temporal_reference_001", "entity_002", "relation_001"),
+            ),),
+            confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en", f"The text explicitly places waiting until {interpretation_reference}.",
+            ),
         )
         validate_analysis(analysis)
         return analysis

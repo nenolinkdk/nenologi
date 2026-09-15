@@ -77,6 +77,26 @@ def validate_analysis_references(analysis: Analysis) -> None:
                 raise ReferenceValidationError(
                     f"temporal relation {temporal.id} cannot reference its governed proposition as its anchor"
                 )
+        if temporal.temporal_reference.startswith("temporal_reference_"):
+            temporal_reference_ids = {
+                item.id for item in analysis.relations
+                if item.type in {"TEMPORAL_POINT", "TEMPORAL_AFTER"}
+            }
+            _require(temporal.temporal_reference, temporal_reference_ids, f"temporal relation {temporal.id} reference")
+    temporal_reference_map = {
+        item.id: item for item in analysis.relations
+        if item.type in {"TEMPORAL_POINT", "TEMPORAL_AFTER"}
+    }
+    for identifier, reference in temporal_reference_map.items():
+        if len(reference.arguments) != 1:
+            raise ReferenceValidationError(f"temporal reference {identifier} requires exactly one target")
+        seen = {identifier}
+        target = reference.arguments[0]
+        while target in temporal_reference_map:
+            if target in seen:
+                raise ReferenceValidationError(f"cyclic temporal reference at {identifier}")
+            seen.add(target)
+            target = temporal_reference_map[target].arguments[0]
     semantic_operator_ids = {
         item.id for item in (*analysis.quantifiers, *analysis.modality, *analysis.negation)
     }

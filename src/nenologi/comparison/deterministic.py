@@ -317,8 +317,38 @@ def _temporal_relation(analysis: Analysis, proposition_id: str, side: str) -> Te
     return relation
 
 
-def _temporal_value(relation: TemporalRelation, *, include_reference: bool) -> str:
-    return f"{relation.relation.value} {relation.temporal_reference}" if include_reference else relation.relation.value
+def _temporal_reference_signature(analysis: Analysis, reference: str) -> tuple[object, ...] | str:
+    items = {item.id: item for item in analysis.relations}
+    entities = {item.id: item for item in analysis.entities}
+    item = items.get(reference)
+    if item is None or item.type not in {"TEMPORAL_POINT", "TEMPORAL_AFTER"}:
+        return reference
+    target = item.arguments[0]
+    if target in entities:
+        resolved: tuple[object, ...] | str = entities[target].label.upper()
+    else:
+        resolved = _temporal_reference_signature(analysis, target)
+    return item.type, resolved
+
+
+def _temporal_reference_value(analysis: Analysis, reference: str) -> str:
+    signature = _temporal_reference_signature(analysis, reference)
+
+    def render(value: tuple[object, ...] | str) -> str:
+        if not isinstance(value, tuple):
+            return value
+        kind, target = value
+        target_value = render(target)
+        return target_value if kind == "TEMPORAL_POINT" else f"AFTER_{target_value}"
+
+    return render(signature)
+
+
+def _temporal_value(analysis: Analysis, relation: TemporalRelation, *, include_reference: bool) -> str:
+    if not include_reference:
+        return relation.relation.value
+    separator = "_" if relation.temporal_reference.startswith("temporal_reference_") else " "
+    return f"{relation.relation.value}{separator}{_temporal_reference_value(analysis, relation.temporal_reference)}"
 
 
 def _transition(
@@ -531,15 +561,16 @@ class DeterministicComparator:
 
         source_temporal = _temporal_relation(source, source_prop.id, "source")
         target_temporal = _temporal_relation(target, target_prop.id, "target")
-        source_temporal_signature = None if source_temporal is None else (source_temporal.relation, source_temporal.temporal_reference)
-        target_temporal_signature = None if target_temporal is None else (target_temporal.relation, target_temporal.temporal_reference)
+        source_temporal_signature = None if source_temporal is None else (source_temporal.relation, _temporal_reference_signature(source, source_temporal.temporal_reference))
+        target_temporal_signature = None if target_temporal is None else (target_temporal.relation, _temporal_reference_signature(target, target_temporal.temporal_reference))
         if source_temporal_signature != target_temporal_signature:
             reference_changed = (
                 source_temporal is not None and target_temporal is not None
-                and source_temporal.temporal_reference != target_temporal.temporal_reference
+                and _temporal_reference_signature(source, source_temporal.temporal_reference)
+                != _temporal_reference_signature(target, target_temporal.temporal_reference)
             )
-            source_value = "NONE" if source_temporal is None else _temporal_value(source_temporal, include_reference=reference_changed or target_temporal is None)
-            target_value = "NONE" if target_temporal is None else _temporal_value(target_temporal, include_reference=reference_changed or source_temporal is None)
+            source_value = "NONE" if source_temporal is None else _temporal_value(source, source_temporal, include_reference=reference_changed or target_temporal is None)
+            target_value = "NONE" if target_temporal is None else _temporal_value(target, target_temporal, include_reference=reference_changed or source_temporal is None)
             reversed_order = (
                 source_temporal is not None and target_temporal is not None
                 and {source_temporal.relation.value, target_temporal.relation.value} == {"BEFORE", "AFTER"}
