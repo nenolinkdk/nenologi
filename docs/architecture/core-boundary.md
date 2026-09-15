@@ -28,6 +28,8 @@ future Trawedit integration-/
 
 The core accepts and returns serializable data rather than UI widgets. Dependency direction points inward: clients may import the core; the core never imports clients. Initial deterministic fixtures and rules must run offline. A future AI-assisted extractor must sit behind an interface and may not leak provider-specific response objects into the schema.
 
+Phase 3 policy evaluation is a consumer of the frozen normalized semantics and deterministic inference result, not a parser extension. Its boundary, provider-independent interface, AI-off behavior, and safety rules are defined in [Phase 3.0 — Interpretation and Policy Architecture](phase-3-interpretation-policy-architecture.md). Future AI remains optional and subordinate to validated structured evidence.
+
 ## Proposed Phase 1 package boundaries
 
 ```text

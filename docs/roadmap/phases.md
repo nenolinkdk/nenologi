@@ -24,7 +24,7 @@ Start with General text and Translation comparison.
 ## Phase 2 — Standalone Windows prototype
 Build a small Windows client around the engine.
 
-The [Phase 2 Completion Audit](../architecture/phase-2-completion-audit.md) freezes the deterministic core under the contract in [Deterministic Core Contract](../architecture/deterministic-core-contract.md). The next semantic work is explicit Phase 3 policy design, beginning with defeasible prediction; client work must preserve the frozen boundary.
+The [Phase 2 Completion Audit](../architecture/phase-2-completion-audit.md) freezes the deterministic core under the contract in [Deterministic Core Contract](../architecture/deterministic-core-contract.md). Phase 3.0 policy architecture is specified separately; client work must preserve the frozen boundary.
 
 Functions:
 - select analysis profile
@@ -40,8 +40,14 @@ Functions:
 
 **Deliverable:** usable proof of concept.
 
-## Phase 3 — Specialized profiles
-Add Biography, Procedure / recipe, Technical instructions, Prompt, Prompt / output, Specifications and SEO / web.
+## Phase 3.0 — Interpretation and policy architecture
+
+The [Phase 3.0 architecture](../architecture/phase-3-interpretation-policy-architecture.md), [interpretation-status contract](../architecture/interpretation-status-contract.md), and [policy registry](../architecture/phase-3-policy-registry.md) define a parser-independent layer over `UNSUPPORTED / NOT_ESTABLISHED`. No policy is implemented by the architecture milestone. The first implementation milestone is Defeasible Recurrence Prediction Policy v0.1.
+
+**Deliverable:** versioned policy/result contracts that preserve Phase 2 and work with AI disabled.
+
+## Phase 3.1 — Specialized profiles
+Add Biography, Procedure / recipe, Technical instructions, Prompt, Prompt / output, Specifications and SEO / web after the policy boundary is implemented and validated.
 
 Later/experimental: Rules/legal, Argumentation, Historical/news, Literary/poetry.
 

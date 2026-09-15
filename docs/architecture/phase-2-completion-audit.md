@@ -96,3 +96,5 @@ The following are intentional boundaries, not defects: controlled grammar; no br
 ## Next task
 
 Begin Phase 3 with a policy-contract design milestone. The recommended first entry point is **Defeasible Prediction Policy v0.1** for `entailment_003`, followed by alternative-reading evaluation and non-literal status propagation. No Phase 3 functionality is implemented by this audit.
+
+That design milestone is now recorded in [Phase 3.0 — Interpretation and Policy Architecture](phase-3-interpretation-policy-architecture.md). This cross-link does not alter the frozen Phase 2 decision, contracts, or 39/42 metric.

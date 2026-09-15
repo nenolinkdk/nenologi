@@ -33,4 +33,6 @@ Current coverage is 39 exact, 0 analyzable-but-inexact, 0 parser-unsupported, 0 
 
 The complete 42-case expected/actual matrix, blocker analysis, and freeze decision are documented in the [Phase 2 Completion Audit](../../docs/architecture/phase-2-completion-audit.md).
 
+The [Phase 3.0 Interpretation and Policy Architecture](../../docs/architecture/phase-3-interpretation-policy-architecture.md) preserves this 39/42 Phase 2 metric and defines a separate future full-pipeline metric. No Phase 3 policy is implemented by that specification milestone.
+
 The validator uses only the Python standard library. It verifies that all schema JSON parses, required case fields exist, IDs are globally unique, enum values and language tags are valid, required difference/status coverage exists, and equivalence cases cannot masquerade as change cases.
