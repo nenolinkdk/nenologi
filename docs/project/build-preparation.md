@@ -33,11 +33,11 @@ A <-> B         -> semantic/logical findings
 
 Phase 1 is complete. The reproducible exit decision, 42-case pipeline matrix, quality baseline, and single recommended Phase 2 milestone are maintained in the [Phase 1 completion audit](../architecture/phase-1-completion-audit.md).
 
-The [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md) verifies 39 exact end-to-end gold cases out of 42, with 0 analyzable-but-inexact, 0 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented. All deterministic parser milestones are implemented; a separate closure audit remains before any Phase 2 completion decision.
+The [Phase 2 Completion Audit](../architecture/phase-2-completion-audit.md) verifies 39 exact end-to-end gold cases out of 42, with 0 analyzable-but-inexact, 0 parser-unsupported, 0 comparator-unsupported, and 3 representation-ready policy cases. The deterministic core is frozen under the recommended baseline `phase-2-deterministic-core-v1`.
 
-## Next implementation milestone
+## Next task
 
-The completed [Controlled Nested Temporal References v0.1](../architecture/nested-temporal-references-v0.1.md) milestone resolves `temporal_003`. The next recommended task is the **Phase 2 Completion Audit**; Phase 3 policy work remains deferred.
+The [Deterministic Core Contract](../architecture/deterministic-core-contract.md) defines the frozen boundary. The next recommended task is **Phase 3 Defeasible Prediction Policy v0.1** for `entailment_003`; it must consume, not weaken, the frozen deterministic representation.
 
 ## Definition of ready
 

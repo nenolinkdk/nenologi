@@ -2,11 +2,11 @@
 
 ## Decision
 
-**Decision B remains pending a separate closure audit.** The planned deterministic parser sequence has landed, all seven inference cases are parseable, and there are no parser or comparator blockers. The three non-exact inference cases require policy rather than broader deterministic entailment.
+**Superseded closure status: Phase 2 is frozen.** The planned deterministic parser sequence has landed, all seven inference cases are parseable, and there are no parser or comparator blockers. The architectural decision and current evidence are recorded in the [Phase 2 Completion Audit](phase-2-completion-audit.md).
 
 **Controlled Nested Temporal References v0.1 is complete.** It represents the exact UNTIL/AFTER NOON family through a structured reference graph. The audit is now 39 exact, 0 analyzable-but-inexact, 0 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented.
 
-The next recommended task is the **Phase 2 Completion Audit**.
+The next recommended task is Phase 3 policy-contract design; no Phase 3 behavior belongs to this readiness record.
 
 ## Verified baseline
 
@@ -84,7 +84,7 @@ A static JSON copy is intentionally not committed because it would duplicate exe
 
 ## Remaining parser blockers
 
-None. The separate closure audit must still verify that this result satisfies every Phase 2 exit criterion.
+None. The separate [Phase 2 Completion Audit](phase-2-completion-audit.md) verified the exit criteria and froze the deterministic core.
 
 ## Resolved comparator blockers
 
@@ -175,7 +175,7 @@ Phase 2 exits when all of the following are measurable and true:
 
 ## Remaining Phase 2 work
 
-No planned deterministic parser milestone remains. A separate Phase 2 Completion Audit must make the closure decision against the exit criteria above. The three policy-layer inference cases remain explicit deferrals.
+No planned deterministic parser milestone remains. The Phase 2 Completion Audit made the closure decision against the exit criteria above. The three policy-layer inference cases remain explicit deferrals.
 
 ## Explicit deferrals
 
@@ -183,4 +183,4 @@ No planned deterministic parser milestone remains. A separate Phase 2 Completion
 - Later optional AI assistance: open-ended candidate extraction, metaphor interpretation proposals, and fuzzy language mapping, always outside authoritative deterministic semantics.
 - Out of scope/optional: commonsense and world-knowledge entailment, general English parsing, ontology reasoning, statistical resolution, GUI, PDF, and Trawedit integration for this core milestone.
 
-The audit was updated after Controlled Nested Temporal References v0.1; no gold expectation changed and Phase 2 closure remains undecided pending its dedicated audit.
+The audit was updated after Controlled Nested Temporal References v0.1 and subsequently closed by the Phase 2 Completion Audit; no gold expectation changed.

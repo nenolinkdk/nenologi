@@ -31,6 +31,6 @@ For the complete per-case pipeline matrix, including concrete blocker codes, run
 
 Current coverage is 39 exact, 0 analyzable-but-inexact, 0 parser-unsupported, 0 comparator-unsupported, and 3 inference-not-implemented. Controlled nested temporal references resolve `temporal_003`; every inference case remains parseable and represented. Probable prediction, alternative-reading evaluation, and non-literal interpretation policy remain unimplemented.
 
-The complete 42-case phase assignment, blocker analysis, and exit criteria are documented in the [Phase 2 Representation-readiness Audit](../../docs/architecture/phase-2-representation-readiness-audit.md).
+The complete 42-case expected/actual matrix, blocker analysis, and freeze decision are documented in the [Phase 2 Completion Audit](../../docs/architecture/phase-2-completion-audit.md).
 
 The validator uses only the Python standard library. It verifies that all schema JSON parses, required case fields exist, IDs are globally unique, enum values and language tags are valid, required difference/status coverage exists, and equivalence cases cannot masquerade as change cases.

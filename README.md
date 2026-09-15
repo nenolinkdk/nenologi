@@ -17,7 +17,7 @@ Nenologi does not assume that natural language has one uniquely correct formaliz
 
 ## Project status
 
-Phase 0 and **Phase 1: Nenologi Core v0.1** are complete. The canonical evidence and Phase 2 recommendation are recorded in the [Phase 1 completion audit](docs/architecture/phase-1-completion-audit.md). No GUI, external AI provider, PDF export, licensing system, or Trawedit integration was part of Phase 1.
+Phase 0, **Phase 1: Nenologi Core v0.1**, and the Phase 2 deterministic-core sequence are complete. The Phase 2 architecture is frozen under the recommended internal baseline `phase-2-deterministic-core-v1`; evidence and contracts are recorded in the [Phase 2 completion audit](docs/architecture/phase-2-completion-audit.md) and [deterministic core contract](docs/architecture/deterministic-core-contract.md). No GUI, external AI provider, PDF export, licensing system, or Trawedit integration is part of the frozen core.
 
 The first success criterion is:
 
@@ -68,8 +68,10 @@ The second is a source/target comparison in which both texts are independently r
 31. [Controlled UNLESS Conditions v0.1](docs/architecture/unless-conditions-v0.1.md)
 32. [Controlled Event-anchored Temporal Relations v0.1](docs/architecture/event-anchored-temporal-relations-v0.1.md)
 33. [Controlled Nested Temporal References v0.1](docs/architecture/nested-temporal-references-v0.1.md)
-34. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
-35. [Build preparation](docs/project/build-preparation.md)
+34. [Phase 2 Completion Audit](docs/architecture/phase-2-completion-audit.md)
+35. [Deterministic Core Contract — Phase 2 Freeze v1](docs/architecture/deterministic-core-contract.md)
+36. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
+37. [Build preparation](docs/project/build-preparation.md)
 
 For a non-technical introduction, see [Nenologi – Looking Beneath the Words](docs/public/what-is-nenologi.md). The older topic-oriented documents under `docs/01-concept` through `docs/08-integrations` remain useful background; the files linked above are the canonical Phase 0 specification.
 

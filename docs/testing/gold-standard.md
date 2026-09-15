@@ -36,4 +36,4 @@ Temporal Relations v0.1 raises exact coverage from 17 to 18 through `temporal_00
 
 The machine-readable audit supersedes hand-maintained supported-ID counts. Successive milestones raised the result from the 19-case Phase 1 exit baseline to 39 exact cases. [Controlled Nested Temporal References v0.1](../architecture/nested-temporal-references-v0.1.md) makes `temporal_003` exact without changing its expectation.
 
-The [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md) inventories every case and assigns all remaining work to deterministic Phase 2, Phase 3 policy, later optional AI assistance, or out of scope. The executable audit remains authoritative for current pipeline totals.
+The [Phase 2 Completion Audit](../architecture/phase-2-completion-audit.md) records expected and actual results for every case and freezes the 39/0/0/0/3 baseline. The executable audit remains authoritative for current pipeline totals.

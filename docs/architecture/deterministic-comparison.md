@@ -2,6 +2,8 @@
 
 `DeterministicComparator` compares two already normalized `Analysis` objects. It never reads or compares raw document strings and has no dependency on `ControlledEnglishAnalyzer` internals.
 
+This behavior is frozen by the [Deterministic Core Contract — Phase 2 Freeze v1](deterministic-core-contract.md); incompatible later changes require a versioned contract.
+
 Scope v0.1 compares category-level topology among aligned quantifier, modality, and negation references. A topology change among operator dimensions present on both sides emits one structured `SCOPE_CHANGE`; operator identity changes remain separate findings, and scope movement of an existing negation is not duplicated as `NEGATION_CHANGE`. See [Scope v0.1](scope-v0.1.md).
 
 Before applying difference rules, the comparator now requires an explicit unique match from the [Proposition Alignment v0.1](proposition-alignment-v0.1.md) service. It enables only the documented single-core-position structural rule needed to preserve existing `ENTITY_RELATION_CHANGE` behavior.

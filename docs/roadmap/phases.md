@@ -24,7 +24,7 @@ Start with General text and Translation comparison.
 ## Phase 2 — Standalone Windows prototype
 Build a small Windows client around the engine.
 
-Before client work, the bounded core-readiness sequence continues from the [Phase 2 Representation-readiness Audit](../architecture/phase-2-representation-readiness-audit.md). Controlled nested temporal references complete the planned deterministic implementation sequence; the next step is a separate Phase 2 Completion Audit.
+The [Phase 2 Completion Audit](../architecture/phase-2-completion-audit.md) freezes the deterministic core under the contract in [Deterministic Core Contract](../architecture/deterministic-core-contract.md). The next semantic work is explicit Phase 3 policy design, beginning with defeasible prediction; client work must preserve the frozen boundary.
 
 Functions:
 - select analysis profile
