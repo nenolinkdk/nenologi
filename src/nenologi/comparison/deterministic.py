@@ -291,8 +291,9 @@ def _condition_value(analysis: Analysis, antecedent: Proposition) -> str:
         item for item in analysis.relations
         if item.type == "ACTION_RELATION" and item.derived_from == (antecedent.id,)
     ), None)
+    prefix = "UNLESS" if _explicit_negation(analysis, antecedent.id)[0] else "IF"
     if action is None or len(antecedent.arguments) != 1:
-        return f"IF_{antecedent.predicate}"
+        return f"{prefix}_{antecedent.predicate}"
     entity = next(item for item in analysis.entities if item.id == antecedent.arguments[0])
     verb = antecedent.predicate
     if verb.endswith("Y") and len(verb) > 1 and verb[-2] not in "AEIOU":
@@ -301,7 +302,7 @@ def _condition_value(analysis: Analysis, antecedent: Proposition) -> str:
         verb += "ES"
     else:
         verb += "S"
-    return f"IF_{entity.label.upper()}_{verb}"
+    return f"{prefix}_{entity.label.upper()}_{verb}"
 
 
 def _temporal_relation(analysis: Analysis, proposition_id: str, side: str) -> TemporalRelation | None:
@@ -469,10 +470,12 @@ class DeterministicComparator:
             source_antecedent_signature = (
                 source_antecedent.predicate,
                 tuple(entity.label.casefold() for entity in source_antecedent_entities),
+                _explicit_negation(source, source_antecedent.id)[0],
             )
             target_antecedent_signature = (
                 target_antecedent.predicate,
                 tuple(entity.label.casefold() for entity in target_antecedent_entities),
+                _explicit_negation(target, target_antecedent.id)[0],
             )
             if source_antecedent_signature != target_antecedent_signature:
                 condition_changed = True

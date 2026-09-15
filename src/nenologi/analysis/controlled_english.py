@@ -125,6 +125,10 @@ _REQUIRE_SCOPE_RE = re.compile(
     r"(?P<subject>The\s+rule)\s+(?:(?P<outer>does\s+not\s+require\s+employees)|"
     r"(?P<inner>requires\s+employees\s+not))\s+to\s+(?P<action>leave)", re.IGNORECASE,
 )
+_UNLESS_ENTER_RE = re.compile(
+    r"(?P<consequent>You\s+may\s+enter)\s+(?P<unless>unless)\s+"
+    r"(?P<antecedent>the\s+door\s+is\s+locked)", re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -569,6 +573,11 @@ class ControlledEnglishAnalyzer:
         residence_language = self._analyze_residence_language(text, language=language, profile=profile)
         if residence_language is not None:
             return residence_language
+        unless_condition = self._analyze_unless_condition(
+            text, language=language, profile=profile,
+        )
+        if unless_condition is not None:
+            return unless_condition
         if isinstance(text, str) and re.search(r"\bif\b", text, re.IGNORECASE):
             return self._analyze_condition(text, language=language, profile=profile)
         temporal_match = self._temporal_match(text)
@@ -664,6 +673,69 @@ class ControlledEnglishAnalyzer:
         )
         validate_analysis(analysis)
         return analysis
+
+    def _analyze_unless_condition(
+        self, text: str, *, language: str, profile: str,
+    ) -> Analysis | None:
+        """Normalize the one controlled UNLESS form to IF NOT antecedent."""
+        if not isinstance(text, str) or not text.strip():
+            return None
+        stripped = text.strip()
+        if stripped[-1:] in "?!":
+            return None
+        body = stripped[:-1].rstrip() if stripped.endswith(".") else stripped
+        match = _UNLESS_ENTER_RE.fullmatch(body)
+        if match is None:
+            return None
+
+        leading = len(text) - len(text.lstrip())
+        unless_start = leading + match.start("unless")
+        normalized_text = (
+            text[:unless_start] + "if    " + text[unless_start + len("unless"):]
+        )
+        base = self._analyze_condition(
+            normalized_text, language=language, profile=profile,
+        )
+        condition = base.conditions[0]
+        certain = Confidence(1.0, "Deterministic controlled UNLESS normalization v0.1 rule")
+        negation = Operator(
+            "antecedent_negation_001", "NOT", condition.antecedent,
+            InterpretationStatus.EXPLICIT, certain,
+            Span(unless_start, unless_start + len("unless")),
+        )
+        antecedent = next(
+            item for item in base.propositions if item.id == condition.antecedent[0]
+        )
+        consequent = next(
+            item for item in base.propositions if item.id == condition.consequent[0]
+        )
+        entity_by_id = {item.id: item for item in base.entities}
+        antecedent_entity = entity_by_id[antecedent.arguments[0]]
+        consequent_entity = entity_by_id[consequent.arguments[0]]
+        formula = (
+            f"(¬{antecedent.predicate.title()}({antecedent_entity.label.title()})) → "
+            f"(May({consequent.predicate.title()}({consequent_entity.label.title()})))"
+        )
+        expression = replace(
+            base.logical_representation[0],
+            expression={
+                "operator": "IF",
+                "antecedent": [negation.id],
+                "consequent": list(condition.consequent),
+            },
+            display=formula,
+            derived_from=base.logical_representation[0].derived_from + (negation.id,),
+        )
+        result = replace(
+            base,
+            document=Document("doc_001", language, text),
+            negation=(negation,), logical_representation=(expression,), confidence=certain,
+            plain_language_interpretation=LocalizedText(
+                "en", "The sentence states that if the door is not locked, then you may enter.",
+            ),
+        )
+        validate_analysis(result)
+        return result
 
     def _analyze_embedded_negation_scope(
         self, text: str, *, language: str, profile: str,

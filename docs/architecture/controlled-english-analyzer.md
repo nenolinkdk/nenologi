@@ -170,10 +170,14 @@ Exactly two period-terminated declarative sentences may be combined when each in
 
 The four exact `Maria ... promise ... leave` and `The rule ... require employees ... leave` forms documented in [Controlled Embedded Negation Scope v0.1](embedded-negation-scope-v0.1.md) normalize to one `LEAVE` proposition plus `PROMISE`/`REQUIRE` and `NOT` operator chains. Scope references, rather than surface text, distinguish outer from embedded negation. No general embedded-clause or scope resolution is added.
 
+## Controlled UNLESS conditions v0.1
+
+The exact `You may enter unless the door is locked` form normalizes to the existing `Condition` graph with `NOT` scoped to the `LOCKED` antecedent and `MAY` scoped to the `ENTER` consequent. The negation span retains the lexical `unless` trigger. See [Controlled UNLESS Conditions v0.1](unless-conditions-v0.1.md). No general UNLESS or conditional logic is added.
+
 ## Explicitly unsupported
 
 - More than two sentences; two-sentence documents outside the controlled independent-proposition or `RULE. MEMBERSHIP.` forms
-- `UNLESS`, `ELSE`, nested/chained/multiple `IF`, comma-bearing suffix `IF`, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
+- `UNLESS` outside the single registered form, `ELSE`, nested/chained/multiple conditions, comma-bearing suffix `IF`, multiple antecedents, antecedent coordination, and `MAY NOT` inside a condition
 - Questions and exclamations
 - Predicate coordination outside the two registered forms, nested/repeated coordination, and subordination
 - Relative clauses and complement clauses outside the controlled scope forms and single `TELL ... THAT ... HAD WON` form
