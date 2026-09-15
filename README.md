@@ -17,7 +17,7 @@ Nenologi does not assume that natural language has one uniquely correct formaliz
 
 ## Project status
 
-Phase 0, **Phase 1: Nenologi Core v0.1**, and the Phase 2 deterministic-core sequence are complete. The Phase 2 architecture is frozen under the recommended internal baseline `phase-2-deterministic-core-v1`; evidence and contracts are recorded in the [Phase 2 completion audit](docs/architecture/phase-2-completion-audit.md) and [deterministic core contract](docs/architecture/deterministic-core-contract.md). Phase 3.0 now defines the interpretation-policy architecture without implementing policies or changing the frozen core. No GUI, external AI provider, PDF export, licensing system, or Trawedit integration is part of the frozen core.
+Phase 0, **Phase 1: Nenologi Core v0.1**, and the Phase 2 deterministic-core sequence are complete. The Phase 2 architecture is frozen under the recommended internal baseline `phase-2-deterministic-core-v1`; evidence and contracts are recorded in the [Phase 2 completion audit](docs/architecture/phase-2-completion-audit.md) and [deterministic core contract](docs/architecture/deterministic-core-contract.md). Phase 3.0 defines the interpretation-policy architecture, and Phase 3.1 implements the first bounded deterministic policy without changing the frozen core. No GUI, external AI provider, PDF export, licensing system, or Trawedit integration is part of the frozen core.
 
 The first success criterion is:
 
@@ -73,8 +73,9 @@ The second is a source/target comparison in which both texts are independently r
 36. [Phase 3.0 Interpretation and Policy Architecture](docs/architecture/phase-3-interpretation-policy-architecture.md)
 37. [Interpretation Status Contract](docs/architecture/interpretation-status-contract.md)
 38. [Phase 3 Policy Registry](docs/architecture/phase-3-policy-registry.md)
-39. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
-40. [Build preparation](docs/project/build-preparation.md)
+39. [Defeasible Recurrence Prediction Policy v0.1](docs/architecture/defeasible-recurrence-prediction-v0.1.md)
+40. [Test corpus strategy](docs/testing/test-corpus-strategy.md)
+41. [Build preparation](docs/project/build-preparation.md)
 
 For a non-technical introduction, see [Nenologi – Looking Beneath the Words](docs/public/what-is-nenologi.md). The older topic-oriented documents under `docs/01-concept` through `docs/08-integrations` remain useful background; the files linked above are the canonical Phase 0 specification.
 

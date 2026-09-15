@@ -42,7 +42,7 @@ Functions:
 
 ## Phase 3.0 — Interpretation and policy architecture
 
-The [Phase 3.0 architecture](../architecture/phase-3-interpretation-policy-architecture.md), [interpretation-status contract](../architecture/interpretation-status-contract.md), and [policy registry](../architecture/phase-3-policy-registry.md) define a parser-independent layer over `UNSUPPORTED / NOT_ESTABLISHED`. No policy is implemented by the architecture milestone. The first implementation milestone is Defeasible Recurrence Prediction Policy v0.1.
+The [Phase 3.0 architecture](../architecture/phase-3-interpretation-policy-architecture.md), [interpretation-status contract](../architecture/interpretation-status-contract.md), and [policy registry](../architecture/phase-3-policy-registry.md) define a parser-independent layer over `UNSUPPORTED / NOT_ESTABLISHED`. [Defeasible Recurrence Prediction Policy v0.1](../architecture/defeasible-recurrence-prediction-v0.1.md) is the first implementation and raises the separate full-pipeline metric to 40/42 without changing Phase 2. The next milestone is Phase 3.2 Alternative-reading Evaluation v0.1.
 
 **Deliverable:** versioned policy/result contracts that preserve Phase 2 and work with AI disabled.
 

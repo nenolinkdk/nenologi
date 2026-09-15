@@ -12,7 +12,7 @@ from pathlib import Path
 
 from nenologi import (
     ControlledEnglishAnalyzer, DeterministicComparator, DeterministicInferenceEngine,
-    DeterministicPropositionAligner,
+    DeterministicPropositionAligner, Phase3InterpretationEngine,
     UnsupportedComparisonError, UnsupportedConstructionError,
 )
 
@@ -67,10 +67,11 @@ def _actual_differences(comparison) -> list[dict[str, object]]:
     ]
 
 
-def audit_gold_coverage() -> AuditResult:
+def audit_gold_coverage(*, full_pipeline: bool = False) -> AuditResult:
     analyzer = ControlledEnglishAnalyzer()
     comparator = DeterministicComparator()
     inference_engine = DeterministicInferenceEngine()
+    interpretation_engine = Phase3InterpretationEngine()
     case_status: dict[str, ImplementationStatus] = {}
     totals: Counter[ImplementationStatus] = Counter()
     by_feature: dict[str, Counter[ImplementationStatus]] = defaultdict(Counter)
@@ -91,7 +92,10 @@ def audit_gold_coverage() -> AuditResult:
                         parsed.append(True)
                 exact = False
                 if all(parsed):
-                    inference = inference_engine.infer(analyses[0], analyses[1])
+                    inference = (
+                        interpretation_engine.evaluate(analyses[0], analyses[1])
+                        if full_pipeline else inference_engine.infer(analyses[0], analyses[1])
+                    )
                     exact = inference.interpretation_status.value == case["expected"]["interpretation_status"]
                 status = (
                     ImplementationStatus.END_TO_END_EXACT
@@ -101,7 +105,11 @@ def audit_gold_coverage() -> AuditResult:
                     "parser": "SUPPORTED" if all(parsed) else "UNSUPPORTED",
                     "analysis": "AVAILABLE" if all(parsed) else "INCOMPLETE",
                     "alignment": "NOT_APPLICABLE", "comparator": "NOT_APPLICABLE",
-                    "inference": inference.rule if exact else "NOT_IMPLEMENTED",
+                    "inference": (
+                        (inference.policy_id or inference.deterministic_result.rule)
+                        if full_pipeline and exact else
+                        inference.rule if exact else "NOT_IMPLEMENTED"
+                    ),
                     "blocking_reason": "NONE" if exact else INFERENCE_BLOCKERS[case["id"]],
                 }
             else:
@@ -166,15 +174,27 @@ def audit_gold_coverage() -> AuditResult:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--json", action="store_true", help="emit the complete per-case pipeline matrix as JSON")
+    parser.add_argument(
+        "--full-pipeline", action="store_true",
+        help="include implemented Phase 3 policies without changing the Phase 2 audit default",
+    )
     args = parser.parse_args()
-    result = audit_gold_coverage()
+    result = audit_gold_coverage(full_pipeline=args.full_pipeline)
     if args.json:
         print(json.dumps({
+            "metric": (
+                "FULL_INTERPRETATION_PIPELINE"
+                if args.full_pipeline else "PHASE_2_DETERMINISTIC_CORE"
+            ),
             "total": sum(result.totals.values()),
             "totals": {status.value: result.totals[status] for status in ImplementationStatus},
             "cases": result.cases,
         }, indent=2))
         return 0
+    print(
+        "METRIC FULL_INTERPRETATION_PIPELINE"
+        if args.full_pipeline else "METRIC PHASE_2_DETERMINISTIC_CORE"
+    )
     print(f"TOTAL {sum(result.totals.values())}")
     for status in ImplementationStatus:
         print(f"{status.value} {result.totals[status]}")

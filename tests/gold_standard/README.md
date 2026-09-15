@@ -35,4 +35,6 @@ The complete 42-case expected/actual matrix, blocker analysis, and freeze decisi
 
 The [Phase 3.0 Interpretation and Policy Architecture](../../docs/architecture/phase-3-interpretation-policy-architecture.md) preserves this 39/42 Phase 2 metric and defines a separate future full-pipeline metric. No Phase 3 policy is implemented by that specification milestone.
 
+Phase 3.1 implements only `DEFEASIBLE_RECURRENCE_PREDICTION.v1`, producing a separate 40/42 full-pipeline result while the Phase 2 audit remains 39/42. Use `python tests/validation/audit_gold_coverage.py --full-pipeline` to report the policy-aware metric.
+
 The validator uses only the Python standard library. It verifies that all schema JSON parses, required case fields exist, IDs are globally unique, enum values and language tags are valid, required difference/status coverage exists, and equivalence cases cannot masquerade as change cases.

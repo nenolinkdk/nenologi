@@ -1,12 +1,12 @@
 # Phase 3 Policy Registry — Architecture v1
 
-The registry is an ordered, versioned, auditable catalogue. Registration validates unique IDs, declared output statuses, deterministic classification, evidence schema, and precedence. Phase 3.0 defines entries only; none is implemented.
+The registry is an ordered, versioned, auditable catalogue. Registration validates unique IDs, declared output statuses, deterministic classification, evidence schema, and precedence. Phase 3.1 implements only `DEFEASIBLE_RECURRENCE_PREDICTION.v1`; the other entries remain specifications.
 
-| Registry order | Stable policy ID | Purpose | Class | Allowed status | Fixed v0.x confidence rule |
-| --- | --- | --- | --- | --- | --- |
-| 1 | `NON_LITERAL_SAFETY_PROPAGATION.v1` | Refuse unsafe literalization when an applicable source marker exists. | deterministic | `CANNOT_BE_SAFELY_FORMALIZED` | `1.0` when exact marker/query guards pass. |
-| 2 | `ALTERNATIVE_READING_EVALUATION.v1` | Evaluate a query across complete isolated reference readings. | deterministic | `AMBIGUOUS` | `1.0` when the alternative graph is complete and reading outcomes differ. |
-| 3 | `DEFEASIBLE_RECURRENCE_PREDICTION.v1` | Classify a narrowly registered repeated-past/future recurrence as probable. | deterministic bounded policy | `PROBABLE` | `1.0` when exact guards pass: certainty of the policy classification, not probability of the event. |
+| Registry order | Stable policy ID | Status | Purpose | Class | Allowed result | Fixed v0.x confidence rule |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | `NON_LITERAL_SAFETY_PROPAGATION.v1` | specified, not registered | Refuse unsafe literalization when an applicable source marker exists. | deterministic | `CANNOT_BE_SAFELY_FORMALIZED` | `1.0` when exact marker/query guards pass. |
+| 2 | `ALTERNATIVE_READING_EVALUATION.v1` | specified, not registered | Evaluate a query across complete isolated reference readings. | deterministic | `AMBIGUOUS` | `1.0` when the alternative graph is complete and reading outcomes differ. |
+| 3 | `DEFEASIBLE_RECURRENCE_PREDICTION.v1` | implemented and registered | Classify a narrowly registered repeated-past/future recurrence as probable. | deterministic bounded policy | `PROBABLE` | `1.0` when exact guards pass: certainty of the policy classification, not probability of the event. |
 
 The order resolves only mutually exclusive applicability families. If more than one policy still applies, evaluation fails closed as a registry error. All policies require an incoming `UNSUPPORTED / NOT_ESTABLISHED`; deterministic terminal results bypass the registry.
 
@@ -28,6 +28,8 @@ Evidence: source/query proposition IDs, their entity IDs, source/query temporal 
 Reject one observation, absent/unknown recurrence count, different predicate/entity/arity, incompatible temporal granularity, non-future target, unsupported temporal constants, conditions or modal changes, ambiguity/non-literal structures, explicit contradiction, and any need for world knowledge. Rejection preserves `UNSUPPORTED / NOT_ESTABLISHED`.
 
 Positive tests: exact case 003; word/digit normalization if both produce the same canonical reference; repeated runs and JSON round-trip. Negative tests: count one, different entity, different predicate, non-future query, morning/evening mismatch, conditional or negated occurrence, explicit contradiction precedence, missing temporal evidence, and unrelated residence/fluency input.
+
+The implemented v0.1 boundary is documented in [Defeasible Recurrence Prediction Policy v0.1](defeasible-recurrence-prediction-v0.1.md).
 
 ## `ALTERNATIVE_READING_EVALUATION.v1`
 

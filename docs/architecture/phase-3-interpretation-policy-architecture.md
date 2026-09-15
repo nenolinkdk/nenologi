@@ -120,7 +120,7 @@ Future tests must cover registry uniqueness/order, applicability and rejection, 
 - Policy IDs carry independent versions, beginning with `.v1`.
 - Future combined baseline: `phase-3-interpretation-pipeline-v1`.
 
-These are recommended names; no Git tags are created. The first implementation milestone should be **Defeasible Recurrence Prediction Policy v0.1**, implemented against this contract without Phase 2 changes.
+These are recommended names; no Git tags are created. **Defeasible Recurrence Prediction Policy v0.1** is now implemented against this contract without Phase 2 changes. The next milestone is Phase 3.2 Alternative-reading Evaluation v0.1.
 
 ## Required decisions A–K
 
